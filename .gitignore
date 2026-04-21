@@ -48,6 +48,9 @@ Thumbs.db
 # Claude project workdir (if any)
 .claude/projects/
 
+# Claude settings locales (overrides personales)
+.claude/settings.local.json
+
 # Nested git repos (tracked separately upstream)
 claude-tradingview-mcp-trading/
 tradingview-mcp/
