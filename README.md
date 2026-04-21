@@ -318,6 +318,7 @@ Claude detectará automáticamente cuál invocar según tu pregunta:
 | **journal-keeper** | "cierro día", "journal", "log trade", "review semana" |
 | **backtest-runner** | "backtest X", "probar esta config", "grid search" |
 | **technical-analyst** | "TA profundo", "smart money", "armónico", "elliot", "fibonacci" |
+| **signal-validator** | "valida señal", "[comunidad] dice...", "/signal Short XLM" |
 
 ### `.claude/commands/` — 11 Slash commands
 
@@ -337,6 +338,7 @@ Atajos rápidos para acciones frecuentes:
 | `/levels` | Niveles técnicos actuales |
 | `/alert` | Configura alerta custom |
 | `/ta` | **Análisis técnico avanzado** (ICT, armónicos, chartismo, Elliott, Fibonacci) |
+| `/signal` | **Valida señal externa** de comunidad con tu sistema (GO/NO-GO) |
 
 ### `.claude/skills/` — 8 Skills custom
 
