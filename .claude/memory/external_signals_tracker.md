@@ -2,8 +2,8 @@
 name: External signals tracker
 description: Registro de señales externas validadas (Discord, Telegram, Twitter) con su outcome para análisis de edge de los traders seguidos
 type: project
+originSessionId: 870cfb36-0066-4b6c-a1b7-eeaebc9a6ca8
 ---
-
 **Propósito:** llevar registro de señales externas validadas y su resultado final para saber qué traders/fuentes tienen edge real.
 
 ## Formato de registro
@@ -60,7 +60,40 @@ Cada señal validada se registra así:
 
 ## Estado actual
 
-(vacío — primera señal se añadirá aquí)
+### Señal #1 — 2026-04-21 04:15 MX
+**Fuente:** El Sabueso de Wall Street
+**Comunidad:** punkchainer's Discord
+**Señal:** SHORT XLMUSDT.P @ 0.1822 (sin SL/TP especificados)
+
+**Validación del sistema:**
+- Score: -1 / +10
+- Veredicto: **ESPERAR / NO ENTRAR AHORA**
+- Razón clave: Régimen TRENDING UP +7.54% en 30h — trade contra-trend en top. Precio ya pasó entry y rebotó 70% del drop máximo.
+
+**Contexto adicional:**
+- Entry del Sabueso fue en TOP del rally (high 0.18259)
+- Mínimo tocado post-señal: 0.17992 (+1.25% profit máximo)
+- Al momento de validación: 0.18124 (+0.54% profit si sigue abierto)
+- Sin Neptune cargado en chart XLM (validación parcial)
+
+**Decisión del usuario:**
+- [ ] No ejecuté (seguí el ESPERAR del sistema)
+- [ ] Ejecuté con size normal
+- [ ] Ejecuté con size reducido
+- [ ] Ejecuté ignorando sistema
+
+**Setup alternativo sugerido (si quieres entrar):**
+- Esperar retest 0.18220-0.18270 con rechazo confirmado
+- SL: 0.18330 (+0.3%)
+- TP1: 0.18060 | TP2: 0.17900 | TP3: 0.17750
+
+**Resultado (pending — actualizar cuando se sepa):**
+- Entry real: ___
+- Exit: ___
+- PnL: ___
+
+**Lección:**
+Traders como Sabueso shortean contra-trend en tops — win rate bajo pero cuando funciona da 1-2% move. Para cuenta chica (cap $11), R:R no compensa el riesgo de liquidación si el rally continúa.
 
 ## Why
 
