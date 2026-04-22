@@ -2,7 +2,9 @@
 
 Capital inicial histórico: $10.00
 Estrategia activa: Mean Reversion 15m / 10x (régimen RANGE)
-Ventana operativa oficial: MX 06:00 – 18:00 (force exit 18:00)
+Ventana operativa oficial: MX 06:00 – 23:59 (force exit 23:59 — "no dormir con trade abierto")
+
+> Nota 2026-04-21 (cierre de día): ventana extendida de 18:00 → 23:59 MX por decisión del trader (cripto es 24/7, la única restricción real es no ir a dormir con posición abierta). La evaluación de disciplina del Trade #2 del 2026-04-21 abajo refleja la regla vigente ese día (force exit 18:00).
 
 ---
 
@@ -83,8 +85,8 @@ No reportado explícitamente por el usuario — pedir en próxima sesión.
 
 > **LOGGEAR EL TRADE EN EL MOMENTO DE ABRIR LA POSICIÓN.** Antes de pulsar "Abrir" en BingX, escribir en el journal: hora MX, precio entry, los 4 filtros cumplidos uno por uno (Donchian tocado, RSI<35/>65, BB tocada, vela cerrada), SL en $X, TPs planeados en $X/$X/$X. Sin este registro NO se puede mejorar. El journal post-hoc es ficción — el real es el que se escribe antes del fill.
 
-**Regla reforzada:**
-- Si a las 17:45 MX el trade sigue abierto: alarma audible. A 18:00 MX cerrar mercado SIN EXCEPCIÓN. El trade #2 es el último que se cierra pasado las 18:00 sin consecuencia.
+**Regla reforzada (actualizada al cierre 2026-04-21):**
+- Nueva ventana operativa: MX 06:00 – 23:59. Si a las 23:30 MX el trade sigue abierto: alarma audible. A 23:59 MX cerrar mercado SIN EXCEPCIÓN (no dormir con posición abierta — con leverage 10x un wick de madrugada puede liquidar mientras el trader no puede reaccionar).
 
 ---
 
