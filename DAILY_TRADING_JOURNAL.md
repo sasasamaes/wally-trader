@@ -1,292 +1,118 @@
-# 📊 DAILY TRADING JOURNAL - NEPTUNE SYSTEM
+# DAILY TRADING JOURNAL — BTCUSDT.P (BingX)
 
-## 🗓️ FECHA: __/__/2025
-
-### ⚠️ ESTADO BREAKOUT ACTUALIZADO
-
-```
-PLAN ESPECÍFICO: [1-STEP CLASSIC / 1-STEP PRO / 1-STEP TURBO / 2-STEP]
-
-CAPITAL INICIAL: $10,000
-BALANCE ACTUAL: $__________
-P&L TOTAL: $__________ (____%)
-PÉRDIDAS HOY: $__________
-TRADES HOY: ___ (___W-___L-___BE)
-
-LÍMITES CRÍTICOS:
-Daily Limit: $__________ (___% usado)
-Max DD: $__________ [STATIC/TRAILING]
-Distancia DD: $__________
-ZONA ACTUAL: [VERDE/AMARILLA/ROJA]
-TAMAÑO PERMITIDO: $__________ por trade
-```
+Capital inicial histórico: $10.00
+Estrategia activa: Mean Reversion 15m / 10x (régimen RANGE)
+Ventana operativa oficial: MX 06:00 – 18:00 (force exit 18:00)
 
 ---
 
-## 📈 ANÁLISIS DEL DÍA
+## SESIÓN 2026-04-21 (martes)
 
-### 🎯 SETUP #1 - [HORA: __:__ UTC]
+### Estado capital
+- Capital pre-sesión: $11.14
+- Capital post-sesión: ~$12.23
+- Delta día: +$1.09 (+9.8% sobre capital pre-sesión)
+- Delta acumulado desde inicio: +$2.23 (+22.3% sobre $10 inicial en 2 trades)
 
-**PAR:** BTC/USDT
-**DIRECCIÓN:** [LONG ↑ / SHORT ↓]
+### Trades ejecutados
+**Trade único del día — LONG BTCUSDT.P**
+- Orden: #992142455942 (Taker, reduce-only cierre)
+- Entry: NO REGISTRADO en tiempo real (falta de logging)
+- Exit: $76,312.7 @ MX 18:43:33
+- Notional: 76.4 USDT
+- Leverage asumido: 10x (margen ~$7.6)
+- Comisión: 0.03815635 USDT
+- PnL neto: **+1.0946 USDT (+1.43% notional)**
+- Movimiento favorable estimado en precio: ~0.14%
+- Resultado: **WIN**
 
-#### 📸 SCREENSHOTS RECIBIDOS:
-- ✅ 1D - Recibido
-- ✅ 4H - Recibido  
-- ✅ 1H - Recibido
-- ✅ 15M - Recibido
+### Métricas del día
+- Trades: 1
+- Win Rate día: 1/1 (100%)
+- Mejor trade: +$1.09
+- Peor trade: N/A
+- Comisiones pagadas: $0.038
 
-#### 📊 ANÁLISIS MULTI-TIMEFRAME:
+### Disciplina / Cumplimiento de reglas
 
-**1D:**
-- Fase Wyckoff: ________________
-- Tendencia: ________________
-- Confianza: ___%
+| Regla | Cumplida |
+|---|---|
+| Operar en régimen correcto (RANGE) | SI (asumido) |
+| 4 filtros Mean Reversion documentados | NO (no registrados en tiempo real) |
+| Entry dentro ventana 06:00-18:00 MX | DESCONOCIDO |
+| **Exit ≤ 18:00 MX (force exit)** | **NO — cerrado 18:43:33 (+43 min fuera de regla)** |
+| Max 5 trades/día | SI (1 trade) |
+| Stop tras 2 SLs | N/A (sin SLs) |
+| No mover SL en contra | N/A |
 
-**4H:**
-- Zona objetivo: $_____-$_____
-- Confluencia: ___/12 factores
-- Probabilidad: ___%
+**Puntaje disciplina día: 2/4 reglas auditables → 50%**
 
-**1H:**
-- Estructura: ________________
-- Neptune Oscillator: ____
-- Confirmación: [SÍ/NO]
+### Patrones detectados (acumulado 2 trades)
+Positivos:
+- **Racha 2-0 (WR 100% temprana)** — muestra aún pequeña pero consistente
+- **No over-trading** — 1 trade por día ambos días, sin "forzar" setups
+- **Disciplina en el outcome (deja correr hasta objetivo)** — ni panic-close, ni FOMO
 
-**15M:**
-- Vela confirmación: [Tipo]
-- Volumen: ___% RVOL
-- Timing: [ÓPTIMO/ESPERAR/NO]
+Negativos / a vigilar:
+- **Falta de logging en tiempo real**: trade #2 no tiene entry ni hora de apertura registrados. Sin esto, no se pueden validar filtros ni construir base estadística real.
+- **Violación del force exit de 18:00 MX** en trade #2 → primer incumplimiento de regla. El hecho de que ganó es lo que lo hace peligroso (refuerzo positivo de mala conducta).
 
-#### 🔥 CONFLUENCIA TOTAL:
-- Factores: ___/12 → [Nivel]
-- Probabilidad estimada: ___%
+### Evaluación honest-first
 
-#### 💰 GESTIÓN DE RIESGO:
-- Entrada: $__________
-- Stop Loss: $__________ (-___%)
-- Tamaño: __________ BTC ($__________)
-- TP1: $__________ (+___%) - 60%
-- TP2: $__________ (+___%) - 40%
-- R:R Blended: 1:___
+El +22.3% en 2 trades se ve espectacular pero son datos de ejemplo, NO evidencia estadística. WR 100% con n=2 no significa nada. Lo que SÍ importa de estos 2 días:
 
-#### ✅ DECISIÓN:
-[EJECUTAR 🚀 / ESPERAR ⏸️ / NO OPERAR ❌]
+1. Ejecutó la estrategia (no se quedó en parálisis análisis)
+2. No perdió capital — primer objetivo de cualquier trader
+3. YA empezó a aparecer indisciplina menor (violación force exit). Si no se corrige ahora que el trade ganó, se convertirá en hábito cuando pierda.
 
-**RAZÓN:** _________________________________________
+### Lección del día
+"Ganar violando una regla es más caro que perder respetándola. El refuerzo positivo del outcome crea el hábito que un día costará más de lo que hoy ganaste."
 
----
+### Estado mental
+No reportado explícitamente por el usuario — pedir en próxima sesión.
 
-### 🎯 SETUP #2 - [HORA: __:__ UTC]
+### Progreso hacia target $100
+- Capital actual: $12.23
+- Target: $100
+- Falta: $87.77 (+717% adicional)
+- A ritmo de +5% compuesto diario necesitaría ~43 días hábiles consecutivos
+- A ritmo observado (2 trades en 2 días, +22%) NO es extrapolable — muestra insuficiente
 
-[Repetir estructura anterior...]
+### Mañana (2026-04-22)
+**1 cosa específica a hacer diferente:**
 
----
+> **LOGGEAR EL TRADE EN EL MOMENTO DE ABRIR LA POSICIÓN.** Antes de pulsar "Abrir" en BingX, escribir en el journal: hora MX, precio entry, los 4 filtros cumplidos uno por uno (Donchian tocado, RSI<35/>65, BB tocada, vela cerrada), SL en $X, TPs planeados en $X/$X/$X. Sin este registro NO se puede mejorar. El journal post-hoc es ficción — el real es el que se escribe antes del fill.
 
-## 📋 RESUMEN DE TRADES EJECUTADOS
-
-### TRADE #1 - [HORA ENTRADA: __:__ UTC]
-
-**DETALLES:**
-- Par: BTC/USDT
-- Dirección: [LONG/SHORT]
-- Entrada: $__________
-- Stop Loss: $__________
-- Tamaño: __________ BTC ($__________)
-- TP1: $__________ | TP2: $__________
-
-**RESULTADO:**
-- [GANADA / PERDIDA / BREAKEVEN]
-- P&L: $__________ (___%)
-- Razón salida: [TP1 / TP2 / SL / MANUAL]
-- Hora salida: __:__ UTC
-
-**ANÁLISIS POST-TRADE:**
-- ¿Setup fue válido? [SÍ/NO]
-- ¿Gestión correcta? [SÍ/NO]
-- ¿Lecciones aprendidas?:
-  1. _________________________
-  2. _________________________
-  3. _________________________
+**Regla reforzada:**
+- Si a las 17:45 MX el trade sigue abierto: alarma audible. A 18:00 MX cerrar mercado SIN EXCEPCIÓN. El trade #2 es el último que se cierra pasado las 18:00 sin consecuencia.
 
 ---
 
-### TRADE #2 - [HORA ENTRADA: __:__ UTC]
+## HISTORIAL DE SESIONES
 
-[Repetir estructura anterior...]
+### 2026-04-20 (lunes) — PRIMER WIN
+- Trades: 1 | WR: 1/1 | PnL: +$1.14 (+11.4%) | Capital: $10.00 → $11.14
+- Setup: Mean Reversion LONG, Donchian Low(15), TP2 hit a 75,729
+- Disciplina: entró antes de cerrar vela verde (filtro #4 incumplido), pero cerró disciplinado
 
----
-
-## 📊 ESTADÍSTICAS DEL DÍA
-
-### MÉTRICAS DE RENDIMIENTO:
-```
-Total Trades: ___
-Ganadoras: ___ (___%)
-Perdidas: ___ (___%)
-Breakeven: ___ (___%)
-
-P&L Neto: $__________
-P&L Porcentual: ___%
-Fees Pagados: $__________
-R:R Promedio: 1:___
-
-Mayor Ganadora: +$__________
-Mayor Perdedora: -$__________
-Racha Actual: [___W / ___L]
-```
-
-### CUMPLIMIENTO DE REGLAS:
-```
-✅ Respeté Daily Limit: [SÍ/NO]
-✅ Respeté Max DD: [SÍ/NO]
-✅ Operé en zona correcta: [SÍ/NO]
-✅ Tamaño correcto: [SÍ/NO]
-✅ R:R ≥ 1:3: [SÍ/NO]
-✅ Confluencia mínima: [SÍ/NO]
-✅ Screenshots completos: [SÍ/NO]
-✅ No operé contra 1D: [SÍ/NO]
-✅ No hice revenge trading: [SÍ/NO]
-✅ Mental estado OK: [SÍ/NO]
-```
+### 2026-04-21 (martes) — SEGUNDO WIN CON VIOLACIÓN
+- Trades: 1 | WR: 1/1 | PnL: +$1.09 (+9.8% sobre capital) | Capital: $11.14 → $12.23
+- Setup: LONG cerrado en 76,312.7
+- Disciplina: **force exit 18:00 MX violado (cerrado 18:43:33)**
 
 ---
 
-## 🎯 OBJETIVOS VS REALIDAD
+## MÉTRICAS ACUMULADAS (n=2 trades)
 
-### METAS DIARIAS:
 ```
-🎯 Meta P&L: +$__________
-📈 Real P&L: $__________
-📊 Cumplimiento: ___%
-
-🎯 Meta Trades: ___
-📈 Real Trades: ___
-📊 Cumplimiento: ___%
-
-🎯 Meta Win Rate: ___%
-📈 Real Win Rate: ___%
-📊 Cumplimiento: ___%
+Total trades:          2
+Winners / Losers:      2 / 0
+Win Rate:              100% (muestra insuficiente)
+PnL neto acumulado:    +$2.23
+Retorno sobre inicial: +22.3%
+Max DD:                0%
+Días operando:         2 consecutivos
+Violaciones de regla:  1 (filtro #4 día 1, force exit día 2 = 2 en 2 días)
 ```
 
-### PROGRESO EVALUATION:
-```
-🎯 Meta Total: +$__________
-📈 Progreso Actual: $__________
-📊 Porcentaje: ___%
-
-🎯 Días Restantes: ___
-📈 Promedio necesario: $__________ por día
-```
-
----
-
-## 💡 REFLEXIONES Y APRENDIZAJE
-
-### ✅ LO QUE HICE BIEN:
-1. _________________________________________
-2. _________________________________________
-3. _________________________________________
-
-### ❌ ERRORES COMETIDOS:
-1. _________________________________________
-2. _________________________________________
-3. _________________________________________
-
-### 🎓 LECCIONES APRENDIDAS:
-1. _________________________________________
-2. _________________________________________
-3. _________________________________________
-
-### 🔄 MEJORAS PARA MAÑANA:
-1. _________________________________________
-2. _________________________________________
-3. _________________________________________
-
----
-
-## 🚨 INCIDENTES Y ALERTAS
-
-### PROTOCOLOS ACTIVADOS:
-```
-[ ] 3 pérdidas consecutivas → STOP 24h
-[ ] Daily >75% usado → NO más trades
-[ ] Zona ROJA → Solo setups perfectos
-[ ] Mental comprometido → STOP inmediato
-[ ] Sin screenshots → NO operar
-```
-
-### INCIDENTES DEL DÍA:
-- [Hora: __:__] - [Descripción incidente]
-- [Hora: __:__] - [Descripción incidente]
-
----
-
-## 📅 PLANIFICACIÓN PARA MAÑANA
-
-### ESTADO INICIAL MAÑANA:
-```
-Balance Proyectado: $__________
-Daily Limit Mañana: $__________
-Max DD: $__________ [mismo/ajustado]
-Zona Proyectada: [VERDE/AMARILLA/ROJA]
-```
-
-### ENFOQUE MAÑANA:
-```
-🎯 Prioridad: [Conservador / Normal / Agresivo]
-📊 Timeframes clave: [1D/4H/1H/15M]
-🎯 Pares a vigilar: [BTC/ETH / etc]
-⏰ Horarios óptimos: [London/NY/Overlap]
-```
-
-### MEJORAS A IMPLEMENTAR:
-1. _________________________________________
-2. _________________________________________
-3. _________________________________________
-
----
-
-## 📊 TENDENCIAS SEMANALES
-
-### ÚLTIMOS 7 DÍAS:
-```
-Día 1: $__________ [___W-___L]
-Día 2: $__________ [___W-___L]
-Día 3: $__________ [___W-___L]
-Día 4: $__________ [___W-___L]
-Día 5: $__________ [___W-___L]
-Día 6: $__________ [___W-___L]
-Día 7: $__________ [___W-___L]
-
-Total Semana: $__________
-Promedio Diario: $__________
-Win Rate Semanal: ___%
-```
-
-### PATRONES IDENTIFICADOS:
-- Mejor hora para operar: __:__ UTC
-- Mejor día de la semana: ____________
-- Setup más exitoso: [LONG/SHORT] en [timeframe]
-- Error más común: _________________________
-
----
-
-## 🎯 FIRMA DEL TRADER
-
-Yo, _________________________, confirmo que toda la información registrada en este journal es precisa y completa.
-
-**Fecha:** __/__/2025
-**Firma:** _________________________
-
----
-
-## 📝 NOTAS ADICIONALES
-
-[Espacio para notas extras, observaciones, ideas, etc.]
-
-________________________________________________________________
-________________________________________________________________
-________________________________________________________________
-________________________________________________________________
-________________________________________________________________
+**NOTA:** 2 violaciones en 2 trades = 100% tasa de violación. La WR 100% enmascara este dato. Si el patrón continúa, la estrategia no está siendo testeada en su forma pura — se está testeando una versión degradada.
