@@ -115,8 +115,8 @@ trading/
 | TP3 (20%) | 6.0 × SL |
 | Leverage | 10x |
 | Position sizing | 2% risk del capital |
-| Ventana entradas | MX 06:00 – 12:00 |
-| Cierre forzado | MX 17:00 |
+| Ventana entradas | MX 06:00 – 23:59 |
+| Cierre forzado | MX 23:59 (no dormir con posición abierta) |
 | Max trades/día | 3 |
 | Stop sesión | 2 SLs → para |
 
@@ -367,7 +367,7 @@ Atajos rápidos para acciones frecuentes:
 
 ### `.claude/scripts/` — Automatización
 
-- **statusline.sh** — Status line siempre visible: `💰 $11.14 (+$1.14) │ 📊 0/3 │ 🟢 VENT │ 🕐 MX 06:00 │ BTC.P`
+- **statusline.sh** — Status line siempre visible: `💰 $12.23 (+$2.23) │ 📊 0/3 │ 🟢 VENT │ 🕐 MX 06:00 │ BTC.P`
 - **session_start.sh** — Carga contexto al iniciar Claude (capital, reglas, comandos)
 - **stop_hook.sh** — Auto-commit del journal al cerrar sesión
 - **preprompt_check.sh** — Detecta "arriesgar todo", "mover SL", "aumentar leverage" y alerta
@@ -388,7 +388,7 @@ Atajos rápidos para acciones frecuentes:
 Siempre visible en tu terminal:
 
 ```
-💰 $11.14 (+$1.14) │ 📊 0/3 │ 🟢 VENT │ 🕐 MX 06:00 │ BTC.P
+💰 $12.23 (+$2.23) │ 📊 0/3 │ 🟢 VENT │ 🕐 MX 06:00 │ BTC.P
 ```
 
 Muestra: capital actual, delta desde inicial, trades hoy, si estás en ventana, hora MX, símbolo.

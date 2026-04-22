@@ -21,11 +21,17 @@ HORA_MX=$(TZ='America/Mexico_City' date +%H:%M)
 HORA_NUM=$(TZ='America/Mexico_City' date +%H)
 HORA_NUM=${HORA_NUM#0}  # remove leading zero
 
-# Ventana MX 06:00-17:00
-if [ "$HORA_NUM" -ge 6 ] 2>/dev/null && [ "$HORA_NUM" -lt 17 ] 2>/dev/null; then
+# Ventana MX 06:00-23:59 (cripto 24/7, trader no duerme con trade abierto)
+if [ "$HORA_NUM" -ge 6 ] 2>/dev/null && [ "$HORA_NUM" -le 23 ] 2>/dev/null; then
     VENTANA="🟢 VENT"
     VCOLOR=$'\e[0;32m'
+    # Aviso de cierre próximo (22:00-23:59)
+    if [ "$HORA_NUM" -ge 22 ] 2>/dev/null; then
+        VENTANA="🟡 CLOSE"
+        VCOLOR=$'\e[0;33m'
+    fi
 else
+    # 00:00-05:59 = fuera de ventana (dormir)
     VENTANA="🔴 OFF"
     VCOLOR=$'\e[0;31m'
 fi

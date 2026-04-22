@@ -8,8 +8,9 @@ Guía operativa para sesiones de trading BTCUSDT.P con Claude. Lee esto al inici
 - **Zona horaria:** México (UTC-6)
 - **Capital activo:** $10 (objetivo inicial: escalar a $100)
 - **TradingView:** Plan Basic (máx 2 indicadores — Neptune Signals + Neptune Oscillator ocupan ambos slots)
-- **Ventana operativa:** MX 06:00 – 18:00 (análisis desde 06:00, force exit 18:00 MX)
-  - Cierre anticipado 12:00 MX permitido si: ya acumuló ganancia buena del día **O** tiene un pendiente personal
+- **Ventana operativa:** MX 06:00 – 23:59 (análisis desde 06:00, force exit 23:59 MX "antes de dormir")
+  - Cripto opera 24/7, pero el trader NO duerme con posición abierta
+  - Cierre anticipado permitido si: ya acumuló ganancia buena del día **O** tiene un pendiente personal
 - **Estilo:** scalping intraday, no day-trading de múltiples días
 
 ## Estrategia oficial — DEPENDE DEL RÉGIMEN DE MERCADO
@@ -41,8 +42,8 @@ Validada con **100% WR** y **+15.1%** en backtest 3 días frente a 144 configs.
 | TP2 (40%) | **4.0 × SL** |
 | TP3 (20%) | **6.0 × SL** |
 | Leverage | **10x** |
-| Ventana | **MX 06:00 – 18:00** |
-| Force exit | **18:00 MX** (o 12:00 MX si ya hay ganancia del día / pendiente personal) |
+| Ventana | **MX 06:00 – 23:59** |
+| Force exit | **23:59 MX** (regla "no dormir con trade abierto"); cierre anticipado permitido si ya hay ganancia del día o pendiente personal |
 | Max 5 trades/día | 2 SLs → stop |
 
 **Entradas (4 filtros obligatorios, todos simultáneos):**

@@ -17,7 +17,7 @@ Acciones:
    - Cyan (Donchian Low)
    - Rojo dashed (SLs)
    - Verde (TPs)
-   - Línea vertical naranja (cierre 17:00 MX)
+   - Línea vertical naranja (cierre 23:59 MX — no dormir con posición)
 4. Texto superior con resumen
 
 Opciones (vía argumentos):

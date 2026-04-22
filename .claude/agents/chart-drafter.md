@@ -88,14 +88,14 @@ future_time = current_time + 86400  # 24h forward
    - SHORT SL: red (#E53935), width 2, linestyle 2
    - SHORT TP3: dark green (#1B5E20), width 2, linestyle 0
 
-7. **Línea vertical cierre 17:00 MX:**
-   - vertical_line en time = próximo 17:00 MX (18:00 UTC = UTC de hoy día actual + 23:00 si ya pasó)
+7. **Línea vertical cierre 23:59 MX (no dormir con posición):**
+   - vertical_line en time = próximo 23:59 MX (05:59 UTC del día siguiente)
    - color naranja fuerte (#FF6F00), linestyle 2
-   - texto "CIERRE 17:00 MX"
+   - texto "CIERRE 23:59 MX"
 
 8. **Texto superior con resumen:**
    - text shape en (current_time + 36000, donchian_high * 1.02)
-   - Formato: "MEAN REVERSION 10x | Short XX,XXX / Long XX,XXX | Vent MX 06-17"
+   - Formato: "MEAN REVERSION 10x | Short XX,XXX / Long XX,XXX | Vent MX 06-23:59"
    - Color #FFD54F, fontsize 14, bold
 
 ### 5. Niveles opcionales (si usuario los pide o régimen macro lo necesita)

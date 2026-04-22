@@ -39,7 +39,7 @@ Evitar que el usuario entre en setup inválido. **Tu sesgo por defecto es NO-GO.
 - [ ] EMA50 confirma dirección
 
 ### 3. Valida reglas duras de sesión
-- ¿Hora actual en MX 06:00-12:00? (fuera → NO-GO o reducir size)
+- ¿Hora actual en MX 06:00-23:59? (fuera 00:00-05:59 → NO-GO; >22:00 → solo si hay tiempo para que el setup cierre antes de 23:59)
 - ¿Ya hubo 2 SLs hoy? (sí → NO-GO, stop día)
 - ¿Capital < 70% inicial? (sí → NO-GO, revisar)
 - ¿Hay noticia alto impacto próximas 4h? (sí → NO-GO)
@@ -114,8 +114,9 @@ ESPERA. No entres.
 - Si 2/4 o menos → no es tu setup hoy
 
 ### Si es fuera de horario
-- Recuérdale la ventana MX 06-12
-- Si es urgente y quiere operar fuera → reduce size a 50%
+- Recuérdale la ventana MX 06:00-23:59 (cripto 24/7 pero no dormir con trade abierto)
+- Si es 00:00-05:59 MX → NO-GO estricto (tiempo de dormir)
+- Si es >22:00 MX → valida que el setup tenga TP cerca y pueda cerrar antes de 23:59
 
 ## Nunca
 

@@ -106,7 +106,7 @@ Calcula según mi capital actual (revisar trading_log.md):
    * Mean Reversion: Donchian H/L + BB + zonas entry + MID + SL/TP3 ambos lados
    * Breakout: niveles ruptura + buffer + SL/TP3
 3. Añadir niveles extra: PDH/PDL (azul), Weekly Open (morado), VWAP (amarillo)
-4. Línea vertical cierre 17:00 MX
+4. Línea vertical cierre 23:59 MX
 5. Texto superior: "REGIMEN: X | ESTRATEGIA: Y | SESGO: Z | Entry en Q"
 
 ═══ FASE 12: PLAN DE ENTRADA ═══
@@ -115,7 +115,7 @@ Formato:
 - Entry zone exacto (precio)
 - SL calculado con 2% risk position sizing
 - TP1/TP2/TP3 con ATR
-- Hora óptima (priorizar MX 06:00-10:00 = London/NY overlap)
+- Hora óptima (priorizar MX 06:00-10:00 = London/NY overlap; ventana total 06:00-23:59)
 - Los 4 filtros listados que deben alinearse
 - Invalidación (qué condiciones cancelan el setup)
 
@@ -125,7 +125,7 @@ Lista imprimible que debo tachar antes de apretar COMPRAR/VENDER:
 ☐ Régimen correcto identificado
 ☐ 4/4 filtros alineados (no 3/4)
 ☐ Multi-TF confluence (1H no contradice 15m)
-☐ Hora dentro de MX 06-12
+☐ Hora dentro de MX 06:00-23:59
 ☐ Sin noticia alto impacto en próximas 4h
 ☐ Correlaciones (ETH) en la misma dirección
 ☐ SL calculado y listo para poner
@@ -271,7 +271,7 @@ Identifica 1 patrón a cambiar la próxima semana.
 ║  ☐ Régimen identificado (R/T/V)           ║
 ║  ☐ Sin noticias high impact 4h            ║
 ║  ☐ ETH en dirección a mi bias             ║
-║  ☐ Hora MX 06:00-12:00                    ║
+║  ☐ Hora MX 06:00-23:59 (no dormir open)   ║
 ║                                           ║
 ║  SETUP                                    ║
 ║  ☐ 4/4 filtros alineados                  ║
@@ -324,7 +324,7 @@ PnL:   $______
 
 ¿Seguí TODOS los 4 filtros? SI / NO
 ¿Seguí checklist físico? SI / NO
-Hora de entrada dentro de MX 06-12? SI / NO
+Hora de entrada dentro de MX 06:00-23:59? SI / NO
 ──────────────────────────────────────
 [Trade #2 si hubo...]
 

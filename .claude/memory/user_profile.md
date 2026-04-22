@@ -19,11 +19,13 @@ originSessionId: 870cfb36-0066-4b6c-a1b7-eeaebc9a6ca8
 - Indicadores cargados fijos: Neptune® Signals™ + Neptune® Oscillator™
 - Idioma interfaz TV: Español
 
-**Ventana operativa:**
+**Ventana operativa (actualizada 2026-04-21):**
+- Cripto opera 24/7; regla personal: **no dormir con posición abierta**
 - Análisis desde MX 06:00 AM
-- Entradas: MX 06:00 – 18:00 (6 AM – 6 PM)
-- Force exit default: **MX 18:00**
-- Cierre anticipado **MX 12:00 permitido** si: (a) ya acumuló ganancia buena del día, o (b) tiene pendiente/vuelta personal. No es regla estricta de cerrar a 12 MD.
+- Entradas: MX 06:00 – 23:59
+- Force exit default: **MX 23:59** (cerrar antes de dormir)
+- Cierre anticipado permitido si: (a) ya acumuló ganancia buena del día, o (b) tiene pendiente/vuelta personal
+- Sesión de mayor volatilidad: MX 06:00–10:00 (London/NY overlap) — priorizar entradas en esa franja cuando sea posible
 
 **Nivel de experiencia:**
 - Conoce conceptos básicos (entry, SL, TP, leverage) pero necesita reglas operativas explícitas y paso a paso

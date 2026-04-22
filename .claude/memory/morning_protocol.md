@@ -116,7 +116,7 @@ Leer capital actual de trading_log.md. Calcular:
    - Mean Reversion: Donchian H/L + BB + zonas entry + MID + SL/TP3 ambos lados
    - Breakout: niveles ruptura + buffer + SL/TP3
 3. Niveles extra: PDH/PDL (azul), Weekly Open (morado), VWAP (amarillo)
-4. Línea vertical cierre 17:00 MX
+4. Línea vertical cierre 23:59 MX (no dormir con posición)
 5. Texto superior con resumen
 
 ## FASE 12: Plan de Entrada
