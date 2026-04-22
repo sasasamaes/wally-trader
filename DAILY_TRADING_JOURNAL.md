@@ -8,6 +8,25 @@ Ventana operativa oficial: MX 06:00 – 23:59 (force exit 23:59 — "no dormir c
 
 ---
 
+## SESIÓN 2026-04-22 (miércoles) — TERCER WIN
+
+### Estado capital (confirmado por screenshot exchange)
+- Capital pre-sesión: $11.82 (implícito por +15.32% del día)
+- Capital post-sesión: **$13.63**
+- PnL realizado del día: **+$1.81 (+15.32%)**
+- Delta acumulado desde inicio: +$3.63 (+36.3% sobre $10 inicial en 3 trades)
+- ⚠ Gap de -$0.41 entre cierre 2026-04-21 ($12.23) y baseline de hoy ($11.82) — posible funding fee / withdraw / ajuste no documentado. Confirmar con usuario.
+
+### Trades ejecutados
+- **Trade único del día (3º WIN consecutivo)** — detalles de entry/exit/setup NO registrados en tiempo real. PnL +$1.81 confirmado vía exchange.
+- **PATRÓN REPETIDO**: 2º día seguido sin logging completo en el momento de ejecución.
+
+### Disciplina
+- WIN sí, pero **auditabilidad = 0**. No se puede verificar si fue setup válido 4/4 filtros o suerte.
+- Próxima sesión: exigir logging PRE-FILL antes de cualquier otra cosa.
+
+---
+
 ## SESIÓN 2026-04-21 (martes)
 
 ### Estado capital
@@ -74,11 +93,11 @@ El +22.3% en 2 trades se ve espectacular pero son datos de ejemplo, NO evidencia
 No reportado explícitamente por el usuario — pedir en próxima sesión.
 
 ### Progreso hacia target $100
-- Capital actual: $12.23
+- Capital actual: $13.63
 - Target: $100
-- Falta: $87.77 (+717% adicional)
-- A ritmo de +5% compuesto diario necesitaría ~43 días hábiles consecutivos
-- A ritmo observado (2 trades en 2 días, +22%) NO es extrapolable — muestra insuficiente
+- Falta: $86.37 (+634% adicional)
+- A ritmo de +5% compuesto diario necesitaría ~41 días hábiles consecutivos
+- A ritmo observado (3 trades en 3 días, +36.3%) NO es extrapolable — muestra insuficiente
 
 ### Mañana (2026-04-22)
 **1 cosa específica a hacer diferente:**
@@ -102,19 +121,24 @@ No reportado explícitamente por el usuario — pedir en próxima sesión.
 - Setup: LONG cerrado en 76,312.7
 - Disciplina: **force exit 18:00 MX violado (cerrado 18:43:33)**
 
+### 2026-04-22 (miércoles) — TERCER WIN (mejor día % hasta la fecha)
+- Trades: 1 | WR: 1/1 | PnL: +$1.81 (+15.32%) | Capital: $11.82 → $13.63
+- Setup: DESCONOCIDO (sin registro en tiempo real) — PATRÓN REPETIDO del día anterior
+- Gap sin documentar: $12.23 → $11.82 (-$0.41) pre-sesión
+
 ---
 
-## MÉTRICAS ACUMULADAS (n=2 trades)
+## MÉTRICAS ACUMULADAS (n=3 trades)
 
 ```
-Total trades:          2
-Winners / Losers:      2 / 0
+Total trades:          3
+Winners / Losers:      3 / 0
 Win Rate:              100% (muestra insuficiente)
-PnL neto acumulado:    +$2.23
-Retorno sobre inicial: +22.3%
-Max DD:                0%
-Días operando:         2 consecutivos
-Violaciones de regla:  1 (filtro #4 día 1, force exit día 2 = 2 en 2 días)
+PnL neto acumulado:    +$3.63
+Retorno sobre inicial: +36.3%
+Max DD:                0% (excluyendo gap -$0.41 no documentado)
+Días operando:         3 consecutivos
+Violaciones de regla:  filtro #4 día 1, force exit día 2, zero-logging días 2 y 3
 ```
 
-**NOTA:** 2 violaciones en 2 trades = 100% tasa de violación. La WR 100% enmascara este dato. Si el patrón continúa, la estrategia no está siendo testeada en su forma pura — se está testeando una versión degradada.
+**NOTA:** 3 WINs en 3 días con 2 días seguidos sin logging completo. El outcome sigue disfrazando el problema estructural: **si no se registra, no existe evidencia estadística** — solo anécdotas.
