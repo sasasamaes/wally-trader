@@ -11,12 +11,25 @@ set -euo pipefail
 PROGRESS_FILE="$(dirname "$0")/../profiles/fotmarkets/memory/phase_progress.md"
 
 # Parse capital_current del YAML embebido en el markdown
+# Validaciones defensivas: archivo presente, campo presente, valor numérico.
+# Sin estas validaciones, un phase_progress.md corrupto retorna silenciosamente
+# phase 1 (empty → awk 0) o phase 3 (texto → awk string comparison).
 get_capital() {
   if [[ ! -f "$PROGRESS_FILE" ]]; then
-    echo "ERROR: phase_progress.md no encontrado" >&2
+    echo "ERROR: phase_progress.md no encontrado en $PROGRESS_FILE" >&2
     exit 1
   fi
-  grep -E '^capital_current:' "$PROGRESS_FILE" | awk '{print $2}' | tr -d ' '
+  local cap
+  cap="$(grep -E '^capital_current:' "$PROGRESS_FILE" | head -1 | awk '{print $2}' | tr -d ' ')"
+  if [[ -z "$cap" ]]; then
+    echo "ERROR: capital_current no encontrado en phase_progress.md" >&2
+    exit 1
+  fi
+  if ! [[ "$cap" =~ ^-?[0-9]+(\.[0-9]+)?$ ]]; then
+    echo "ERROR: capital_current no numérico: '$cap'" >&2
+    exit 1
+  fi
+  echo "$cap"
 }
 
 # Determina fase según thresholds de config.md

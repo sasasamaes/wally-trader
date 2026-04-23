@@ -17,6 +17,7 @@ set -euo pipefail
 SCRIPT_DIR="$(dirname "$0")"
 PROFILE_DIR="$SCRIPT_DIR/../profiles/fotmarkets"
 PHASE_SCRIPT="$SCRIPT_DIR/fotmarkets_phase.sh"
+PROFILE_SCRIPT="$SCRIPT_DIR/profile.sh"
 LOG_FILE="$PROFILE_DIR/memory/trading_log.md"
 
 fail() {
@@ -28,6 +29,12 @@ pass() {
   echo "PASS"
   exit 0
 }
+
+# Check 0: Verificar que profile activo sea fotmarkets (defensa contra cross-profile invocation)
+ACTIVE_PROFILE="$(bash "$PROFILE_SCRIPT" get 2>/dev/null || echo '')"
+if [[ "$ACTIVE_PROFILE" != "fotmarkets" ]]; then
+  fail "profile activo es '$ACTIVE_PROFILE' (no fotmarkets). Este guard solo aplica cuando fotmarkets está activo."
+fi
 
 # Check 1: Ventana horaria MX
 # Nota: 10# fuerza base-10 (evita que bash interprete 0638 u 0900 como octal inválido)
@@ -43,7 +50,11 @@ if [[ "$DOW" -ge 6 ]]; then
 fi
 
 # Check 3: Phase detection
-PHASE=$(bash "$PHASE_SCRIPT" 2>/dev/null || echo "1")
+# Importante: si el phase script falla (archivo ausente/corrupto), BLOCK con razón clara.
+# No hacer fallback silencioso a "1" — eso esconde configuración rota.
+if ! PHASE=$(bash "$PHASE_SCRIPT" 2>&1); then
+  fail "No se pudo determinar fase ($PHASE)"
+fi
 
 # Mapea fase → max_trades y max_sl_consecutive
 case "$PHASE" in
@@ -69,7 +80,7 @@ fi
 
 # Check 5: SL consecutivos (últimos N trades hoy)
 if [[ -f "$LOG_FILE" && "$TRADES_HOY" -ge "$MAX_SL_CONSEC" ]]; then
-  # Extrae columna "Resultado" (8ª columna separada por |) de últimos N trades del día
+  # Extrae columna "Resultado" (campo $10 — leading | crea empty $1, datos en $2..$14)
   LAST_N_RESULTS=$(grep "^| $FECHA " "$LOG_FILE" | tail -n "$MAX_SL_CONSEC" \
     | awk -F'|' '{ gsub(/ /, "", $10); print tolower($10) }')
 
