@@ -11,12 +11,20 @@ Pasos que ejecuta Claude:
 2. SI profile == "retail":
    - Despacha `morning-analyst` (BTC-BingX single-asset, 17 fases, ver abajo)
    - El agente usa niveles/memoria de `profiles/retail/memory/`
+   - **FASES TV OBLIGATORIAS** (ya documentadas en el agente):
+     - FASE 11: dibujo completo (Donchian 15 + BB + PDH/PDL + Weekly Open + VWAP + Neptune 1D/4H + entry/SL/TP1/2/3 si setup)
+     - FASE 11b: BIAS LONG/SHORT/NEUTRAL con trigger e invalidación
+     - FASE 11c: watchlist 3-5 precios con alertas sugeridas
 
 3. SI profile == "ftmo":
-   - Despacha `morning-analyst-ftmo` (multi-asset 14 fases)
-   - El agente analiza los 6 assets del universo FTMO
+   - Despacha `morning-analyst-ftmo` (multi-asset, universo BTC/ETH/EURUSD/GBPUSD/NAS100/SPX500)
+   - El agente analiza los 6 assets y selecciona 1 A-grade
    - Incluye guardian pre-check antes de proponer setups
    - Usa niveles/memoria de `profiles/ftmo/memory/`
+   - **FASES TV OBLIGATORIAS** (ya documentadas en el agente):
+     - FASE 11: cambio a TV symbol del asset ganador (mapeo OANDA/BINANCE) + dibujo S/R 4H + Donchian 1H + BB + PDH/PDL + entry/SL/TP1/2
+     - FASE 11b: BIAS LONG/SHORT/NEUTRAL con trigger e invalidación (ajustado por correlación multi-asset y DXY)
+     - FASE 11c: watchlist 3-5 precios con alertas sugeridas
 
 4. SI profile == "fotmarkets":
    - Ejecuta validación previa:
@@ -26,15 +34,43 @@ Pasos que ejecuta Claude:
      Si BLOCK por ventana u otras razones → muestra el BLOCK pero continúa con análisis "preparativo" (sin entry sugerida).
    - Lee `.claude/profiles/fotmarkets/config.md` para obtener `phase` actual y `allowed_assets`
    - Despacha `morning-analyst-ftmo` con instrucción especial:
+     - "Modo FOTMARKETS activado — seguir sección FOTMARKETS-AWARE del agente"
      - "Analizar SOLO los siguientes assets: <allowed_assets de la fase actual>"
-     - "Usar reglas de Fotmarkets-Micro (no FTMO-Conservative): filtros de strategy.md"
+     - "Usar reglas de Fotmarkets-Micro (NO FTMO-Conservative): filtros de strategy.md"
      - "Ventana operativa: MX 07:00-11:00 (no 06:00-16:00)"
      - "Risk per trade: <phase_risk_pct>% (phase-aware), cap $<phase_risk_usd_cap>"
      - "Max trades hoy: <phase_max_trades>"
+     - "TF entry 5m / confirmación 15m / contexto 1H (no 4H)"
+     - **"FASE TV OBLIGATORIA — cambiar chart a símbolo TV equivalente del asset elegido:"**
+       - EURUSD → `OANDA:EURUSD` | GBPUSD → `OANDA:GBPUSD` | USDJPY → `OANDA:USDJPY`
+       - XAUUSD → `OANDA:XAUUSD` | NAS100 → `OANDA:NAS100USD` | SPX500 → `OANDA:SPX500USD`
+       - BTCUSD → `BINANCE:BTCUSDT` | ETHUSD → `BINANCE:ETHUSDT`
+       - TF inicial 5m tras switch
+     - **"FASE DIBUJO TV OBLIGATORIA — trazar con `draw_shape` en este orden:"**
+       1. `horizontal_line` en **resistencia 1H** clave (color rojo) con label "R1H"
+       2. `horizontal_line` en **soporte 1H** clave (color verde) con label "S1H"
+       3. `horizontal_line` en **Donchian High/Low(20) 5m** (color naranja) con label "DC HI/LO"
+       4. `horizontal_line` en **EMA50 15m** (color azul) con label "EMA50 15m"
+       5. `rectangle` marcando **entry zone** (±0.15% del nivel estructural)
+       6. `horizontal_line` en **SL** (color rojo grueso) con label "SL"
+       7. `horizontal_line` en **TP (2R)** (color verde grueso) con label "TP 2R"
+       8. Si NO hay setup A-grade → dibujar SOLO S/R + Donchian (vigilancia, sin entry)
+     - **"FASE BIAS OBLIGATORIA — indicar dirección explícita:"**
+       - 🟢 **BIAS LONG** si EMA50(15m) > EMA200(15m) AND precio cerca soporte
+       - 🔴 **BIAS SHORT** si EMA50(15m) < EMA200(15m) AND precio cerca resistencia
+       - ⚪ **BIAS NEUTRAL** si EMAs cruzadas/planas o precio en medio del range
+       - Incluir **trigger condicional** ("si cierra 5m >X → confirma LONG", "si rompe <Y → invalida")
+     - **"FASE WATCHLIST OBLIGATORIA — niveles a vigilar en TV:"**
+       - Lista de 3-5 precios clave con acción asociada ("si toca X, revalidar filtros")
+       - Sugerir alertas TV (`alert_create`) para:
+         - Toque de soporte/resistencia clave
+         - Break de EMA50 15m
+         - Precio al edge del Donchian
    - El agente usa niveles/memoria de `profiles/fotmarkets/memory/`
    - Al final, recordatorio explícito:
      - "⚠️ Profile fotmarkets = bonus $30 en broker no regulado. Este no reemplaza tu profile FTMO/retail real."
      - "Verificar bonus T&C en memory/session_notes.md antes de ejecutar."
+     - "Ejecución manual en MT5 — TV solo vigila, no ejecuta."
 
 5. Si argumento opcional: pasa como contexto adicional al agente (ej: "/morning sin café")
 

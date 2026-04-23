@@ -116,10 +116,78 @@ Lee capital actual de `~/.claude/projects/<project-path-encoded>/memory/trading_
 - Riesgo max = 2% del capital
 - Qty = Risk_USD / SL_distance_USD
 
-### FASE 11: Dibujar en TV
-1. LIMPIAR: `ui_mouse_click 12 619 right` → `ui_click data-name=remove-drawing-tools`
-2. Dibujar según estrategia (Mean Reversion: Donchian + BB + zonas + SL/TP3 + línea 17:00)
-3. PDH/PDL (azul), Weekly Open (morado), VWAP (amarillo)
+### FASE 11: Dibujar en TV (obligatorio)
+
+**Secuencia fija:**
+```
+1. LIMPIAR dibujos previos: `ui_mouse_click 12 619 right` → `ui_click data-name=remove-drawing-tools`
+   (draw_clear falla frecuentemente, por eso el menú contextual del trash icon)
+2. chart_set_timeframe 15   (TF base de la estrategia Mean Reversion)
+3. Dibujar los siguientes niveles con draw_shape horizontal_line + label:
+   - DONCHIAN HIGH(15)  → color naranja  label "DC HI <precio>"
+   - DONCHIAN LOW(15)   → color naranja  label "DC LO <precio>"
+   - BB UPPER(20,2)     → color gris     label "BB UP <precio>"
+   - BB LOWER(20,2)     → color gris     label "BB LO <precio>"
+   - BB MID (SMA20)     → color gris claro label "BB MID"
+   - PDH               → color azul      label "PDH <precio>"
+   - PDL               → color azul      label "PDL <precio>"
+   - Weekly Open       → color morado    label "WO <precio>"
+   - VWAP (si visible) → color amarillo  label "VWAP"
+   - Neptune Line 1D   → color verde oscuro label "N1D <precio>" (si cargado)
+   - Neptune Line 4H   → color verde     label "N4H <precio>" (si cargado)
+4. Si hay BIAS definido (ver FASE 11b):
+   - draw_shape rectangle ENTRY ZONE (±0.1% del edge Donchian) → color amarillo
+   - draw_shape horizontal_line SL   → color rojo grueso     label "SL <precio>"
+   - draw_shape horizontal_line TP1  → color verde claro     label "TP1 <precio>"
+   - draw_shape horizontal_line TP2  → color verde           label "TP2 <precio>"
+   - draw_shape horizontal_line TP3  → color verde oscuro    label "TP3 <precio>"
+5. draw_shape trend_line vertical en hora 23:59 MX como recordatorio "Force exit"
+6. Si régimen es VOLATILE o no hay setup → dibujar SOLO Donchian + BB + PDH/PDL (chart de vigilancia)
+```
+
+### FASE 11b: Bias LONG/SHORT explícito (obligatorio)
+
+Declarar direccionalidad del día con trigger + invalidación:
+
+```
+🟢 BIAS LONG si:
+  - Régimen = RANGE y precio en zona inferior del range (cerca Donchian Low / BB lower)
+  - O régimen = TRENDING UP con pullback a soporte
+  - Trigger: "Si vela 15m cierra verde + RSI<35 + low toca BB lower → confirmar 4/4 filtros LONG"
+  - Invalidación: "Si cierra 15m <<SL> → abortar bias LONG hoy"
+
+🔴 BIAS SHORT si:
+  - Régimen = RANGE y precio en zona superior del range (cerca Donchian High / BB upper)
+  - O régimen = TRENDING DOWN con pullback a resistencia
+  - Trigger: "Si vela 15m cierra roja + RSI>65 + high toca BB upper → confirmar 4/4 filtros SHORT"
+  - Invalidación: "Si cierra 15m >>SL> → abortar bias SHORT hoy"
+
+⚪ BIAS NEUTRAL si:
+  - Precio centro del range (entre BB mid ±0.3%)
+  - Régimen ambiguo o VOLATILE
+  - Acción: esperar break/retest, NO operar hasta definición
+```
+
+Incluir sesgo contrarian por sentiment extremo:
+- F&G <20 (Extreme Fear) → sesga LONG incluso si bias estructural es neutral
+- F&G >80 (Extreme Greed) → sesga SHORT
+- Funding extremo (>+0.05% o <-0.05%) → contrarian al lado cargado
+
+### FASE 11c: Watchlist TV — niveles a vigilar (obligatorio)
+
+Tabla explícita de 3-5 precios clave con acción y alertas sugeridas:
+
+```
+| Precio | Tipo | Acción asociada |
+|---|---|---|
+| <P1>  | Donchian Low(15) | Si toca → revalidar filtros LONG |
+| <P2>  | Donchian High(15) | Si toca → revalidar filtros SHORT |
+| <P3>  | BB Mid (pivote) | Cruce = cambio de sesgo intrabar |
+| <P4>  | PDH o PDL más cercano | Rompe con vol → potencial breakout |
+| <P5>  | SL implícito (1.5×ATR del extremo) | Si rompe → invalidación |
+```
+
+Sugerir alertas BingX/TV (`alert_create`) en P1, P2, y break de PDH/PDL.
 
 ### FASE 12: Plan de Entrada
 Entry exacto, SL, TP1/TP2/TP3, hora óptima, 4 filtros listados, invalidación.
