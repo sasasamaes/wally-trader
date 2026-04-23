@@ -51,7 +51,30 @@ Pasos que ejecuta Claude:
    - Comportamiento actual (3 wins log pattern).
    - journal-keeper append a `.claude/profiles/retail/memory/trading_log.md`.
 
-6. Auto-commit al final:
+6. **DUAL-WRITE A NOTION (si Notion MCP activo):**
+   
+   **Detectar disponibilidad:**
+   - Lee `.claude/.env` buscando `NOTION_RETAIL_DB_ID` y `NOTION_FTMO_DB_ID`
+   - Verifica que tengas acceso a tools `mcp__notion_*` (prefix del Notion MCP conectado)
+   - Si alguno falta → saltar este paso (solo .md local, comportamiento original)
+   
+   **Si ambos disponibles:**
+   - Selecciona DB según profile:
+     - `$DB_ID = NOTION_RETAIL_DB_ID` si profile=retail
+     - `$DB_ID = NOTION_FTMO_DB_ID` si profile=ftmo
+   - Para cada trade registrado hoy en el `.md` (nuevo append desde última vez):
+     - Usa tool Notion apropiada (`mcp__notion__create_page` o equivalente con parent=database)
+     - Mapea campos del .md a columnas de la DB (ver `docs/NOTION_SETUP.md` para schema)
+     - Columnas retail: Name, Date, Time MX, Asset, Direction, Entry, SL, TP1, TP2, TP3, Size (BTC), Leverage, Result, PnL $, PnL %, R multiple, Filters passed, ML score, Sentiment, Notes
+     - Columnas FTMO: igual + Lots, Magic, Ticket MT5, Status, Guardian verdict, Equity pre, Equity post
+   - Si creación falla (404 DB ID inválido, 429 rate limit, network):
+     - Warning al usuario: "⚠️ Notion write failed: <error>. .md local preservado."
+     - NO bloquea el flujo
+   - Si éxito:
+     - Info: "✅ Notion: N rows creados en DB <profile>"
+     - Captura el `page_id` en `<!-- notion_page_id: ... -->` HTML comment en el mismo trade del .md (para futuras updates)
+
+7. Auto-commit al final:
    `git add <archivos profile> && git commit -m "journal: auto-save sesión <profile> <YYYY-MM-DD>"`
 
 Input (opcional):

@@ -19,6 +19,24 @@ if [[ -x "$PROFILE_SCRIPT" ]]; then
 fi
 # ─────────────────────────────────
 
+# ─────── Notion MCP detection (opcional) ──
+NOTION_ENABLED=0
+NOTION_STATUS_LINE=""
+ENV_FILE="$(dirname "$0")/../.env"
+if [[ -f "$ENV_FILE" ]]; then
+  NOTION_RETAIL_DB=$(grep -E '^NOTION_RETAIL_DB_ID=' "$ENV_FILE" 2>/dev/null | cut -d'=' -f2- | tr -d ' "')
+  NOTION_FTMO_DB=$(grep -E '^NOTION_FTMO_DB_ID=' "$ENV_FILE" 2>/dev/null | cut -d'=' -f2- | tr -d ' "')
+  if [[ -n "$NOTION_RETAIL_DB" && -n "$NOTION_FTMO_DB" ]]; then
+    NOTION_ENABLED=1
+    NOTION_STATUS_LINE="**Notion MCP:** ✅ Habilitado — DBs configuradas (retail + ftmo). Dual-write activado para /journal, /order, /sync, /trades, /challenge."
+  else
+    NOTION_STATUS_LINE="**Notion MCP:** ⬜ Opcional (no configurado). Para activar ver docs/NOTION_SETUP.md"
+  fi
+else
+  NOTION_STATUS_LINE="**Notion MCP:** ⬜ Opcional (no configurado). Para activar ver docs/NOTION_SETUP.md"
+fi
+# ─────────────────────────────────
+
 # Determinar saludo según hora
 if [ "$HORA_MX" -ge 5 ] 2>/dev/null && [ "$HORA_MX" -le 9 ] 2>/dev/null; then
     SALUDO="Buenos días — ventana de trading activa"
@@ -71,6 +89,7 @@ $STALE_MSG_OUTPUT
 $CAP_LINE
 **Símbolo:** BTCUSDT.P (BingX)
 **Estrategia activa:** Mean Reversion 15m (según régimen)
+$NOTION_STATUS_LINE
 
 ## Comandos rápidos disponibles
 - /morning — análisis matutino completo (17 fases)

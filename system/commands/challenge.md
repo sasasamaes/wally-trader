@@ -49,3 +49,27 @@ Pasos que ejecuta Claude:
    - Si profit_pct >= 10.0 → "🎯 CHALLENGE PASSED — Contacta FTMO para verificación"
    - Si cualquier regla BREACHED → "🚫 CHALLENGE BREACHED — <regla>. Cuenta nueva requerida."
    - Si overrides > 0 → "📋 Revisa overrides.log al /journal"
+
+6. **AGREGADO DESDE NOTION FTMO DB (si Notion MCP activo):**
+   - Lee `.claude/.env` para `NOTION_FTMO_DB_ID`. Verifica acceso a tools `mcp__notion_*`
+   - Si disponible:
+     - Query `mcp__notion__query_database` con filter por fecha >= fecha-inicio-challenge
+     - Calcula agregados independientes:
+       - Total trades (count): N
+       - WR (rows con Result IN [TP1, TP2]): X%
+       - Sum PnL $ (columna): $Y
+       - Best day (groupby Date, max sum PnL $): $Z
+       - Avg R multiple: W
+     - Compara con métricas del guardian (equity_curve):
+       - Si divergen >5% → warning: "⚠️ Notion vs local divergen. Corre /sync para reconciliar."
+       - Si match → Notion sirve como backup visual, guardian sigue siendo source of truth
+     - Agrega sección al dashboard:
+       ```
+       NOTION AGGREGATE (últimos N días challenge)
+         Trades totales: N
+         WR: X%
+         PnL acumulado: $Y
+         Best day: $Z
+         Divergencia vs local: ✓ match / ⚠️ <delta>
+       ```
+   - Si query falla: silencioso, solo agregados locales

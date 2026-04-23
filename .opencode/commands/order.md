@@ -60,3 +60,14 @@ Pasos que ejecuta Claude:
 Si manual_pending, agregar: `⚠️ EA OFFLINE — copia a MT5 manualmente`
 
 7. Al final, actualiza pending_orders.json a disco (update status final).
+
+8. **DUAL-WRITE A NOTION FTMO DB (si Notion MCP activo):**
+   - Lee `.claude/.env` para `NOTION_FTMO_DB_ID`. Verifica acceso a tools `mcp__notion_*`
+   - Si disponible:
+     - Crea row en Notion FTMO DB con parent_database_id=$NOTION_FTMO_DB_ID
+     - Columnas: Name=`#<id> <asset> <direction>`, Date=today, Time MX=<hh:mm>, Asset, Direction, Entry, SL, TP1, Lots, Magic=77777, **Status=<queued|sent_to_ea|manual_pending>**, Guardian verdict=<OK/WARN>, Filters passed=`7/7`, Notes=`setup: <setup>`
+     - Captura page_id del resultado
+     - Append `notion_page_id` field al pending en pending_orders.json (para que /sync pueda update después)
+   - Si Notion write falla:
+     - Warning: "⚠️ Notion create failed: <error>. Orden en pending_orders.json local preservada."
+     - NO bloquea el flujo

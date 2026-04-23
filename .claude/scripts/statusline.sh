@@ -9,6 +9,19 @@ if [[ -x "$PROFILE_SCRIPT" ]]; then
 fi
 # ─────────────────────────────────
 
+# ─────── Notion detection (opcional) ──
+# Lee .env y verifica si ambas NOTION_*_DB_ID están llenas
+NOTION_TAG=""
+ENV_FILE="$(dirname "$0")/../.env"
+if [[ -f "$ENV_FILE" ]]; then
+  NOTION_RETAIL_DB=$(grep -E '^NOTION_RETAIL_DB_ID=' "$ENV_FILE" 2>/dev/null | cut -d'=' -f2- | tr -d ' "')
+  NOTION_FTMO_DB=$(grep -E '^NOTION_FTMO_DB_ID=' "$ENV_FILE" 2>/dev/null | cut -d'=' -f2- | tr -d ' "')
+  if [[ -n "$NOTION_RETAIL_DB" && -n "$NOTION_FTMO_DB" ]]; then
+    NOTION_TAG=" • 📝 Notion ✓"
+  fi
+fi
+# ─────────────────────────────────
+
 # Determinar output según profile
 if [[ "$PROFILE" == "ftmo" ]]; then
   CURVE="$(dirname "$0")/../profiles/ftmo/memory/equity_curve.csv"
@@ -16,10 +29,10 @@ if [[ "$PROFILE" == "ftmo" ]]; then
     LAST_EQ="$(tail -n1 "$CURVE" | cut -d',' -f2)"
     DAILY="$(python3 "$(dirname "$0")/guardian.py" --profile ftmo --action status --brief 2>/dev/null || echo "N/A")"
     EA_STATUS=$(python3 "$(dirname "$0")/mt5_bridge.py" ea-status 2>/dev/null || echo "EA N/A")
-    echo "[FTMO \$10k] Equity: \$$LAST_EQ  •  $DAILY  •  $EA_STATUS"
+    echo "[FTMO \$10k] Equity: \$$LAST_EQ  •  $DAILY  •  $EA_STATUS$NOTION_TAG"
   else
     EA_STATUS=$(python3 "$(dirname "$0")/mt5_bridge.py" ea-status 2>/dev/null || echo "EA N/A")
-    echo "[FTMO \$10k] Equity: \$10,000 (initial — run /equity)  •  $EA_STATUS"
+    echo "[FTMO \$10k] Equity: \$10,000 (initial — run /equity)  •  $EA_STATUS$NOTION_TAG"
   fi
   exit 0
 fi
@@ -85,12 +98,13 @@ else
     DELTA_SIGN=""
 fi
 
-# Single line output (preserva formato retail original + profile tag)
-printf "%s[RETAIL]%s %s💰 \$%s%s %s(%s\$%s)%s │ 📊 %s/3 │ %s%s%s │ 🕐 MX %s │ %sBTC.P%s" \
+# Single line output (preserva formato retail original + profile tag + notion tag)
+printf "%s[RETAIL]%s %s💰 \$%s%s %s(%s\$%s)%s │ 📊 %s/3 │ %s%s%s │ 🕐 MX %s │ %sBTC.P%s%s" \
     "$BOLD" "$RESET" \
     "$BOLD" "$CAP" "$RESET" \
     "$DELTA_COLOR" "$DELTA_SIGN" "$DELTA" "$RESET" \
     "$TRADES_HOY" \
     "$VCOLOR" "$VENTANA" "$RESET" \
     "$HORA_MX" \
-    "$YELLOW" "$RESET"
+    "$YELLOW" "$RESET" \
+    "$NOTION_TAG"

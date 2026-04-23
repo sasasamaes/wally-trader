@@ -40,3 +40,19 @@ TRADES HOY: <cerradas> cerrado + <abiertas> abierto = <total>/2
 Última orden propuesta: <id> [<status>]
 Pega estado MT5 actual o corre /sync
 ```
+
+8. **CROSS-REFERENCE CON NOTION FTMO DB (si Notion MCP activo):**
+   - Lee `.claude/.env` para `NOTION_FTMO_DB_ID`. Verifica acceso a tools `mcp__notion_*`
+   - Si disponible:
+     - Query `mcp__notion__query_database` con filter `Date == today` (timezone MX)
+     - Para cada row hoy: cross-reference con mt5_state + pending_orders
+     - Detecta discrepancias:
+       - Row Notion con Status=filled pero no aparece en state.positions ni closed_today → flag warning
+       - Position en MT5 no presente en Notion (trade manual sin /order) → sugerir /sync para agregarla
+     - Agrega sección al dashboard:
+       ```
+       NOTION MIRROR (hoy)
+         Rows en Notion hoy: N
+         Sincronización: ✓ OK / ⚠️ <N> discrepancias
+       ```
+   - Si query falla: warning silent + continúa sin sección Notion
