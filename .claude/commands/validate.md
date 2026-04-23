@@ -52,5 +52,32 @@ Acción: <GO | CONFIRM | NO-GO>
      `<timestamp>|ftmo|<rule_violated>|<equity>|<trade_json>|<user_reason>`
    - Procede con "GO" pero con warning grande
 
+6. **[FTMO ONLY] Si veredicto final GO (7/7 filtros + guardian OK/OK_WITH_WARN):**
+   
+   Pregunta al usuario:
+   ```
+   ¿Ejecutar orden ahora?
+   
+   Responde:
+   - YES → encolar al EA (o manual si offline)
+   - AJUSTAR <size|sl|tp> <valor> → modificar param y re-validar
+   - NO → solo guardar setup en memoria, no ejecutar
+   ```
+   
+   a. Si responde **YES**:
+      - Invoca flujo de `/order` con los parámetros del setup validado (7/7 + guardian OK)
+      - Pasa directamente a la confirmación YES de `/order` (usuario ya aprobó en /validate)
+      - Usa mismo `guardian_verdict` y `filters_passed=7`
+      - Output: muestra tabla ASCII de orden encolada (mismo formato que `/order`)
+   
+   b. Si responde **AJUSTAR X Y**:
+      - Actualiza param (size, sl, o tp)
+      - Re-valida guardian con nuevo param
+      - Re-pide confirmación (vuelve a paso 6)
+   
+   c. Si responde **NO** o nada:
+      - Display: "Setup guardado en memoria. Usa `/order` después para ejecutar."
+      - NO escribe a pending_orders.json ni mt5_commands.json
+
 Contexto adicional (opcional):
 $ARGUMENTS

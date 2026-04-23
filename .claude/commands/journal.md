@@ -16,11 +16,31 @@ Pasos que ejecuta Claude:
    - ftmo   → `.claude/profiles/ftmo/memory/trading_log.md` + actualiza `challenge_progress.md`
 
 4. SI profile == "ftmo":
-   - Lee trades del día del user (input manual: pega texto o screenshot MT5)
-   - Para cada trade, append row a `equity_curve.csv` vía guardian --action equity-update
-   - Recalcula: WR, avg R, best day ratio, profit factor
-   - Update `challenge_progress.md` con nuevas métricas
-   - Si overrides.log tiene eventos del día → lista para revisión
+   
+   **E. Auto-ingest trades MT5 cerrados hoy:**
+   - Lee `.claude/profiles/ftmo/memory/mt5_state.json` (via python3 scripts/mt5_bridge.py si symlink falla)
+   - Busca array `closed_today` (si existe) o `positions` cerradas con `close_time` = hoy
+   - Para cada trade con magic=77777 (filtra trades de ClaudeBridge EA):
+     - Parsea: ticket, symbol, type (BUY/SELL), volume, open_price, close_price, profit_usd, close_reason
+     - Append row a `.claude/profiles/ftmo/memory/trading_log.md`:
+       ```
+       | 2026-04-22 14:32 | BTCUSD | LONG | 0.05 | 77542→77482 | -$50.00 | sl | #cmd_20260422_143015_01 |
+       ```
+     - Si equity cambió respecto a state previo (`state.account.equity_prev` vs `equity`):
+       - Ejecuta: `python3 scripts/guardian.py --profile ftmo --action equity-update --value <new_equity>`
+       - Guarda nuevo equity en state para próxima comparación
+   
+   **F. Marca pending expired:**
+   - Lee `.claude/profiles/ftmo/memory/pending_orders.json`
+   - Para cada pending order con `status != "filled"`:
+     - Si `proposed_at` + `expiry_minutes` < now → status = "expired"
+   - Save pending_orders.json
+   
+   **G. Summary output:**
+   - "Trades del día: X filled + Y expired"
+   - "PnL neto: +$X.XX" (suma de profits en trading_log del día)
+   - "Overrides guardian hoy: Z" (si overrides.log tiene eventos de hoy, lista las razones)
+   - "Próximo reset FTMO: 00:00 UTC"
    - Muestra al usuario:
      - Trades del día con resultado
      - PnL neto
