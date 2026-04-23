@@ -31,6 +31,40 @@ Pasos que ejecuta Claude:
    - Si guardian retorna BLOCK_SIZE → aplica size_adjustment factor
    - Si BLOCK_HARD → NO-GO total
 
+3.5. SI profile == "fotmarkets":
+   - Lee capital actual: `CAP=$(bash .claude/scripts/fotmarkets_phase.sh capital)`
+   - Detecta fase: `PHASE=$(bash .claude/scripts/fotmarkets_phase.sh)`
+   - Mapea fase → risk_pct y risk_usd_cap:
+     - Fase 1: risk_pct=10, cap=$3.00
+     - Fase 2: risk_pct=5, cap=null (dinámico)
+     - Fase 3: risk_pct=2, cap=null (dinámico)
+   - Fórmula:
+     ```
+     risk_usd = min(CAP * risk_pct / 100, risk_usd_cap if set else infinity)
+     sl_pips = abs(entry - sl) en pips del asset
+     
+     # pip value por 0.01 lot (referencia, VALIDAR con MT5 Specification del broker):
+     #   EURUSD, GBPUSD, USDJPY: $0.10 por pip
+     #   XAUUSD: depende del broker (típicamente $0.10 o $1.00 por pip)
+     #   NAS100, SPX500: depende del broker (típicamente $0.10 por point)
+     #   BTCUSD, ETHUSD CFD: depende del broker, usar Specification
+     
+     lots = risk_usd / (sl_pips * pip_value_per_lot)
+     lots = floor(lots * 100) / 100  # redondeo 2 decimales hacia abajo
+     
+     if lots < 0.01 → ABORTAR con mensaje:
+       "Trade imposible: sizing calculado ${lots} < min lot 0.01. Amplia SL o espera Fase N."
+     ```
+   - Valida asset en whitelist de la fase:
+     ```
+     if asset NOT IN phase_N.allowed_assets → ERROR "Asset <X> no desbloqueado hasta Fase Y"
+     ```
+   - Valida que trade sea viable con el Lite Guardian:
+     ```
+     bash .claude/scripts/fotmarkets_guard.sh check
+     ```
+     Si BLOCK → comunicar razón y sugerir posponer.
+
 4. Output:
    - Lots (FTMO) o BTC size + margin (retail)
    - Capital a arriesgar ($X)
