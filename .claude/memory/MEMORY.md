@@ -1,4 +1,4 @@
-# Memory Index — Trading Project (Dual Profile)
+# Memory Index — Wally Trader (Triple Profile)
 
 ## GLOBAL (ambos profiles leen)
 - [User profile](user_profile.md) — Trader retail México, dual-profile FTMO + retail, capital $13.63 real + $10k FTMO demo

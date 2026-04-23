@@ -1,6 +1,6 @@
 # 🧠 Memoria persistente del sistema
 
-Esta es la memoria oficial del proyecto de trading — toda la información que Claude recuerda entre sesiones.
+Esta es la memoria oficial de **Wally Trader** — toda la información que Claude recuerda entre sesiones.
 
 ## 🔄 Cómo funciona la sincronización
 

@@ -1,6 +1,9 @@
-# Trading Project — Claude Instructions
+# Wally Trader — Claude Instructions
 
-Guía operativa para sesiones de trading BTCUSDT.P con Claude. Lee esto al inicio de cada sesión.
+> Sistema de trading personal con capital real + challenge FTMO + bonus Fotmarkets.
+> Bautizado en honor a Wally 🌭, perro salchicha y CEO mascota del proyecto.
+
+Guía operativa para sesiones de trading con Claude. Lee esto al inicio de cada sesión.
 
 ## Perfil del trader
 

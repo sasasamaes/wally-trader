@@ -1,10 +1,12 @@
-# 📈 BTC Trading System — Dual-Profile (Retail + FTMO)
+# 🌭 Wally Trader — Triple-Profile Trading System
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-54%20passing-brightgreen.svg)](#)
 [![Multi-CLI](https://img.shields.io/badge/CLI-Claude%20Code%20%7C%20OpenCode-blue.svg)](#)
 
-Sistema de trading algorítmico-asistido **multi-profile**: retail BingX BTCUSDT.P y FTMO MT5 multi-asset, construido sobre TradingView + Claude Code + Pine Script + MQL5 EA.
+> Nombrado en honor a **Wally**, perro salchicha y CEO mascota del proyecto.
+
+Sistema de trading algorítmico-asistido **triple-profile**: retail BingX BTCUSDT.P, FTMO MT5 multi-asset, y Fotmarkets bonus micro-capital. Construido sobre TradingView + Claude Code + Pine Script + MQL5 EA.
 
 **Autor:** [Francisco Campos Diaz (@sasasamaes)](https://github.com/sasasamaes) · **License:** [MIT](LICENSE) · **Contribuciones:** ver [CONTRIBUTING.md](CONTRIBUTING.md)
 
