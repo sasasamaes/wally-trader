@@ -32,6 +32,9 @@ tradingview-mcp/screenshots/
 *.key
 *.pem
 
+# MT5 credentials
+.claude/.env
+
 # Python
 __pycache__/
 *.py[cod]
