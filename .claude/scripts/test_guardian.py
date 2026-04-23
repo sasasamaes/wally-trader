@@ -158,3 +158,96 @@ def test_best_day_ratio_ignores_losing_days():
     best, total = guardian.best_day_ratio(curve)
     assert best == 200.0
     assert total == 200.0  # Only positive days counted
+
+
+def test_load_ftmo_config(tmp_path):
+    cfg = tmp_path / "config.md"
+    cfg.write_text("""# FTMO
+
+Some prose.
+
+```yaml
+challenge_type: 1-step
+initial_capital: 10000
+max_daily_loss_pct: 3
+max_total_trailing_pct: 10
+best_day_cap_pct: 50
+risk_per_trade_pct: 0.5
+max_trades_per_day: 2
+max_sl_consecutive: 2
+```
+""")
+    c = guardian.load_profile_config(str(cfg))
+    assert c["initial_capital"] == 10000
+    assert c["max_daily_loss_pct"] == 3
+    assert c["max_trades_per_day"] == 2
+
+
+CFG_DEFAULT = {
+    "initial_capital": 10000,
+    "max_daily_loss_pct": 3,
+    "max_total_trailing_pct": 10,
+    "best_day_cap_pct": 50,
+    "risk_per_trade_pct": 0.5,
+    "max_trades_per_day": 2,
+    "max_sl_consecutive": 2,
+}
+
+
+def test_check_entry_ok_fresh_day():
+    curve = [
+        {"timestamp": datetime(2026,4,23,6,0), "equity": 10000.0, "source": "m", "note": ""},
+    ]
+    trade = {"asset": "BTCUSD", "entry": 77538, "sl": 77238, "loss_if_sl": 30}
+    result = guardian.check_entry(CFG_DEFAULT, curve, trade, now=datetime(2026,4,23,9,0))
+    assert result["verdict"] == "OK"
+    assert result["blocking"] is False
+
+
+def test_check_entry_block_daily_breach():
+    curve = [
+        {"timestamp": datetime(2026,4,23,6,0),  "equity": 10000.0, "source": "m", "note": ""},
+        {"timestamp": datetime(2026,4,23,10,0), "equity":  9780.0, "source": "m", "note": ""},  # already -220
+    ]
+    trade = {"asset": "BTCUSD", "entry": 77538, "sl": 77238, "loss_if_sl": 100}
+    # If SL hits: -220 - 100 = -320 = -3.2% → BREACH daily limit 3% ($300)
+    result = guardian.check_entry(CFG_DEFAULT, curve, trade, now=datetime(2026,4,23,11,0))
+    assert result["verdict"] in ("BLOCK_SIZE", "BLOCK_HARD")
+    assert result["blocking"] is True
+
+
+def test_check_entry_block_hard_daily_already_breached():
+    curve = [
+        {"timestamp": datetime(2026,4,23,6,0),  "equity": 10000.0, "source": "m", "note": ""},
+        {"timestamp": datetime(2026,4,23,10,0), "equity":  9690.0, "source": "m", "note": ""},  # -310, past 3%
+    ]
+    trade = {"asset": "BTCUSD", "entry": 77538, "sl": 77238, "loss_if_sl": 50}
+    result = guardian.check_entry(CFG_DEFAULT, curve, trade, now=datetime(2026,4,23,11,0))
+    assert result["verdict"] == "BLOCK_HARD"
+    assert "daily" in result["reason"].lower()
+
+
+def test_check_entry_warn_trailing_close_to_limit():
+    curve = [
+        {"timestamp": datetime(2026,4,23,6,0),  "equity": 10000.0, "source": "m", "note": ""},
+        {"timestamp": datetime(2026,4,24,9,0),  "equity": 10500.0, "source": "m", "note": ""},  # peak
+        {"timestamp": datetime(2026,4,25,10,0), "equity":  9700.0, "source": "m", "note": ""},  # dd $800 = 8%
+    ]
+    trade = {"asset": "BTCUSD", "entry": 77538, "sl": 77238, "loss_if_sl": 50}
+    result = guardian.check_entry(CFG_DEFAULT, curve, trade, now=datetime(2026,4,25,11,0))
+    # Should warn but not block (trailing is WARN not BLOCK)
+    assert result["verdict"] in ("OK_WITH_WARN", "BLOCK_SIZE")
+    assert any("trailing" in w.lower() for w in result.get("warnings", []))
+
+
+def test_check_entry_block_max_trades():
+    # Simulate 2 trades already today via markers in notes
+    curve = [
+        {"timestamp": datetime(2026,4,23,6,0),  "equity": 10000.0, "source": "m", "note": "init"},
+        {"timestamp": datetime(2026,4,23,8,0),  "equity": 10080.0, "source": "trade", "note": "BTC TP1"},
+        {"timestamp": datetime(2026,4,23,11,0), "equity": 10050.0, "source": "trade", "note": "ETH SL"},
+    ]
+    trade = {"asset": "BTCUSD", "entry": 77538, "sl": 77238, "loss_if_sl": 50}
+    result = guardian.check_entry(CFG_DEFAULT, curve, trade, now=datetime(2026,4,23,12,0))
+    assert result["verdict"] == "BLOCK_HARD"
+    assert "trades" in result["reason"].lower()

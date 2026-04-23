@@ -10,6 +10,7 @@ Usage:
 import argparse
 import csv
 import json
+import re
 import sys
 from datetime import datetime, date
 from pathlib import Path
@@ -90,6 +91,163 @@ def best_day_ratio(curve):
     if not positive:
         return (0.0, 0.0)
     return (max(positive), sum(positive))
+
+
+def load_profile_config(config_md_path):
+    """Parse the YAML block inside config.md. Returns dict."""
+    text = Path(config_md_path).read_text()
+    # Find first ```yaml ... ``` block
+    m = re.search(r"```yaml\s*\n(.*?)\n```", text, re.DOTALL)
+    if not m:
+        raise ValueError(f"No YAML block in {config_md_path}")
+    yaml_text = m.group(1)
+    # Simple YAML parse (numeric/string values only, no nesting)
+    result = {}
+    for line in yaml_text.splitlines():
+        line = line.split("#", 1)[0].strip()  # strip inline comments
+        if not line:
+            continue
+        if ":" not in line:
+            continue
+        key, val = line.split(":", 1)
+        key = key.strip()
+        val = val.strip()
+        # Try numeric
+        try:
+            if "." in val:
+                result[key] = float(val)
+            else:
+                result[key] = int(val)
+        except ValueError:
+            result[key] = val
+    return result
+
+
+def _count_trades_today(curve, target_date):
+    """Rows with source == 'trade' dated today."""
+    return sum(
+        1 for r in curve
+        if r["timestamp"].date() == target_date and r["source"] == "trade"
+    )
+
+
+def _consecutive_sl_today(curve, target_date):
+    """Count trailing consecutive SL events today (based on 'SL' substring in note)."""
+    today_trades = [
+        r for r in curve
+        if r["timestamp"].date() == target_date and r["source"] == "trade"
+    ]
+    if not today_trades:
+        return 0
+    today_trades.sort(key=lambda x: x["timestamp"])
+    count = 0
+    for r in reversed(today_trades):
+        if "SL" in r["note"].upper():
+            count += 1
+        else:
+            break
+    return count
+
+
+def check_entry(cfg, curve, trade, now=None):
+    """Evaluates whether the proposed trade respects all rules.
+
+    trade dict must include: asset, entry, sl, loss_if_sl (pre-computed USD at SL).
+    Returns dict with: verdict, blocking, reason, warnings, size_adjustment.
+    """
+    if now is None:
+        now = datetime.now()
+    today = now.date()
+    initial = cfg.get("initial_capital", 10000)
+    daily_limit_usd = initial * cfg.get("max_daily_loss_pct", 3) / 100.0
+    trailing_limit_usd = initial * cfg.get("max_total_trailing_pct", 10) / 100.0
+    trailing_warn_threshold_usd = trailing_limit_usd * 0.8
+    best_day_cap_pct = cfg.get("best_day_cap_pct", 50)
+    best_day_info_threshold = best_day_cap_pct / 100.0 * 0.9  # 0.45 if cap is 50
+
+    loss_if_sl = trade["loss_if_sl"]
+    warnings = []
+
+    # REGLA 4: Max trades/día
+    trades_today = _count_trades_today(curve, today)
+    if trades_today >= cfg.get("max_trades_per_day", 2):
+        return {
+            "verdict": "BLOCK_HARD",
+            "blocking": True,
+            "reason": f"Max trades/día ({trades_today}/{cfg['max_trades_per_day']}) alcanzado.",
+            "warnings": [],
+            "size_adjustment": None,
+        }
+
+    # REGLA 5: 2 SLs consecutivos
+    if _consecutive_sl_today(curve, today) >= cfg.get("max_sl_consecutive", 2):
+        return {
+            "verdict": "BLOCK_HARD",
+            "blocking": True,
+            "reason": "2 SLs consecutivos hoy. STOP por regla psicológica.",
+            "warnings": [],
+            "size_adjustment": None,
+        }
+
+    # REGLA 1: Daily 3%
+    daily = daily_pnl(curve, today)
+    daily_after_sl = daily - loss_if_sl
+    if daily_after_sl <= -daily_limit_usd:
+        # Check if ANY size avoids breach
+        margin_remaining = daily_limit_usd + daily  # how much more we can lose today
+        if margin_remaining <= 0:
+            return {
+                "verdict": "BLOCK_HARD",
+                "blocking": True,
+                "reason": (
+                    f"Daily loss ya en ${-daily:.2f} ({-daily/initial*100:.2f}%). "
+                    f"Ningún size permitido hoy. Reset mañana 06:00 MX."
+                ),
+                "warnings": [],
+                "size_adjustment": None,
+            }
+        # Size adjustment
+        if loss_if_sl > 0:
+            size_adj_factor = margin_remaining / loss_if_sl
+            return {
+                "verdict": "BLOCK_SIZE",
+                "blocking": True,
+                "reason": (
+                    f"Size propuesto pierde ${loss_if_sl:.2f} si SL. "
+                    f"Daily margin restante ${margin_remaining:.2f}. "
+                    f"Reduce size a {size_adj_factor:.2%} del propuesto."
+                ),
+                "warnings": [],
+                "size_adjustment": size_adj_factor,
+            }
+
+    # REGLA 2: Trailing 10% WARN
+    dd = trailing_dd(curve)
+    dd_after_sl = dd + loss_if_sl
+    if dd_after_sl >= trailing_warn_threshold_usd:
+        warnings.append(
+            f"Trailing DD iría a ${dd_after_sl:.2f} "
+            f"({dd_after_sl/initial*100:.1f}% del capital) — cerca del límite 10%."
+        )
+
+    # REGLA 3: Best Day INFO
+    best, total = best_day_ratio(curve)
+    if total > 0:
+        ratio = best / total
+        if ratio >= best_day_info_threshold:
+            warnings.append(
+                f"Best day ratio {ratio*100:.0f}% (cap {best_day_cap_pct}%). "
+                "Distribuye más en próximos días."
+            )
+
+    verdict = "OK_WITH_WARN" if warnings else "OK"
+    return {
+        "verdict": verdict,
+        "blocking": False,
+        "reason": "Todas las reglas OK" if not warnings else "OK con advertencias",
+        "warnings": warnings,
+        "size_adjustment": None,
+    }
 
 
 def main():
