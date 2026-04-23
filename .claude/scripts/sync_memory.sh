@@ -6,7 +6,7 @@
 #   ./sync_memory.sh status # muestra diferencias
 
 CLAUDE_MEM="$HOME/.claude/projects/<project-path-encoded>/memory"
-REPO_MEM="~/Documents/trading/.claude/memory"
+REPO_MEM="$HOME/Documents/wally-trader/.claude/memory"
 
 ACTION="${1:-status}"
 

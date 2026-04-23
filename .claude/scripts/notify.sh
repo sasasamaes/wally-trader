@@ -11,4 +11,4 @@ osascript -e "display notification \"${MENSAJE}\" with title \"${TITULO}\" sound
 
 # Log para historial
 FECHA=$(TZ='America/Mexico_City' date +'%Y-%m-%d %H:%M:%S')
-echo "[${FECHA}] ${TITULO}: ${MENSAJE}" >> ~/Documents/trading/.claude/scripts/notifications.log
+echo "[${FECHA}] ${TITULO}: ${MENSAJE}" >> ~/Documents/wally-trader/.claude/scripts/notifications.log

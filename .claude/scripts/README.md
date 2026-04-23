@@ -48,7 +48,7 @@ Cron matutino para ser ejecutado a las 5:30 AM L-V. Envía notificación para re
 ```bash
 crontab -e
 # Añadir:
-30 5 * * 1-5 ~/Documents/trading/.claude/scripts/daily_cron.sh
+30 5 * * 1-5 ~/Documents/wally-trader/.claude/scripts/daily_cron.sh
 ```
 
 ### `notifications.log`
@@ -64,7 +64,7 @@ Log de ejecuciones del cron matutino.
 crontab -e
 
 # Añadir estas líneas:
-30 5 * * 1-5 ~/Documents/trading/.claude/scripts/daily_cron.sh     # Lunes-Viernes 5:30 AM MX
+30 5 * * 1-5 ~/Documents/wally-trader/.claude/scripts/daily_cron.sh     # Lunes-Viernes 5:30 AM MX
 0 17 * * 1-5 osascript -e 'display notification "Cierra posiciones ya!" with title "🕐 Fin de sesión"'  # 5:00 PM MX
 0 10 * * 0 osascript -e 'display notification "Domingo: review semanal en Claude" with title "📊 Weekly Review"'  # Dom 10 AM
 ```
@@ -85,7 +85,7 @@ Si prefieres launchd sobre cron:
     <string>com.trading.morning</string>
     <key>ProgramArguments</key>
     <array>
-        <string>~/Documents/trading/.claude/scripts/daily_cron.sh</string>
+        <string>~/Documents/wally-trader/.claude/scripts/daily_cron.sh</string>
     </array>
     <key>StartCalendarInterval</key>
     <dict>

@@ -2,9 +2,9 @@
 # Cron matutino: se ejecuta 5:30 AM L-V para preparar análisis
 # Instalación:
 #   crontab -e
-#   30 5 * * 1-5 ~/Documents/trading/.claude/scripts/daily_cron.sh
+#   30 5 * * 1-5 ~/Documents/wally-trader/.claude/scripts/daily_cron.sh
 
-LOG="~/Documents/trading/.claude/scripts/cron.log"
+LOG="$HOME/Documents/wally-trader/.claude/scripts/cron.log"
 FECHA=$(TZ='America/Mexico_City' date +'%Y-%m-%d %H:%M')
 
 echo "[$FECHA] Cron matutino iniciado" >> "$LOG"
