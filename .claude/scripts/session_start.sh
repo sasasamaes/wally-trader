@@ -20,7 +20,7 @@ fi
 # Leer capital actual de memoria
 MEMORY_DIR="$HOME/.claude/projects/<project-path-encoded>/memory"
 TRADING_LOG="$MEMORY_DIR/trading_log.md"
-CAP="11.14"
+CAP="13.63"
 if [ -f "$TRADING_LOG" ]; then
     FOUND=$(grep -oE 'Capital (actual|running|final)[: ]+\$[0-9]+\.[0-9]+' "$TRADING_LOG" 2>/dev/null | tail -1 | grep -oE '[0-9]+\.[0-9]+')
     [ -n "$FOUND" ] && CAP="$FOUND"

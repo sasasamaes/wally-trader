@@ -1,6 +1,6 @@
 # Memory Index — Trading Project
 
-- [User profile](user_profile.md) — Trader retail México, capital $10 → $11.14 (primer win 2026-04-20), objetivo $100
+- [User profile](user_profile.md) — Trader retail México, capital $10 → $13.63 (3 wins 04-20, 04-21, 04-22), objetivo $100
 - [Trading log](trading_log.md) — Historial de trades ejecutados con aprendizajes
 - [Morning protocol](morning_protocol.md) — Protocolo completo 5:30 AM: sentiment+régimen+niveles+dibujo TV+veredicto
 - [User goals vs reality](user_goals_reality.md) — Expectativas de "ganar todas" calibradas con WR 65% realista

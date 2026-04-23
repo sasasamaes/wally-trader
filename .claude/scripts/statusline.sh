@@ -14,7 +14,7 @@ if [ -f "$TRADING_LOG" ]; then
     # Fallback 2: último valor dinero del log
     [ -z "$CAP" ] && CAP=$(grep -oE '\$[0-9]+\.[0-9]+' "$TRADING_LOG" 2>/dev/null | tail -1 | tr -d '$')
 fi
-CAP=${CAP:-11.14}
+CAP=${CAP:-13.63}
 
 # Hora MX (UTC-6)
 HORA_MX=$(TZ='America/Mexico_City' date +%H:%M)

@@ -10,7 +10,7 @@ originSessionId: 870cfb36-0066-4b6c-a1b7-eeaebc9a6ca8
 - Exchange: BingX (perpetuals)
 - Par activo: BTCUSDT.P
 - Capital inicial: $10
-- Capital actual: $11.14 (post-primer-trade 2026-04-20, +11.4%)
+- Capital actual: $13.63 (post-trade #3 2026-04-22, +36.3% desde inicio en 3 trades, 3W-0L)
 - Objetivo declarado: escalar a $100 (10x retorno)
 - Leverage usado: 10x (inicialmente planteó 20x pero lo bajó tras entender riesgo de liquidación)
 

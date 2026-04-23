@@ -2,7 +2,7 @@
 
 Sistema completo de trading algorítmico-asistido para BTCUSDT.P en BingX, construido sobre TradingView + Claude Code + Pine Script.
 
-**Status actual:** Sistema validado con 2 trades ganadores (+22.3% / $10 → $12.23).
+**Status actual:** Sistema validado con 3 trades ganadores (+36.3% / $10 → $13.63).
 **Objetivo:** Escalar cuenta de $10 → $100 → FTMO $10k fundeado en ~4-6 meses.
 
 ---
@@ -286,7 +286,7 @@ cd ~/Documents/trading
 claude
 ```
 
-El status line muestra: `💰 $12.23 (+$2.23) │ 📊 0/3 │ 🟢 VENT │ 🕐 MX 05:30 │ BTC.P`
+El status line muestra: `💰 $13.63 (+$3.63) │ 📊 0/3 │ 🟢 VENT │ 🕐 MX 05:30 │ BTC.P`
 
 ### 🌄 MX 05:45-06:00 — Check personal
 
@@ -465,7 +465,8 @@ Si cambias de máquina, deberás regenerar la memoria o copiarla manualmente.
 |---|---|---|---|
 | Primer trade ganador | $10 → $11.14 | 1 | ✅ **Completado** (2026-04-20) |
 | Segundo trade ganador | $11.14 → $12.23 | 1 | ✅ **Completado** (2026-04-21) |
-| Acumular 25 trades estadísticos | → $15-20 | ~15-20 | 🔄 En progreso (2/25) |
+| Tercer trade ganador | $11.82 → $13.63 | 1 | ✅ **Completado** (2026-04-22, +15.32%) |
+| Acumular 25 trades estadísticos | → $15-20 | ~15-20 | 🔄 En progreso (3/25) |
 | WR validado ≥ 60% sobre 25+ trades | — | ~20 | ⏳ Pendiente |
 | $20 por trade | $161 cap | ~26 | ⏳ Pendiente |
 | $50/día promedio | $325 cap | ~70 | ⏳ Pendiente |
@@ -600,7 +601,7 @@ Atajos rápidos para acciones frecuentes:
 
 ### `.claude/scripts/` — Automatización
 
-- **statusline.sh** — Status line siempre visible: `💰 $12.23 (+$2.23) │ 📊 0/3 │ 🟢 VENT │ 🕐 MX 06:00 │ BTC.P`
+- **statusline.sh** — Status line siempre visible: `💰 $13.63 (+$3.63) │ 📊 0/3 │ 🟢 VENT │ 🕐 MX 06:00 │ BTC.P`
 - **session_start.sh** — Carga contexto al iniciar Claude (capital, reglas, comandos)
 - **stop_hook.sh** — Auto-commit del journal al cerrar sesión
 - **preprompt_check.sh** — Detecta "arriesgar todo", "mover SL", "aumentar leverage" y alerta
@@ -621,7 +622,7 @@ Atajos rápidos para acciones frecuentes:
 Siempre visible en tu terminal:
 
 ```
-💰 $12.23 (+$2.23) │ 📊 0/3 │ 🟢 VENT │ 🕐 MX 06:00 │ BTC.P
+💰 $13.63 (+$3.63) │ 📊 0/3 │ 🟢 VENT │ 🕐 MX 06:00 │ BTC.P
 ```
 
 Muestra: capital actual, delta desde inicial, trades hoy, si estás en ventana, hora MX, símbolo.
@@ -733,6 +734,6 @@ Proyecto personal sin licencia pública. Si quieres usar partes del código, cit
 ---
 
 **Última actualización:** 2026-04-22
-**Capital actual:** $12.23 (2/2 wins, +22.3% acumulado)
+**Capital actual:** $13.63 (3/3 wins, +36.3% acumulado)
 **Próximo objetivo:** $20 (≈ +63%) en las próximas 2 semanas
 **Última feature:** Capa ML (Sentiment NLP + XGBoost + LSTM scaffold) — commit `fa06770`
