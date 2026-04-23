@@ -15,9 +15,11 @@ if [[ "$PROFILE" == "ftmo" ]]; then
   if [[ -f "$CURVE" && $(wc -l < "$CURVE") -gt 1 ]]; then
     LAST_EQ="$(tail -n1 "$CURVE" | cut -d',' -f2)"
     DAILY="$(python3 "$(dirname "$0")/guardian.py" --profile ftmo --action status --brief 2>/dev/null || echo "N/A")"
-    echo "[FTMO \$10k] Equity: \$$LAST_EQ  •  $DAILY"
+    EA_STATUS=$(python3 "$(dirname "$0")/mt5_bridge.py" ea-status 2>/dev/null || echo "EA N/A")
+    echo "[FTMO \$10k] Equity: \$$LAST_EQ  •  $DAILY  •  $EA_STATUS"
   else
-    echo "[FTMO \$10k] Equity: \$10,000 (initial — run /equity)"
+    EA_STATUS=$(python3 "$(dirname "$0")/mt5_bridge.py" ea-status 2>/dev/null || echo "EA N/A")
+    echo "[FTMO \$10k] Equity: \$10,000 (initial — run /equity)  •  $EA_STATUS"
   fi
   exit 0
 fi
