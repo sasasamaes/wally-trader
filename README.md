@@ -1,25 +1,29 @@
-# 📈 BTC Trading System — Scalping Intraday con Claude
+# 📈 BTC Trading System — Dual-Profile (Retail + FTMO)
 
-Sistema completo de trading algorítmico-asistido para BTCUSDT.P en BingX, construido sobre TradingView + Claude Code + Pine Script.
+Sistema de trading algorítmico-asistido **multi-profile**: retail BingX BTCUSDT.P y FTMO MT5 multi-asset, construido sobre TradingView + Claude Code + Pine Script + MQL5 EA.
 
-**Status actual:** Sistema validado con 3 trades ganadores (+36.3% / $10 → $13.63).
-**Objetivo:** Escalar cuenta de $10 → $100 → FTMO $10k fundeado en ~4-6 meses.
+**Status actual:** Retail validado con 3 wins (+36.3% / $10 → $13.63). FTMO profile + MT5 bridge implementados, pendientes de paper trading.
+**Objetivo:** Escalar retail $10 → $100 y en paralelo pasar challenge FTMO $10k fundeado.
 
 ---
 
 ## 🎯 Qué es este proyecto
 
-Un **sistema operativo de trading** que combina:
+Un **sistema operativo de trading** dual-profile que combina:
 
-- **Estrategia validada por backtest** (Mean Reversion + Donchian Breakout según régimen)
+- **Dual profile aislado** — retail (BingX $13.63, Mean Reversion 15m) y FTMO ($10k demo, FTMO-Conservative multi-asset)
+- **Guardian rules engine** — enforce automático de reglas FTMO (3% daily hard, 10% trailing warn, Best Day info)
+- **MT5 Bridge** — manual-asistido o via ClaudeBridge.mq5 EA (file-based JSON bridge para macOS)
+- **Estrategias validadas** — Mean Reversion + Donchian Breakout (retail) / FTMO-Conservative multi-asset (FTMO)
 - **Indicador Pine Script** con los 4 filtros de entrada automatizados
-- **Protocolo matutino** de 17 fases (análisis + psicología + disciplina)
-- **Memoria persistente en Claude** que recuerda tu perfil, reglas y progreso
+- **Protocolo matutino** (retail 17 fases / FTMO 14 fases multi-asset)
+- **Memoria aislada por profile** — trades FTMO no contaminan log retail y viceversa
 - **Journal obligatorio** de cada trade + review semanal
 - **Integración con TradingView** via MCP (Claude dibuja niveles, detecta señales)
 - **Capa ML** (NLP sentiment + XGBoost supervisado) como 5° filtro opcional
+- **Multi-CLI portable** — canonical `system/` con adapters para Claude Code, OpenCode (validado), Codex (untested)
 
-No es un bot automatizado. Es una **disciplina acompañada** — Claude hace el análisis pesado, tú ejecutas con reglas.
+No es un bot automatizado. Es una **disciplina acompañada** — Claude hace el análisis pesado, el guardian aplica reglas, tú ejecutas.
 
 ---
 
@@ -27,53 +31,75 @@ No es un bot automatizado. Es una **disciplina acompañada** — Claude hace el 
 
 ```
 trading/
-├── CLAUDE.md                      # Guía del proyecto (la que Claude lee al iniciar)
-├── MORNING_PROMPT.md              # Protocolo matutino de 17 fases
+├── CLAUDE.md                      # Guía del proyecto (Claude lee al iniciar)
+├── MORNING_PROMPT.md              # Protocolo matutino retail (17 fases)
 ├── MEAN_REVERSION_INDICATOR.pine  # Indicador Pine Script (4 filtros + alertas)
 ├── DAILY_TRADING_JOURNAL.md       # Template journal diario
-├── BREAKOUT_DASHBOARD_TRACKER.md  # Dashboard de niveles Donchian
-├── NEPTUNE_TRADING_SYSTEM.md      # Docs sistema Neptune (legacy, referencia)
-├── DOCUMENTATION.md               # Documentación general del sistema
-├── QUICK_START_GUIDE.md           # Guía rápida de arranque
 ├── RISK_CALCULATOR.md             # Fórmulas de position sizing
-├── .gitignore                     # Excluye /tmp, screenshots, node_modules
 ├── README.md                      # Este archivo
-└── .claude/
-    ├── settings.json              # Config principal (statusline, hooks, permissions)
-    ├── settings.local.json        # Overrides locales (gitignored)
-    ├── agents/                    # 7 agentes Claude especializados
-    │   ├── morning-analyst.md     # Protocolo 17 fases 6 AM
-    │   ├── trade-validator.md     # Valida GO/NO-GO antes de entrar
-    │   ├── regime-detector.md     # Detecta RANGE/TRENDING/VOLATILE
-    │   ├── chart-drafter.md       # Dibuja niveles en TradingView
-    │   ├── risk-manager.md        # Calcula position sizing 2% rule
-    │   ├── journal-keeper.md      # Actualiza trading_log + review semanal
-    │   └── backtest-runner.md     # Corre backtests y grid search
-    ├── commands/                  # 11 slash commands
-    │   ├── morning.md             # /morning
-    │   ├── validate.md            # /validate
-    │   ├── regime.md              # /regime
-    │   ├── risk.md                # /risk
-    │   ├── journal.md             # /journal
-    │   ├── chart.md               # /chart
-    │   ├── backtest.md            # /backtest
-    │   ├── status.md              # /status
-    │   ├── review.md              # /review
-    │   ├── levels.md              # /levels
-    │   └── alert.md               # /alert
-    ├── scripts/                   # Shell scripts (hooks + helpers)
-    │   ├── statusline.sh          # Status line: cap/PnL/hora/ventana
-    │   ├── session_start.sh       # Hook: inyecta contexto al iniciar
-    │   ├── stop_hook.sh           # Hook: auto-commit journal al cerrar
-    │   ├── preprompt_check.sh     # Hook: detecta auto-sabotaje
-    │   ├── notify.sh              # Helper notificaciones macOS
-    │   ├── alert_setup.sh         # Monitor setup 4/4 en background
-    │   ├── daily_cron.sh          # Cron matutino 5:30 AM
-    │   └── README.md              # Docs de los scripts
-    └── skills/                    # 3 skills custom del dominio
-        ├── btc-regime-analysis/   # Deep dive análisis régimen
-        ├── btc-on-chain/          # Métricas on-chain
-        └── trade-psychology/      # Framework disciplina mental
+│
+├── system/                        # 📌 CANONICAL SOURCE OF TRUTH (multi-CLI)
+│   ├── commands/                  # 23 slash commands markdown (formato CC)
+│   ├── agents/                    # 12 agentes (incluye morning-analyst-ftmo)
+│   ├── skills/                    # 14 skills custom
+│   ├── mcp/servers.json           # MCP config neutral
+│   ├── hooks/                     # placeholder para hooks compartidos
+│   └── README.md                  # Flujo de sync + adapters
+│
+├── adapters/                      # Per-CLI translators
+│   ├── claude-code/install.sh     # Symlinks .claude/ → system/
+│   ├── opencode/                  # transform.py + pre-commit hook + watch
+│   └── codex/                     # ⚠️ UNTESTED
+│
+├── .claude/                       # Claude Code harness
+│   ├── settings.json              # statusline, hooks, permissions
+│   ├── settings.local.json        # overrides locales (gitignored)
+│   ├── .env                       # FTMO credentials (gitignored)
+│   ├── .env.example               # template credenciales
+│   ├── active_profile             # "retail | <iso>" o "ftmo | <iso>"
+│   ├── commands/ → ../system/commands/   # symlink
+│   ├── agents/   → ../system/agents/     # symlink
+│   ├── skills/   → ../system/skills/     # symlink
+│   ├── profiles/                  # 🆕 Profile-scoped config + memoria
+│   │   ├── retail/
+│   │   │   ├── config.md          # capital $13.63, BingX, 10x, Mean Reversion
+│   │   │   ├── strategy.md
+│   │   │   └── memory/            # trading_log + market_regime + etc
+│   │   └── ftmo/
+│   │       ├── config.md          # $10k, MT5, multi-asset, reglas duras
+│   │       ├── strategy.md        # FTMO-Conservative (SL 0.4%, 0.5% risk)
+│   │       ├── rules.md           # Spec formal 3%/10%/Best Day
+│   │       ├── memory/            # equity_curve, pending_orders, challenge_progress
+│   │       └── mt5_ea/            # ClaudeBridge.mq5 + install.sh + README
+│   └── scripts/
+│       ├── profile.sh             # Switch profile activo
+│       ├── guardian.py            # 🆕 Rules engine FTMO (3%/10%/Best Day)
+│       ├── mt5_bridge.py          # 🆕 JSON parser/writer para EA bridge
+│       ├── test_guardian.py       # 24 unit tests
+│       ├── test_mt5_bridge.py     # 19 unit tests
+│       ├── test_integration.sh    # 8 e2e tests
+│       ├── backtest_ftmo.py       # Skeleton backtest FTMO-Conservative
+│       ├── statusline.sh          # [RETAIL] o [FTMO $10k] + métricas
+│       ├── session_start.sh       # Profile-aware context injection
+│       ├── stop_hook.sh           # Auto-commit journal
+│       ├── preprompt_check.sh     # Detecta auto-sabotaje
+│       ├── notify.sh              # Notificaciones macOS
+│       └── daily_cron.sh          # Cron 5:30 AM
+│
+├── .opencode/                     # 🆕 Generated by adapters/opencode (committed)
+│   ├── commands/                  # 23 translated (CC → OC format)
+│   ├── agents/                    # 12 translated
+│   ├── skills/ → ../system/skills/ # symlink (format compatible)
+│   └── config.json                # MCP servers.tradingview
+│
+├── scripts/ml_system/             # Capa ML (NLP + XGBoost + LSTM scaffold)
+│   └── ...                        # ver sección ML más abajo
+│
+├── docs/superpowers/              # 🆕 Specs + plans + implementation logs
+│   ├── specs/                     # Design docs aprobados
+│   └── plans/                     # Implementation plans + logs
+│
+└── tradingview-mcp/               # MCP server TradingView (submodule externo)
 
 ├── scripts/ml_system/             # Capa ML (NLP + XGBoost + DL scaffold)
 │   ├── README.md                  # Doc maestra del sistema ML
@@ -157,6 +183,29 @@ trading/
 
 ## 🌅 Uso diario
 
+El sistema opera en **dos profiles aislados**. Al iniciar el día eliges cuál operar — no ambos el mismo día.
+
+### Profile switching (inicio de día)
+
+```bash
+cd ~/Documents/trading
+claude
+
+# Dentro de Claude Code:
+/profile              # ver profile activo + timestamp
+/profile retail       # switch a retail (BingX $13.63)
+/profile ftmo         # switch a FTMO ($10k demo)
+/profile status       # resumen de ambos profiles
+```
+
+Statusline refleja el profile activo:
+- `[RETAIL] 💰 $13.63 (+$3.63) │ 📊 0/3 │ 🟢 VENT │ 🕐 MX 06:00 │ BTC.P`
+- `[FTMO $10k] Equity: $10,000 • Daily: $+0 (0.0%) • EA ✓ 3s • Pos: 0`
+
+---
+
+### 🏠 Workflow RETAIL (BingX $13.63 — el sistema original)
+
 ### 1. Preparación nocturna (el día anterior)
 - Review del día
 - Actualizar `DAILY_TRADING_JOURNAL.md`
@@ -167,12 +216,15 @@ Abre Claude Code en este directorio:
 ```bash
 cd ~/Documents/trading
 claude
+
+# Si el profile activo es ftmo, switch primero:
+/profile retail
 ```
 
 ### 3. Invoca el agente matutino
-Dile a Claude: **"análisis matutino"** o **"morning analysis"**.
+Dile a Claude: **"análisis matutino"** o **"morning analysis"**, o usa `/morning`.
 
-Claude detectará automáticamente el agente `morning-analyst` y ejecutará el protocolo completo.
+Con profile=retail, Claude despacha automáticamente el agente `morning-analyst` (retail-only, 17 fases BTC-BingX).
 
 Alternativamente, copia el bloque `PROMPT PRINCIPAL` de `MORNING_PROMPT.md`.
 
@@ -206,6 +258,81 @@ Claude ejecuta 17 fases en ~5-8 minutos:
 ```
 "Review semana: métricas, patrones, 1 cambio para la próxima"
 ```
+
+---
+
+### 🏦 Workflow FTMO ($10k demo — multi-asset)
+
+> **Prerequisitos:** `.claude/.env` llenado con credenciales FTMO + `ClaudeBridge.mq5` EA instalado en MT5 (ver [Setup inicial](#-setup-inicial)).
+
+### 1. Inicio de día FTMO
+
+```bash
+cd ~/Documents/trading
+claude
+
+/profile ftmo
+/equity 10247        # actualizar equity si cambió desde ayer (lee tu MT5)
+/challenge           # dashboard de progreso (profit acumulado, rules, DD)
+```
+
+### 2. Análisis matutino multi-asset
+
+```
+/morning
+```
+
+Claude despacha `morning-analyst-ftmo` (14 fases). Analiza 6 assets del universo (BTC, ETH, EURUSD, GBPUSD, NAS100, SPX500), detecta régimen por asset, invoca guardian pre-check, selecciona 1 setup A-grade del día.
+
+### 3. Esperar zona + validar
+
+```
+/validate            # 7 filtros (vs 4 del retail) + guardian verdict
+```
+
+Si todos 7 ✓ y guardian OK, Claude ofrece auto-`/order`:
+
+```
+¿Ejecutar orden ahora? Responde YES para encolar al EA, AJUSTAR <param> <val>, o NO.
+```
+
+### 4. Encolar orden (YES typed obligatorio)
+
+Claude escribe la orden a `pending_orders.json` + envía a `mt5_commands.json`. Si el EA está vivo (heartbeat < 60s), ejecuta en MT5 automático. Si EA offline → modo manual, tú copias los params a MT5.
+
+### 5. Monitoreo durante el día
+
+```
+/trades              # dashboard: posiciones abiertas, pendientes, cerradas hoy, PnL diario
+/sync                # fuerza refresh del state desde MT5
+```
+
+Guardian bloquea entradas nuevas si:
+- Daily PnL llegará a ≤ -3% con SL → **BLOCK_HARD** o **BLOCK_SIZE** con reducción
+- 2 SLs consecutivos hoy → **BLOCK_HARD**
+- 2 trades ya ejecutados → **BLOCK_HARD** (cap diario)
+
+### 6. Force exit 16:00 MX
+
+FTMO no permite overnight (y el sistema lo refuerza). A las 16:00 MX cierra todo.
+
+### 7. Cierre de día
+
+```
+/journal
+```
+
+Auto-ingesta `closed_today` del EA, actualiza `trading_log.md` de FTMO, llama a `guardian --action equity-update` con el nuevo equity, marca pending expired, resume métricas del día.
+
+### 8. Validación antes de challenge pago
+
+**Paper trading obligatorio** en FTMO Free Trial 14 días. Criterios para pagar challenge $93.43:
+- WR ≥ 55% sobre 10+ trades paper
+- 0 daily breaches simulados
+- 0 overrides del guardian
+- Max DD ≤ 5%
+
+Detalles en `docs/superpowers/plans/2026-04-22-ftmo-profile-IMPLEMENTATION-LOG.md`.
 
 ---
 
@@ -416,12 +543,24 @@ Recalibra el modelo con data reciente para adaptarse al régimen. Verifica AUC e
 
 ### Requisitos
 
-- **TradingView Desktop** (plan Basic mínimo)
+**Core (ambos profiles):**
+- **Claude Code** (Anthropic CLI) — primario, mejor soporte
+- **TradingView Desktop** (plan Basic mínimo) + MCP conectado
+- **Python 3.9+** con PyYAML (`pip3 install pyyaml`)
+- **Homebrew** (macOS) para `libomp` (XGBoost) y `fswatch` (opcional)
+
+**Retail profile (BingX):**
 - **BingX Futures** con BTCUSDT.P activado
-- **Claude Code** (Anthropic CLI)
-- **TradingView MCP** instalado y conectado (ver `tradingview-mcp/`)
-- **Python 3.9+** (para backtests y sistema ML)
-- **Homebrew** (para `libomp` requerido por XGBoost en Mac)
+- Capital real (actual $13.63)
+
+**FTMO profile (opcional, para challenge):**
+- **Cuenta FTMO Demo** (gratis 14 días Free Trial) o challenge $93.43
+- **MT5 Desktop for Mac** instalado y loggeado al menos una vez
+- Credenciales FTMO (login, password, server FTMO-Demo)
+
+**Multi-CLI (opcional, hedge):**
+- **OpenCode** — `curl -fsSL https://opencode.ai/install | bash` (free)
+- **Codex** — OpenAI API key + `npm install -g @openai/codex` (adapter UNTESTED)
 
 ### Instalación
 
@@ -430,24 +569,92 @@ Recalibra el modelo con data reciente para adaptarse al régimen. Verifica AUC e
 git clone git@github.com:sasasamaes/trading.git
 cd trading
 
-# 2. Instalar y conectar el TradingView MCP (ver prompt abajo)
-#    Luego abrir TradingView Desktop con CDP en puerto 9222
+# 2. Instalar TradingView MCP (ver "prompt listo para Claude Code" abajo)
+#    Luego abrir TradingView Desktop con --remote-debugging-port=9222
 
-# 3. Abrir Claude Code en este directorio
+# 3. Abrir Claude Code
 claude
 
 # 4. Instalar indicador Pine en TV (manual):
-#    - Abrir Pine Editor en TV
-#    - Copiar contenido de MEAN_REVERSION_INDICATOR.pine
-#    - Pegar, guardar como "MR Signals"
-#    - Añadir al chart
+#    Pine Editor → copiar MEAN_REVERSION_INDICATOR.pine → guardar "MR Signals" → añadir al chart
 
-# 5. (Opcional pero recomendado) Setup del sistema ML:
+# 5. Instalar adapter Claude Code (sincroniza symlinks .claude/ → system/)
+bash adapters/claude-code/install.sh
+
+# 6. Verificar profile default (debe ser "retail")
+bash .claude/scripts/profile.sh show
+# → retail | <iso>
+
+# 7. (Opcional) Setup ML
 cd scripts/ml_system
-./setup.sh                              # instala deps Python
-brew install libomp                     # runtime XGBoost en Mac
-python3 supervised/train.py --days 365  # entrena modelo (~100MB download, 2-4 min)
+./setup.sh
+brew install libomp
+python3 supervised/train.py --days 365
+cd ../..
 ```
+
+### Setup FTMO profile (opcional)
+
+Si quieres operar el challenge FTMO además del retail:
+
+```bash
+# 1. Llenar credenciales FTMO en .env (gitignored)
+cp .claude/.env.example .claude/.env
+# Editar .claude/.env con tu editor:
+#   FTMO_LOGIN=<tu login>
+#   FTMO_PASSWORD=<tu password>
+#   FTMO_READONLY_PASSWORD=<tu ro password>
+#   FTMO_SERVER=FTMO-Demo
+
+# 2. Abrir MT5 al menos una vez (login con cuenta FTMO-Demo)
+open -a "MetaTrader 5"
+# Login → cerrar
+
+# 3. Instalar el EA ClaudeBridge.mq5 en MT5
+bash .claude/profiles/ftmo/mt5_ea/install.sh
+# Auto-detecta bottle path de Mac, copia EA, crea symlinks a memory/
+
+# 4. En MT5: habilitar algo-trading + drag ClaudeBridge al chart BTCUSD
+#    Tools → Options → Expert Advisors → ✅ Allow algorithmic trading
+#    Navigator (Ctrl+N) → Expert Advisors → F5 → drag ClaudeBridge a chart
+#    Diálogo → ✅ Allow Automated Trading → OK
+#    Experts tab (Ctrl+T) debe mostrar: "ClaudeBridge EA v1.00 starting magic=77777"
+
+# 5. Verificar heartbeat
+cat .claude/profiles/ftmo/memory/mt5_state.json
+# Debe tener last_update reciente
+bash .claude/scripts/profile.sh set ftmo
+bash .claude/scripts/statusline.sh
+# [FTMO $10k] ... EA ✓ Xs
+
+# 6. Primer test con 0.01 lots
+/profile ftmo
+/order BTCUSD BUY 77500 sl=77400 tp=77600 lots=0.01
+# Confirmar YES → EA ejecuta → /trades muestra
+```
+
+Guía completa paso a paso: `.claude/profiles/ftmo/mt5_ea/README.md`.
+
+### Setup OpenCode (opcional, hedge)
+
+```bash
+# 1. Instalar OpenCode
+curl -fsSL https://opencode.ai/install | bash
+
+# 2. Generar .opencode/ desde system/ + instalar git pre-commit hook
+bash adapters/opencode/install.sh
+
+# 3. (Opcional) Real-time sync durante edición activa
+brew install fswatch
+bash adapters/opencode/watch.sh   # en terminal aparte
+
+# 4. Probar
+cd ~/Documents/trading
+opencode
+# → dentro de OpenCode: /status
+```
+
+Detalles en `adapters/opencode/README.md`.
 
 ### Instalar TradingView MCP (prompt listo para Claude Code)
 
@@ -623,28 +830,56 @@ Claude detectará automáticamente cuál invocar según tu pregunta:
 | **technical-analyst** | "TA profundo", "smart money", "armónico", "elliot", "fibonacci" |
 | **signal-validator** | "valida señal", "[comunidad] dice...", "/signal Short XLM" |
 
-### `.claude/commands/` — 11 Slash commands
+### `system/commands/` — 23 Slash commands (profile-aware)
 
-Atajos rápidos para acciones frecuentes:
+Atajos rápidos. La mayoría se adaptan al profile activo automáticamente.
+
+**Dual-profile (nuevos):**
 
 | Comando | Acción |
 |---|---|
-| `/morning` | Análisis matutino completo (17 fases) |
-| `/validate` | Valida entry con 4 filtros (GO/NO-GO) |
-| `/regime` | Detecta régimen rápido |
-| `/risk` | Position sizing con regla 2% |
-| `/journal` | Actualiza log del día |
+| `/profile` | Ver/cambiar profile activo (retail/ftmo) |
+| `/status` | Estado profile-aware (retail: cap/régimen; ftmo: equity/DD/EA) |
+
+**FTMO-only:**
+
+| Comando | Acción |
+|---|---|
+| `/equity <valor>` | Actualizar equity FTMO desde MT5 |
+| `/challenge` | Dashboard progreso challenge (profit, rules, best day ratio) |
+| `/order` | Encolar orden al EA (con YES typed obligatorio) |
+| `/trades` | Dashboard MT5 (posiciones, pendientes, closed today) |
+| `/sync` | Reconciliar pending_orders.json ↔ mt5_state.json |
+
+**Trading core (profile-aware):**
+
+| Comando | Acción |
+|---|---|
+| `/morning` | Despacha morning-analyst (retail 17 fases) o morning-analyst-ftmo (14 fases multi-asset) |
+| `/validate` | Retail: 4 filtros + ML opcional. FTMO: 7 filtros + guardian check_entry |
+| `/regime` | Detecta régimen rápido (RANGE/TRENDING/VOLATILE) |
+| `/risk` | Position sizing — 2% retail, 0.5% FTMO (via guardian) |
+| `/journal` | Retail: tradicional. FTMO: auto-ingest closed_today del EA |
 | `/chart` | Limpia y redibuja niveles en TV |
 | `/backtest` | Ejecuta backtest/grid search |
-| `/status` | Estado sistema (cap, trades, hora) |
 | `/review` | Review semanal con métricas |
 | `/levels` | Niveles técnicos actuales |
 | `/alert` | Configura alerta custom |
-| `/ta` | **Análisis técnico avanzado** (ICT, armónicos, chartismo, Elliott, Fibonacci) |
-| `/signal` | **Valida señal externa** de comunidad con tu sistema (GO/NO-GO) |
-| `/neptune` | Lee outputs de indicadores **Neptune** (Bangchan10) en el chart |
-| `/sentiment` | **NLP Sentiment Aggregator** (F&G + News + Reddit + Funding) → score 0-100 |
-| `/ml` | **ML score** del setup actual (XGBoost, probabilidad TP-first LONG/SHORT) |
+
+**Análisis técnico avanzado:**
+
+| Comando | Acción |
+|---|---|
+| `/ta` | Análisis técnico avanzado (ICT, armónicos, chartismo, Elliott, Fibonacci) |
+| `/signal` | Valida señal externa de comunidad (GO/NO-GO) |
+| `/neptune` | Lee outputs de indicadores Neptune (Bangchan10) |
+
+**Capa ML:**
+
+| Comando | Acción |
+|---|---|
+| `/sentiment` | NLP Sentiment Aggregator (F&G + News + Reddit + Funding) → score 0-100 |
+| `/ml` | ML score del setup actual (XGBoost, probabilidad TP-first) |
 | `/ml-train` | Re-entrena el modelo XGBoost con histórico Binance |
 
 ### `.claude/skills/` — 8 Skills custom
@@ -805,7 +1040,16 @@ Proyecto personal sin licencia pública. Si quieres usar partes del código, cit
 
 ---
 
-**Última actualización:** 2026-04-22
-**Capital actual:** $13.63 (3/3 wins, +36.3% acumulado)
-**Próximo objetivo:** $20 (≈ +63%) en las próximas 2 semanas
-**Última feature:** Capa ML (Sentiment NLP + XGBoost + LSTM scaffold) — commit `fa06770`
+**Última actualización:** 2026-04-23 (sesión arquitectura — 3 features nuevos, 66 commits)
+**Capital actual (retail):** $13.63 (3/3 wins, +36.3% acumulado)
+**Estado FTMO:** profile + MT5 bridge implementados, pendiente paper trading en Free Trial
+**Próximo objetivo retail:** $20 (≈ +63%) en las próximas 2 semanas
+**Próximo objetivo FTMO:** correr backtest → paper trading 10+ trades → decidir challenge $93
+
+**Features recientes:**
+- Dual-profile system (retail + FTMO) — commit `086e754`
+- MT5 Bridge con EA MQL5 — commit `c27ccf6`
+- Multi-CLI portability (system/ + adapters OC/Codex) — commit `c3eda3a`
+- Capa ML (Sentiment NLP + XGBoost + LSTM scaffold) — commit `fa06770`
+
+**Tests totales:** 54 unit (24 guardian + 19 mt5_bridge + 11 transform) + 8 integration e2e.
