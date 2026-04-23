@@ -18,7 +18,25 @@ Pasos que ejecuta Claude:
    - Incluye guardian pre-check antes de proponer setups
    - Usa niveles/memoria de `profiles/ftmo/memory/`
 
-4. Si argumento opcional: pasa como contexto adicional al agente (ej: "/morning sin café")
+4. SI profile == "fotmarkets":
+   - Ejecuta validación previa:
+     ```
+     bash .claude/scripts/fotmarkets_guard.sh check
+     ```
+     Si BLOCK por ventana u otras razones → muestra el BLOCK pero continúa con análisis "preparativo" (sin entry sugerida).
+   - Lee `.claude/profiles/fotmarkets/config.md` para obtener `phase` actual y `allowed_assets`
+   - Despacha `morning-analyst-ftmo` con instrucción especial:
+     - "Analizar SOLO los siguientes assets: <allowed_assets de la fase actual>"
+     - "Usar reglas de Fotmarkets-Micro (no FTMO-Conservative): filtros de strategy.md"
+     - "Ventana operativa: MX 07:00-11:00 (no 06:00-16:00)"
+     - "Risk per trade: <phase_risk_pct>% (phase-aware), cap $<phase_risk_usd_cap>"
+     - "Max trades hoy: <phase_max_trades>"
+   - El agente usa niveles/memoria de `profiles/fotmarkets/memory/`
+   - Al final, recordatorio explícito:
+     - "⚠️ Profile fotmarkets = bonus $30 en broker no regulado. Este no reemplaza tu profile FTMO/retail real."
+     - "Verificar bonus T&C en memory/session_notes.md antes de ejecutar."
+
+5. Si argumento opcional: pasa como contexto adicional al agente (ej: "/morning sin café")
 
 ## Fases del morning-analyst retail (17 fases, incluye Pre-flight TV)
 
