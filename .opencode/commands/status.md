@@ -33,8 +33,26 @@ Pasos que ejecuta Claude:
      Asset vigilancia: <top 1-2 del morning-analyst-ftmo>
      ```
 
-4. SI profile no reconocido:
-   - Muestra warning: "Profile desconocido: <X>. Corre /profile ftmo o /profile retail."
+4. SI profile == "fotmarkets":
+   - Lee `.claude/profiles/fotmarkets/memory/phase_progress.md` (capital + fase)
+   - Lee `.claude/profiles/fotmarkets/memory/trading_log.md` (trades hoy)
+   - Invoca: `bash .claude/scripts/fotmarkets_phase.sh detail`
+   - Invoca: `bash .claude/scripts/fotmarkets_guard.sh check` (captura PASS/BLOCK)
+   - Muestra statusline fotmarkets expandido:
+     ```
+     [FOTMARKETS $30.00]
+     Fase: 1 (rango [0, 100))
+     Próximo threshold: $100 (desbloquea USDJPY, XAUUSD, NAS100)
+     Risk por trade: 10% ($3.00)
+     Max trades hoy: 1
+     Estrategia: Fotmarkets-Micro
+     Ventana MX: 07:00–11:00
+     Guardian: PASS/BLOCK <razón>
+     Trades hoy: 0/1
+     Último trade: <fecha> <resultado>
+     ```
 
-5. Al final de cualquier output, incluye una línea: "Última actualización: <timestamp>. Cambiar profile: /profile ftmo|retail"
+5. SI profile no reconocido:
+   - Muestra warning: "Profile desconocido: <X>. Corre /profile ftmo|retail|fotmarkets."
 
+6. Al final de cualquier output, incluye: "Última actualización: <timestamp>. Cambiar profile: /profile ftmo|retail|fotmarkets"
