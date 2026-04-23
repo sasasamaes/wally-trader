@@ -430,8 +430,8 @@ Recalibra el modelo con data reciente para adaptarse al régimen. Verifica AUC e
 git clone git@github.com:sasasamaes/trading.git
 cd trading
 
-# 2. Abrir TradingView Desktop con CDP en puerto 9222
-#    (ver tradingview-mcp/README.md)
+# 2. Instalar y conectar el TradingView MCP (ver prompt abajo)
+#    Luego abrir TradingView Desktop con CDP en puerto 9222
 
 # 3. Abrir Claude Code en este directorio
 claude
@@ -448,6 +448,78 @@ cd scripts/ml_system
 brew install libomp                     # runtime XGBoost en Mac
 python3 supervised/train.py --days 365  # entrena modelo (~100MB download, 2-4 min)
 ```
+
+### Instalar TradingView MCP (prompt listo para Claude Code)
+
+Copia este prompt tal cual a Claude Code (o a Claude Desktop) en una sesión nueva. Claude ejecuta paso por paso y te reporta cada etapa:
+
+```text
+Quiero conectar mi app de TradingView a Claude Code usando el MCP de @Tradesdontlie.
+Repo oficial: https://github.com/tradesdontlie/tradingview-mcp
+
+Por favor haz TODO esto paso por paso, reportándome cada etapa. No avances al
+siguiente paso si uno falla — explícame el error y cómo resolverlo.
+
+1. VERIFICAR PRERREQUISITOS:
+   - Corre "node --version" — tengo que tener Node.js 18 o mayor. Si me falta o es
+     muy viejo, dime exactamente cómo instalarlo para mi sistema operativo.
+   - Corre "git --version" — si no tengo Git, dime cómo instalarlo.
+   - Pregúntame si ya tengo TradingView Desktop instalado. Si no, mándame el link
+     oficial: https://www.tradingview.com/desktop/
+
+2. CLONAR EL REPO:
+   Clona el repositorio en mi carpeta home:
+   git clone https://github.com/tradesdontlie/tradingview-mcp.git ~/tradingview-mcp
+
+3. INSTALAR DEPENDENCIAS:
+   Entra a la carpeta y corre la instalación:
+   cd ~/tradingview-mcp && npm install
+
+4. LEER EL README:
+   Lee el README.md del repo para identificar:
+   - El comando exacto para iniciar el servidor MCP (puede ser "node src/server.js"
+     o algo distinto según la versión).
+   - El flag de debug para lanzar TradingView (suele ser --remote-debugging-port=9222).
+   - Si hay scripts de lanzamiento en la carpeta "scripts/" que yo deba usar directo.
+
+5. CONFIGURAR EL MCP EN CLAUDE CODE:
+   Edita mi archivo de configuración de MCPs. Ubicación según mi OS:
+   - macOS / Linux: ~/.claude/.mcp.json
+   - Windows: %USERPROFILE%\.claude\.mcp.json
+
+   Si el archivo no existe, créalo. Si ya existe con otros MCPs, NO los sobrescribas
+   — solo agrega el de tradingview dentro de "mcpServers". El bloque a insertar
+   (ajusta la ruta absoluta con mi carpeta real):
+
+   {
+     "mcpServers": {
+       "tradingview": {
+         "command": "node",
+         "args": ["/ruta/absoluta/a/tradingview-mcp/src/server.js"]
+       }
+     }
+   }
+
+6. LANZAR TRADINGVIEW CON DEBUG PORT:
+   Explícame cómo cerrar completamente TradingView y volverlo a abrir con el flag
+   de debug. Dame el comando exacto para mi sistema operativo. Si el repo incluye
+   un script en scripts/ (por ejemplo launch_tv_debug_mac.sh), úsalo y dime cómo
+   correrlo.
+
+7. DECIRME QUÉ HAGO AHORA:
+   Resume en 3 pasos finales lo que me toca hacer:
+     (a) reiniciar Claude Code
+     (b) abrir una conversación nueva
+     (c) correr el primer prompt de verificación
+   Dame el prompt exacto para el paso (c).
+
+Objetivo final: que cuando abra Claude Code y escriba "Corre tv_health_check",
+me responda cdp_connected: true. Ahí sabemos que jaló.
+```
+
+**Qué hace el prompt:** verifica Node/Git, clona el MCP al home, instala deps, lee el README del upstream, edita `~/.claude/.mcp.json` sin borrar otros servers, lanza TV con `--remote-debugging-port=9222`, y termina con un health check. Objetivo: `tv_health_check` devuelve `cdp_connected: true`.
+
+**Alternativa manual** (si prefieres no usar el prompt): seguir `tradingview-mcp/README.md` del submodule y agregar el server con `claude mcp add tradingview node /absolute/path/to/tradingview-mcp/src/server.js`.
 
 ### Memoria persistente
 
