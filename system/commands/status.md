@@ -37,3 +37,4 @@ Pasos que ejecuta Claude:
    - Muestra warning: "Profile desconocido: <X>. Corre /profile ftmo o /profile retail."
 
 5. Al final de cualquier output, incluye una línea: "Última actualización: <timestamp>. Cambiar profile: /profile ftmo|retail"
+
