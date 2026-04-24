@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+    "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+    <string>WallyWatcher</string>
+
+    <key>CFBundleIdentifier</key>
+    <string>com.wallytrader.watcher</string>
+
+    <key>CFBundleName</key>
+    <string>Wally Trader</string>
+
+    <key>CFBundleDisplayName</key>
+    <string>Wally Trader Watcher</string>
+
+    <key>CFBundleVersion</key>
+    <string>1.0</string>
+
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+
+    <key>CFBundleSignature</key>
+    <string>WALY</string>
+
+    <key>CFBundleIconFile</key>
+    <string>wally</string>
+
+    <key>LSBackgroundOnly</key>
+    <true/>
+
+    <key>LSUIElement</key>
+    <true/>
+
+    <key>NSHumanReadableCopyright</key>
+    <string>Wally Trader — set &amp; forget watcher.</string>
+</dict>
+</plist>

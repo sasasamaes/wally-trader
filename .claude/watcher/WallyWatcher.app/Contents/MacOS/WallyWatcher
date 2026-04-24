@@ -1,0 +1,35 @@
+#!/bin/bash
+# Wally Trader Watcher — background agent invoked by launchd.
+#
+# Resolves runtime config (REPO_ROOT, PYTHON) from either:
+#   1. ~/.config/wallytrader.conf   (written by install_agent.sh)
+#   2. Environment variables
+#   3. Sensible fallbacks
+#
+# This makes the bundle portable across machines/users — no hardcoded paths.
+
+set -eu
+
+CONFIG_FILE="${WALLY_CONFIG:-$HOME/.config/wallytrader.conf}"
+if [ -f "$CONFIG_FILE" ]; then
+    # shellcheck disable=SC1090
+    source "$CONFIG_FILE"
+fi
+
+: "${REPO_ROOT:=$HOME/Documents/wally-trader}"
+: "${PYTHON:=/opt/homebrew/bin/python3.13}"
+
+if [ ! -d "$REPO_ROOT" ]; then
+    echo "WallyWatcher ERROR: REPO_ROOT not found: $REPO_ROOT" >&2
+    echo "Fix: run install_agent.sh from your repo checkout, or set REPO_ROOT in $CONFIG_FILE" >&2
+    exit 1
+fi
+
+if [ ! -x "$PYTHON" ]; then
+    echo "WallyWatcher ERROR: PYTHON not executable: $PYTHON" >&2
+    echo "Fix: install python 3.12+ (e.g. brew install python@3.13) or set PYTHON in $CONFIG_FILE" >&2
+    exit 1
+fi
+
+cd "$REPO_ROOT"
+exec "$PYTHON" .claude/scripts/watcher_tick.py

@@ -8,9 +8,7 @@
 
     <key>ProgramArguments</key>
     <array>
-        <string>/bin/bash</string>
-        <string>-lc</string>
-        <string>cd "$HOME/Documents/wally-trader" &amp;&amp; /opt/homebrew/bin/python3.13 .claude/scripts/watcher_tick.py</string>
+        <string>__APP_EXECUTABLE__</string>
     </array>
 
     <key>StartInterval</key>

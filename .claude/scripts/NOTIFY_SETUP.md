@@ -4,27 +4,57 @@ Guía manual para activar los canales opcionales. macOS notif funciona sin setup
 
 ## 1. Watcher launchd (obligatorio para auto-hourly)
 
+Usa el instalador portable — resuelve `$HOME`, ruta del repo y binario Python
+al momento de instalar. Funciona en cualquier Mac / usuario sin editar archivos.
+
+### Instalar
 ```bash
-cp .claude/watcher/launchd/com.wallytrader.watcher.plist ~/Library/LaunchAgents/
-launchctl load ~/Library/LaunchAgents/com.wallytrader.watcher.plist
-launchctl list | grep wallytrader
+bash .claude/watcher/install_agent.sh
 ```
 
-Verifica logs:
+El script:
+1. Detecta el repo desde su propia ubicación (cualquier path, no solo `~/Documents/wally-trader`)
+2. Busca Python 3.12+ (prefiere `brew install python@3.13`)
+3. Instala deps si faltan (`requests pyyaml python-dateutil pytest`)
+4. Copia `.claude/watcher/WallyWatcher.app` → `~/.local/Applications/`
+5. Escribe `~/.config/wallytrader.conf` con `REPO_ROOT` + `PYTHON`
+6. Renderiza `~/Library/LaunchAgents/com.wallytrader.watcher.plist` (sustituye path del bundle)
+7. Registra el `.app` con LaunchServices (icono + display name en Background Items)
+8. `launchctl load`
+
+### Verificar
 ```bash
-tail -f /tmp/wally_watcher.out
-tail -f /tmp/wally_watcher.err
+launchctl list | grep wallytrader              # debe aparecer
+launchctl start com.wallytrader.watcher        # trigger manual
+tail -f /tmp/wally_watcher.out                 # logs stdout
+tail -f /tmp/wally_watcher.err                 # logs stderr
+cat .claude/watcher/dashboard.md               # estado actual
 ```
 
-Manual trigger:
-```bash
-launchctl start com.wallytrader.watcher
-```
+### macOS Full Disk Access (obligatorio 1ª vez)
+`~/Documents` está protegido por TCC. Concede FDA a:
+- **System Settings → Privacy & Security → Full Disk Access → `+`**
+- Agrega `/opt/homebrew/bin/python3.13` (u otra versión que detectó el installer)
 
-Unload:
+Si instalaste con otro Python, verifica en `~/.config/wallytrader.conf`.
+
+### Background Items display
+El `.app` se muestra como **"Wally Trader Watcher"** con icono dachshund 🌭
+(en vez de "bash") en *System Settings → General → Ítems de inicio y extensiones*.
+Si sigue mostrando "bash" tras instalar, cierra/reabre System Settings para
+refrescar el cache de LaunchServices.
+
+### Desinstalar
 ```bash
-launchctl unload ~/Library/LaunchAgents/com.wallytrader.watcher.plist
+bash .claude/watcher/uninstall_agent.sh
 ```
+Remueve plist + bundle + config. Historial (`status.json`, `dashboard.md`,
+`notifications.log`) queda intacto.
+
+### Portabilidad — usar en otra máquina/usuario
+Clona el repo en cualquier path (ej: `~/code/wally-trader`, `/opt/wally-trader`)
+y corre `bash .claude/watcher/install_agent.sh`. El installer resuelve paths
+absolutos automáticamente. No hay paths hard-coded en el repo.
 
 ## 2. TwelveData (precio forex/índices para ftmo/fotmarkets)
 
