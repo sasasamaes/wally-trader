@@ -14,11 +14,9 @@ Pasos que ejecuta Claude:
 2. **Parsea args:** Si vacíos, busca último setup en la conversación con bloque
    `ENTRY|SL|TP|INVALIDATION`. Si no encuentra → error "Dame params explícitos o corre /morning primero".
 3. **Valida profile-specific:**
-   - `ftmo` → **DELEGA al flow existente** (guardian.py + EA bridge). Este comando
-     SOLO maneja el path virtual nuevo para retail, retail-bingx, fotmarkets.
-     Si `PROFILE=ftmo`, imprime "Para FTMO usa el flow existente — ver
-     pending_orders.json + mt5_bridge" y aborta (el comando ftmo original aún
-     vive; este /order nuevo es para los 3 no-ftmo).
+   - `ftmo` → **DELEGA** al flow existente (guardian.py + EA bridge). Si
+     `PROFILE=ftmo`, imprime "Para FTMO usa el flow existente — ver mt5_bridge"
+     y aborta.
 
      > **FTMO legacy flow (referencia):** Carga params → guardian.py check →
      > preview ASCII + confirmación YES → append pending_orders.json →
@@ -27,10 +25,18 @@ Pasos que ejecuta Claude:
      > imprime box para copiar a MT5 manualmente → dual-write a Notion FTMO DB
      > (si NOTION_FTMO_DB_ID en .claude/.env + mcp__notion_* disponible).
 
-   - `retail` / `retail-bingx` → sanity checks no-bloqueantes (SL lado correcto,
-     TP lado correcto, risk_pct ≤ 2, qty>0).
-   - `fotmarkets` → llama `bash .claude/scripts/fotmarkets_guard.sh check`; si
-     BLOCK → abortar. Aplica phase sizing.
+   - `retail`:
+     - Sanity: SL lado correcto, TP lado correcto, risk_pct ≤ 2.
+     - `order_lib.sizing_for_profile('retail', entry, sl, 18.09)` → qty/risk.
+     - Si `--real` → imprimir **"⚠️ --real no implementado en v1, orden virtual only"** y continuar.
+   - `retail-bingx`:
+     - Igual que retail pero capital=0.93 (lee de config.md).
+     - `--real` no aplica (BingX sin API integrada). Siempre virtual.
+   - `fotmarkets`:
+     - `bash .claude/scripts/fotmarkets_guard.sh check` → si BLOCK, abortar con reason.
+     - Verifica asset in `allowed_assets` de la phase (Phase 1 = [EURUSD, GBPUSD] solo).
+     - `order_lib.sizing_for_profile('fotmarkets', entry, sl, capital_from_phase_progress)` → qty/risk.
+     - Recuerda: ejecución MT5 manual. Watcher solo notifica trigger.
 4. **Whitelist matrix check:** Llama `python3 -c "from pending_lib import
    load_all_pendings, apply_whitelist_matrix; ..."` con la orden candidata
    añadida virtualmente. Si la nueva orden quedaría en `suspended_policy` →

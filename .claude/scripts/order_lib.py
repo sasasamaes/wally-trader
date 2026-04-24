@@ -137,3 +137,39 @@ def preflight_whitelist(order: dict) -> tuple[bool, str]:
 def create_and_persist(order: dict) -> dict:
     """Append to pending_orders.json + return the persisted order."""
     return append_pending(order["profile"], order)
+
+
+def sizing_for_profile(profile: str, entry: float, sl: float, capital: float) -> dict:
+    """Return {qty, risk_usd, risk_pct, leverage} per profile rules.
+
+    retail/retail-bingx: 2% of capital, 10x leverage, qty = risk / sl_distance
+    fotmarkets: phase-aware (Phase 1 = 10% cap $3; Phase 2 = 5%; Phase 3 = 2%)
+    """
+    sl_distance = abs(entry - sl)
+    if sl_distance == 0:
+        raise ValueError("SL distance is zero")
+
+    if profile in ("retail", "retail-bingx"):
+        risk_pct = 2.0
+        leverage = 10
+        risk_usd = capital * risk_pct / 100
+        # qty approx: risk_usd / sl_distance (BTC perp units)
+        qty = round(risk_usd / sl_distance, 6)
+        return {"qty": qty, "risk_usd": round(risk_usd, 2),
+                "risk_pct": risk_pct, "leverage": leverage}
+
+    if profile == "fotmarkets":
+        # Phase detection: capital < $100 → Phase 1
+        if capital < 100:
+            risk_pct, cap = 10.0, 3.0
+        elif capital < 300:
+            risk_pct, cap = 5.0, float("inf")
+        else:
+            risk_pct, cap = 2.0, float("inf")
+        risk_usd = min(capital * risk_pct / 100, cap)
+        # Fotmarkets lots — 0.01 minimum, depends on asset
+        qty = 0.01  # placeholder; in practice user adjusts lot in MT5 manually
+        return {"qty": qty, "risk_usd": round(risk_usd, 2),
+                "risk_pct": risk_pct, "leverage": 500}
+
+    raise ValueError(f"sizing_for_profile not implemented for {profile}")
