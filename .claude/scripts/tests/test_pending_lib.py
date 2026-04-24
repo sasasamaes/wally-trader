@@ -197,3 +197,95 @@ def test_invalidation_none_active():
     result = evaluate_invalidation(order, current_price=77500, stopday_profiles=set())
     assert not result.invalidated
     assert result.new_status is None
+
+
+from pending_lib import apply_whitelist_matrix
+
+
+def _order(profile, asset, side, id_="ord_x", status="pending", created_at=None):
+    return {
+        "id": id_,
+        "profile": profile,
+        "asset": asset,
+        "side": side,
+        "status": status,
+        "created_at": created_at or "2026-04-24T10:00:00-06:00",
+    }
+
+
+def test_whitelist_single_order_always_active():
+    pendings = {"retail": [_order("retail", "BTCUSDT.P", "LONG")]}
+    active, suspended = apply_whitelist_matrix(pendings, matrix_path=None)
+    assert len(active) == 1
+    assert len(suspended) == 0
+
+
+def test_whitelist_blocks_retail_plus_retail_bingx():
+    pendings = {
+        "retail": [_order("retail", "BTCUSDT.P", "LONG", id_="a",
+                          created_at="2026-04-24T10:00:00-06:00")],
+        "retail-bingx": [_order("retail-bingx", "BTCUSDT.P", "LONG", id_="b",
+                                created_at="2026-04-24T10:05:00-06:00")],
+    }
+    active, suspended = apply_whitelist_matrix(pendings, matrix_path=None)
+    # newer (b) suspended; older (a) stays
+    assert {o["id"] for o in active} == {"a"}
+    assert {o["id"] for o in suspended} == {"b"}
+
+
+def test_whitelist_blocks_same_family_same_side_cross_profile():
+    pendings = {
+        "retail": [_order("retail", "BTCUSDT.P", "LONG", id_="a",
+                          created_at="2026-04-24T09:00:00-06:00")],
+        "fotmarkets": [_order("fotmarkets", "BTCUSD", "LONG", id_="b",
+                              created_at="2026-04-24T10:00:00-06:00")],
+    }
+    active, suspended = apply_whitelist_matrix(pendings, matrix_path=None)
+    assert {o["id"] for o in active} == {"a"}
+    assert {o["id"] for o in suspended} == {"b"}
+
+
+def test_whitelist_allows_hedge_opposite_side():
+    pendings = {
+        "retail": [_order("retail", "BTCUSDT.P", "LONG", id_="a",
+                          created_at="2026-04-24T09:00:00-06:00")],
+        "fotmarkets": [_order("fotmarkets", "BTCUSD", "SHORT", id_="b",
+                              created_at="2026-04-24T10:00:00-06:00")],
+    }
+    active, suspended = apply_whitelist_matrix(pendings, matrix_path=None)
+    assert {o["id"] for o in active} == {"a", "b"}
+    assert len(suspended) == 0
+
+
+def test_whitelist_allows_different_asset_families():
+    pendings = {
+        "retail": [_order("retail", "BTCUSDT.P", "LONG", id_="a")],
+        "fotmarkets": [_order("fotmarkets", "EURUSD", "LONG", id_="b")],
+    }
+    active, suspended = apply_whitelist_matrix(pendings, matrix_path=None)
+    assert len(active) == 2
+    assert len(suspended) == 0
+
+
+def test_whitelist_ftmo_plus_fotmarkets_same_family_blocked():
+    pendings = {
+        "ftmo": [_order("ftmo", "NAS100", "LONG", id_="a",
+                        created_at="2026-04-24T09:00:00-06:00")],
+        "fotmarkets": [_order("fotmarkets", "NAS100", "LONG", id_="b",
+                              created_at="2026-04-24T10:00:00-06:00")],
+    }
+    active, suspended = apply_whitelist_matrix(pendings, matrix_path=None)
+    assert {o["id"] for o in active} == {"a"}
+    assert {o["id"] for o in suspended} == {"b"}
+
+
+def test_whitelist_ignores_already_terminal_status():
+    """Orders in filled/expired/canceled status aren't considered for matrix."""
+    pendings = {
+        "retail": [_order("retail", "BTCUSDT.P", "LONG", id_="a", status="filled")],
+        "retail-bingx": [_order("retail-bingx", "BTCUSDT.P", "LONG", id_="b")],
+    }
+    active, suspended = apply_whitelist_matrix(pendings, matrix_path=None)
+    # `b` is active because `a` is terminal
+    assert {o["id"] for o in active} == {"b"}
+    assert len(suspended) == 0

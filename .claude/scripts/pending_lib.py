@@ -232,3 +232,124 @@ def stopday_triggered_profiles() -> set:
         if count_sls_today(profile) >= 2:
             triggered.add(profile)
     return triggered
+
+
+import yaml
+
+TERMINAL_STATUSES = {
+    "filled",
+    "expired_ttl",
+    "expired_force_exit",
+    "invalidated_price",
+    "invalidated_regime",
+    "invalidated_stopday",
+    "canceled_manual",
+}
+
+
+def _default_matrix_path() -> Path:
+    """Return the whitelist_matrix.yaml path.
+
+    Strategy (approach b):
+    1. Try WALLY_REPO_ROOT env var (used by tests) — if matrix exists there, use it.
+    2. Fall back to the real repo root found by walking up from __file__.
+    This ensures tests that monkeypatch WALLY_REPO_ROOT to tmp still load the
+    real matrix (since tmp has no whitelist_matrix.yaml).
+    """
+    env = os.environ.get("WALLY_REPO_ROOT")
+    if env:
+        candidate = Path(env) / ".claude" / "watcher" / "whitelist_matrix.yaml"
+        if candidate.exists():
+            return candidate
+    # Fall back to real repo path (from __file__ location)
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        if (parent / "CLAUDE.md").exists() and (parent / ".claude").is_dir():
+            return parent / ".claude" / "watcher" / "whitelist_matrix.yaml"
+    # Last resort: use env path even if it doesn't exist
+    if env:
+        return Path(env) / ".claude" / "watcher" / "whitelist_matrix.yaml"
+    raise RuntimeError("Could not locate whitelist_matrix.yaml")
+
+
+def _load_matrix(matrix_path: Optional[Path]) -> dict:
+    path = Path(matrix_path) if matrix_path else _default_matrix_path()
+    if not path.exists():
+        # Degrade gracefully: allow-all
+        return {"asset_families": {}, "rules": [{"id": "allow_default",
+                                                  "match": {}, "action": "allow"}]}
+    with path.open() as f:
+        return yaml.safe_load(f)
+
+
+def _asset_family_of(profile: str, asset: str, families: dict) -> Optional[str]:
+    key = f"{profile}:{asset}"
+    for family, members in families.items():
+        if key in members:
+            return family
+    return None
+
+
+def _rule_matches(rule_match: dict, pair: tuple, families: dict) -> bool:
+    o1, o2 = pair
+    # profiles_in + count_gte
+    if "profiles_in" in rule_match:
+        allowed = set(rule_match["profiles_in"])
+        count = sum(1 for o in (o1, o2) if o["profile"] in allowed)
+        if count < rule_match.get("count_gte", 2):
+            return False
+    # same_asset_family
+    if "same_asset_family" in rule_match:
+        f1 = _asset_family_of(o1["profile"], o1["asset"], families)
+        f2 = _asset_family_of(o2["profile"], o2["asset"], families)
+        same = f1 is not None and f1 == f2
+        if rule_match["same_asset_family"] != same:
+            return False
+    # same_side
+    if "same_side" in rule_match:
+        same = o1.get("side") == o2.get("side")
+        if rule_match["same_side"] != same:
+            return False
+    return True
+
+
+def apply_whitelist_matrix(
+    pendings_by_profile: dict,
+    matrix_path: Optional[Path] = None,
+) -> tuple:
+    """Partition all pending orders into (active, suspended_policy).
+
+    Order is iterated chronologically by created_at. For each pair of
+    non-terminal orders, the first matching rule decides.
+    """
+    matrix = _load_matrix(matrix_path)
+    families = matrix.get("asset_families", {})
+    rules = matrix.get("rules", [])
+
+    # Flatten + filter terminal + sort by created_at
+    flat = []
+    for profile, orders in pendings_by_profile.items():
+        for o in orders:
+            if o.get("status") not in TERMINAL_STATUSES:
+                flat.append(o)
+    flat.sort(key=lambda o: o.get("created_at", ""))
+
+    active: list = []
+    suspended: list = []
+
+    for candidate in flat:
+        decision = "allow"
+        for existing in active:
+            for rule in rules:
+                if _rule_matches(rule.get("match", {}), (existing, candidate), families):
+                    decision = rule.get("action", "allow")
+                    break
+            if decision != "allow":
+                break
+        if decision == "suspend_newest":
+            suspended.append(candidate)
+        else:
+            # allow or allow_with_warning both keep it active
+            active.append(candidate)
+
+    return active, suspended
