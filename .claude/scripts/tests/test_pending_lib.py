@@ -96,3 +96,104 @@ def test_save_is_atomic(tmp_repo):
     # (simulated: just verify roundtrip doesn't leave .tmp files behind)
     save_pendings("retail", [{"id": "ord_2", "status": "pending"}])
     assert not any(tmp_repo.rglob("*.tmp"))
+
+
+from pending_lib import evaluate_invalidation, InvalidationResult
+from datetime import datetime, timedelta, timezone
+
+
+def _iso(dt):
+    return dt.astimezone().isoformat(timespec="seconds")
+
+
+def test_invalidation_ttl_expired():
+    past = datetime.now(timezone.utc) - timedelta(hours=1)
+    order = {
+        "id": "x",
+        "expires_at": _iso(past),
+        "force_exit_mx": _iso(datetime.now(timezone.utc) + timedelta(days=1)),
+        "invalidation_price": 0,
+        "invalidation_side": "below",
+        "profile": "retail",
+    }
+    result = evaluate_invalidation(order, current_price=100.0, stopday_profiles=set())
+    assert result.invalidated
+    assert result.new_status == "expired_ttl"
+
+
+def test_invalidation_price_broken_below():
+    future = datetime.now(timezone.utc) + timedelta(hours=1)
+    order = {
+        "id": "x",
+        "expires_at": _iso(future),
+        "force_exit_mx": _iso(future),
+        "invalidation_price": 76900,
+        "invalidation_side": "below",
+        "profile": "retail",
+    }
+    result = evaluate_invalidation(order, current_price=76800, stopday_profiles=set())
+    assert result.invalidated
+    assert result.new_status == "invalidated_price"
+
+
+def test_invalidation_price_broken_above():
+    future = datetime.now(timezone.utc) + timedelta(hours=1)
+    order = {
+        "id": "x",
+        "expires_at": _iso(future),
+        "force_exit_mx": _iso(future),
+        "invalidation_price": 79500,
+        "invalidation_side": "above",
+        "profile": "retail",
+    }
+    result = evaluate_invalidation(order, current_price=79600, stopday_profiles=set())
+    assert result.invalidated
+    assert result.new_status == "invalidated_price"
+
+
+def test_invalidation_stopday():
+    future = datetime.now(timezone.utc) + timedelta(hours=1)
+    order = {
+        "id": "x",
+        "expires_at": _iso(future),
+        "force_exit_mx": _iso(future),
+        "invalidation_price": 0,
+        "invalidation_side": "below",
+        "profile": "retail",
+    }
+    result = evaluate_invalidation(
+        order, current_price=100.0, stopday_profiles={"retail"}
+    )
+    assert result.invalidated
+    assert result.new_status == "invalidated_stopday"
+
+
+def test_invalidation_force_exit():
+    past = datetime.now(timezone.utc) - timedelta(minutes=5)
+    future = datetime.now(timezone.utc) + timedelta(days=1)
+    order = {
+        "id": "x",
+        "expires_at": _iso(future),
+        "force_exit_mx": _iso(past),
+        "invalidation_price": 0,
+        "invalidation_side": "below",
+        "profile": "retail",
+    }
+    result = evaluate_invalidation(order, current_price=100.0, stopday_profiles=set())
+    assert result.invalidated
+    assert result.new_status == "expired_force_exit"
+
+
+def test_invalidation_none_active():
+    future = datetime.now(timezone.utc) + timedelta(hours=1)
+    order = {
+        "id": "x",
+        "expires_at": _iso(future),
+        "force_exit_mx": _iso(future),
+        "invalidation_price": 76900,
+        "invalidation_side": "below",
+        "profile": "retail",
+    }
+    result = evaluate_invalidation(order, current_price=77500, stopday_profiles=set())
+    assert not result.invalidated
+    assert result.new_status is None

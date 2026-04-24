@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import os
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -122,3 +122,113 @@ def find_by_id(order_id: str) -> Optional[tuple[str, dict]]:
 def load_all_pendings() -> dict[str, list[dict]]:
     """Return {profile: [pendings, ...]} for all profiles."""
     return {profile: load_pendings(profile) for profile in PROFILES}
+
+
+from dataclasses import dataclass
+from dateutil import parser as _dateutil_parser
+
+
+@dataclass
+class InvalidationResult:
+    invalidated: bool
+    new_status: Optional[str] = None
+    reason: Optional[str] = None
+
+
+def _parse_iso(s: str) -> datetime:
+    """Parse ISO8601 preserving tz info; assume local if naive."""
+    dt = _dateutil_parser.isoparse(s)
+    if dt.tzinfo is None:
+        dt = dt.astimezone()
+    return dt
+
+
+def evaluate_invalidation(
+    order: dict,
+    current_price: float,
+    stopday_profiles: set,
+) -> InvalidationResult:
+    """Return whether a pending order should be invalidated and why.
+
+    Checked in priority order (first match wins):
+      1. Stop-day (2 SLs already hit today in that profile)
+      2. Force-exit time reached (regla "no dormir con trade abierto")
+      3. TTL expired
+      4. Price crossed invalidation threshold
+    """
+    now_utc = datetime.now(timezone.utc)
+
+    # 1. Stop-day
+    if order.get("profile") in stopday_profiles:
+        return InvalidationResult(
+            True, "invalidated_stopday", "2 SLs hit today → STOP día regla"
+        )
+
+    # 2. Force-exit time
+    force_exit_s = order.get("force_exit_mx")
+    if force_exit_s:
+        force_exit_dt = _parse_iso(force_exit_s)
+        if now_utc >= force_exit_dt.astimezone(timezone.utc):
+            return InvalidationResult(
+                True, "expired_force_exit", f"force_exit {force_exit_s} reached"
+            )
+
+    # 3. TTL
+    expires_s = order.get("expires_at")
+    if expires_s:
+        expires_dt = _parse_iso(expires_s)
+        if now_utc >= expires_dt.astimezone(timezone.utc):
+            return InvalidationResult(
+                True, "expired_ttl", f"TTL {expires_s} reached"
+            )
+
+    # 4. Price
+    invalidation_price = order.get("invalidation_price")
+    invalidation_side = order.get("invalidation_side", "below")
+    if invalidation_price and invalidation_price > 0:
+        if invalidation_side == "below" and current_price < invalidation_price:
+            return InvalidationResult(
+                True,
+                "invalidated_price",
+                f"price {current_price} < invalidation {invalidation_price}",
+            )
+        if invalidation_side == "above" and current_price > invalidation_price:
+            return InvalidationResult(
+                True,
+                "invalidated_price",
+                f"price {current_price} > invalidation {invalidation_price}",
+            )
+
+    return InvalidationResult(False)
+
+
+def count_sls_today(profile: str) -> int:
+    """Parse trading_log.md of profile; count SL trades dated today (MX tz).
+
+    Relaxed parser: any line containing 'SL' or 'stop loss' AND today's date
+    in YYYY-MM-DD format. Good enough for stop-day rule.
+    """
+    log_path = (
+        _repo_root() / ".claude" / "profiles" / profile / "memory" / "trading_log.md"
+    )
+    if not log_path.exists():
+        return 0
+    # today in MX tz (UTC-6)
+    from datetime import timedelta as _td
+    mx_now = datetime.now(timezone.utc) - _td(hours=6)
+    today_str = mx_now.strftime("%Y-%m-%d")
+    content = log_path.read_text().lower()
+    count = 0
+    for line in content.splitlines():
+        if today_str in line and ("sl" in line or "stop loss" in line):
+            count += 1
+    return count
+
+
+def stopday_triggered_profiles() -> set:
+    """Return set of profiles where today's SL count >= 2."""
+    triggered = set()
+    for profile in PROFILES:
+        if count_sls_today(profile) >= 2:
+            triggered.add(profile)
+    return triggered
