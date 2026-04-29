@@ -757,6 +757,7 @@ Recalibra el modelo con data reciente para adaptarse al régimen. Verifica AUC e
 
 **Multi-CLI (opcional, hedge):**
 - **OpenCode** — `curl -fsSL https://opencode.ai/install | bash` (free, soporte total v2)
+- **Hermes Agent** (NousResearch) — `curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash` (free, soporte total v1, requiere cuenta API LLM)
 - **Codex** — OpenAI API key + `npm install -g @openai/codex` (adapter UNTESTED)
 
 ### Usar este proyecto en OpenCode (soporte total)
@@ -807,6 +808,62 @@ bash adapters/opencode/watch.sh   # daemon que regenera al editar system/
 **Limitaciones conocidas (vs Claude Code):**
 - Los hooks `session_start.sh` / `stop_hook.sh` / `preprompt_check.sh` **no se ejecutan automáticamente** en OpenCode. Si necesitas el contexto del SessionStart, córrelo manualmente: `bash .claude/scripts/session_start.sh`.
 - El statusline con USD↔CRC vive en `.claude/scripts/statusline.sh` y solo lo lee Claude Code. En OpenCode lo puedes inspeccionar manualmente con: `bash .claude/scripts/statusline.sh`.
+
+### Usar este proyecto en Hermes Agent (soporte total)
+
+El proyecto tiene **soporte completo** para [Hermes Agent (NousResearch)](https://github.com/NousResearch/hermes-agent) — el agente con loop de aprendizaje integrado, cron scheduling nativo, y delivery a Telegram/Discord/Slack/WhatsApp. La fuente de verdad sigue siendo `system/`; `adapters/hermes/` traduce a skills nativos del estándar [agentskills.io](https://agentskills.io).
+
+**Primer uso (sin tener Hermes instalado):**
+```bash
+# 1. Genera .hermes/skills/ desde system/ (idempotente, sin requerir Hermes)
+bash adapters/hermes/install.sh
+
+# 2. Verifica
+python3 -m pytest adapters/hermes/test_transform.py -v   # 12 tests
+```
+
+**Cuando instales Hermes:**
+```bash
+# 3. Install Hermes
+curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
+
+# 4. Re-run install.sh — esta vez crea symlink ~/.hermes/skills/wally-trader/ → <repo>/.hermes/skills/
+bash adapters/hermes/install.sh
+
+# 5. Setup Hermes (model + provider)
+hermes setup
+
+# 6. Configura TradingView MCP (opcional)
+hermes config set mcp.tradingview.command node
+hermes config set mcp.tradingview.args '["./tradingview-mcp/src/server.js"]'
+
+# 7. Lanza Hermes — auto-loads AGENTS.md + 55 skills (12 agents + 29 commands + 14 skills)
+cd /Users/josecampos/Documents/wally-trader
+hermes
+```
+
+**Qué obtienes:**
+- `.hermes/skills/wally-agents/` — 12 skills traducidos desde `system/agents/`
+- `.hermes/skills/wally-commands/` — 29 skills (`/morning`, `/risk`, `/profile`, …)
+- `.hermes/skills/wally-skills/` — symlink a `system/skills/` (14 skills técnicas: ICT, Fibonacci, ADX, etc.)
+- `AGENTS.md` raíz leído automáticamente por Hermes (mismo archivo que OpenCode usa)
+
+**Conceptual mapping CC → Hermes:**
+Hermes NO tiene "subagents" ni "slash commands" como filesystem entries — todo se proyecta como **skills** unificados. La invocación funciona igual: `/morning` activa la skill `wally-commands/morning`, y el agent decide cuándo invocar `wally-agents/regime-detector` según description match.
+
+**Features únicas de Hermes (que CC/OC no tienen):**
+- **Cron scheduling nativo** — `hermes cron add "0 6 * * *" /morning` para análisis automático CR 06:00
+- **Multi-platform delivery** — `hermes gateway` envía análisis a Telegram/Discord/Slack/WhatsApp/Signal
+- **Serverless backends** — corre en Modal/Daytona ($0 cuando idle, despierta on demand)
+- **FTS5 memory search** — búsqueda full-text cross-session ("qué hice el lunes en BTC")
+- **Voice memo** — mandar voz desde Telegram, Hermes transcribe
+- **Skills self-improving** — skills se editan solas con uso
+
+**Limitaciones conocidas (vs Claude Code):**
+- Hooks `session_start.sh` / `stop_hook.sh` no se ejecutan automáticamente — invocar manualmente
+- Statusline USD↔CRC solo en CC; en Hermes ejecutar `bash .claude/scripts/statusline.sh` manualmente
+- MCP config exacta no completamente documentada upstream — usar `hermes config set` o el wizard `hermes setup`
+- Subagents CC se proyectan como skills (funciona, pero pierde semántica de "subagent" explícito)
 
 ### Instalación
 

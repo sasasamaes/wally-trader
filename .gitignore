@@ -13,6 +13,8 @@
 !opencode.json
 !system/mcp/servers.json
 !.opencode/config.json
+# Hermes adapter — generated skills tree (tracked so clone-and-go works)
+!.hermes/skills/**/*.json
 
 # Screenshots (can be large)
 tradingview-mcp/screenshots/

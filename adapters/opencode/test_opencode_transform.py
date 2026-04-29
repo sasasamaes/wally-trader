@@ -1,10 +1,15 @@
 """Unit tests for transform.py — CC → OpenCode translator."""
+import importlib.util
 import json
-import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
-import transform
+# Load transform.py under a unique module name to avoid sys.modules collision
+# with adapters/hermes/transform.py when running `pytest adapters/`.
+_spec = importlib.util.spec_from_file_location(
+    "oc_transform", Path(__file__).parent / "transform.py"
+)
+transform = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(transform)
 
 
 def test_translate_command_removes_allowed_tools(tmp_path):
