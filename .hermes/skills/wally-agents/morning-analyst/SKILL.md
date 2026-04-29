@@ -64,6 +64,25 @@ Pregunta al usuario:
 
 **Si cualquiera = NO → recomienda skip hoy.**
 
+### FASE 1.5: Cross-check de precio Chainlink (validación pre-análisis)
+
+Antes de leer datos del MCP TradingView, valida que el precio TV NO está desviado del agregado on-chain (Chainlink). Esto detecta:
+- Datos stale del MCP (TV chart cargado horas atrás)
+- Wicks fakeados específicos de Binance/BingX (vs precio agregado global)
+- Eventos de manipulación local
+
+Procedimiento:
+1. `mcp__tradingview__quote_get` → obtén `last_price` actual
+2. `bash .claude/scripts/chainlink_price.sh BTC --compare <last_price>`
+3. Lee verdict del helper:
+   - **OK** (delta <0.3%) → continúa al FASE 2
+   - **WARN** (delta 0.3-1%) → continúa pero registra en VEREDICTO final como "[!] Discrepancia precio: X% TV vs Chainlink"
+   - **ALERT** (delta >1%) → ABORTA análisis. VEREDICTO inmediato: "NO OPERAR — discrepancia precio TV vs Chainlink Y%. Reabre TV o cambia exchange."
+
+Si Chainlink no responde (todos RPCs caídos): continúa con análisis normal pero anota la falta del cross-check en el reporte. NO bloquea.
+
+Solo aplica para profile retail (BTC). FTMO/fotmarkets multi-asset → FASE 1.5 se delega al morning-analyst-ftmo equivalente.
+
 ### FASE 2: Contexto Global (paralelo, un solo message)
 WebFetch simultáneo:
 - `api.alternative.me/fng/?limit=7`
