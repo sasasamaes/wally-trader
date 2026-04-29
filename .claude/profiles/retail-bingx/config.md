@@ -20,8 +20,8 @@ Ver `strategy.md` — **Mean Reversion 15m** (idéntica a profile `retail`/Binan
 
 ## Ventana operativa
 
-- Inicio: MX 06:00
-- Force exit: MX 23:59 (regla "no dormir con posición abierta")
+- Inicio: CR 06:00
+- Force exit: CR 23:59 (regla "no dormir con posición abierta")
 
 ## Reglas duras
 

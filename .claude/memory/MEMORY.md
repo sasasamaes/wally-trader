@@ -1,8 +1,8 @@
 # Memory Index — Wally Trader (Triple Profile)
 
 ## GLOBAL (ambos profiles leen)
-- [User profile](user_profile.md) — Trader retail México, dual-profile FTMO + retail, capital $13.63 real + $10k FTMO demo
-- [Operating window](operating_window.md) — Retail MX 06:00–23:59, FTMO 06:00–16:00
+- [User profile](user_profile.md) — Trader retail Costa Rica, dual-profile FTMO + retail, capital $13.63 real + $10k FTMO demo
+- [Operating window](operating_window.md) — Retail CR 06:00–23:59, FTMO 06:00–16:00
 - [Communication prefs](communication_prefs.md) — Español, directo, honest-first, disclaimers
 - [User goals vs reality](user_goals_reality.md) — WR realistico, expectativas calibradas
 - [Morning protocol](morning_protocol.md) — Protocolo base, variantes en cada profile

@@ -1,5 +1,5 @@
 ---
-description: Use al final de la sesión de trading (MX 17:00 o cuando el usuario diga
+description: Use al final de la sesión de trading (CR 17:00 o cuando el usuario diga
   "cierro día", "journal", "log del trade", "review"). Actualiza trading_log.md, calcula
   métricas, documenta aprendizajes, identifica patrones.
 mode: subagent
@@ -152,7 +152,7 @@ Target mínimo para validar estrategia:
 ### 5. Recomendación para próxima semana
 
 1 cambio específico y medible. Ejemplo:
-- "Solo operar MX 07:00-10:00 (hora con 80% WR)"
+- "Solo operar CR 07:00-10:00 (hora con 80% WR)"
 - "Aumentar size si 5 wins seguidos"
 - "Skip lunes (día con 20% WR histórico)"
 

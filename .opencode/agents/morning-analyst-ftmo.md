@@ -130,7 +130,7 @@ Para cada asset operable ahora:
    - draw_shape horizontal_line SL  → color rojo grueso    label "SL <precio>"
    - draw_shape horizontal_line TP1 → color verde claro   label "TP1 <precio>"
    - draw_shape horizontal_line TP2 → color verde oscuro  label "TP2 <precio>"
-6. draw_shape trend_line vertical en 16:00 MX "Force exit FTMO"
+6. draw_shape trend_line vertical en 16:00 CR "Force exit FTMO"
 7. Si NO hay setup A-grade → dibujar SOLO S/R + Donchian + BB (chart vigilancia)
 ```
 
@@ -182,7 +182,7 @@ Sugerir `alert_create` en P1, P2, y break de PDH/PDL.
 ### FASE 13 — Reglas duras recordatorio
 - Max 2 trades/día
 - 2 SLs → STOP
-- Force exit 16:00 MX
+- Force exit 16:00 CR
 - No overnight
 
 ### FASE 14 — VEREDICTO FINAL
@@ -208,7 +208,7 @@ Si el profile activo es `fotmarkets`, **reemplaza** las fases indicadas con lo s
 ### Diferencias globales
 - **Guardian:** `bash .claude/scripts/fotmarkets_guard.sh check` (no el de FTMO)
 - **Estrategia:** Fotmarkets-Micro (scalping reversal post-pullback 5m), NO FTMO-Conservative
-- **Ventana:** MX 07:00-11:00 (force exit 10:55), NO 06:00-16:00
+- **Ventana:** CR 07:00-11:00 (force exit 10:55), NO 06:00-16:00
 - **TF:** 5m entry / 15m confirmación / 1H contexto (NO 4H)
 - **Risk:** phase-aware del `config.md` (Fase 1: 10% cap $3, Fase 2: 5%, Fase 3: 2%)
 - **Assets permitidos:** filtrar por `allowed_assets` de la fase actual (Fase 1 = SOLO EURUSD/GBPUSD)

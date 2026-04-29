@@ -5,7 +5,7 @@ Scripts de soporte para el sistema de trading. Cada uno tiene una función espec
 ## 📋 Scripts
 
 ### `statusline.sh`
-Muestra status line persistente: capital actual, PnL delta, trades hoy, ventana activa, hora MX, símbolo.
+Muestra status line persistente: capital actual, PnL delta, trades hoy, ventana activa, hora CR, símbolo.
 
 **Invocación automática:** configurado en `.claude/settings.json` → `statusLine.command`.
 
@@ -64,8 +64,8 @@ Log de ejecuciones del cron matutino.
 crontab -e
 
 # Añadir estas líneas:
-30 5 * * 1-5 ~/Documents/wally-trader/.claude/scripts/daily_cron.sh     # Lunes-Viernes 5:30 AM MX
-0 17 * * 1-5 osascript -e 'display notification "Cierra posiciones ya!" with title "🕐 Fin de sesión"'  # 5:00 PM MX
+30 5 * * 1-5 ~/Documents/wally-trader/.claude/scripts/daily_cron.sh     # Lunes-Viernes 5:30 AM CR
+0 17 * * 1-5 osascript -e 'display notification "Cierra posiciones ya!" with title "🕐 Fin de sesión"'  # 5:00 PM CR
 0 10 * * 0 osascript -e 'display notification "Domingo: review semanal en Claude" with title "📊 Weekly Review"'  # Dom 10 AM
 ```
 

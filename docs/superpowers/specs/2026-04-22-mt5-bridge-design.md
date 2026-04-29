@@ -1,6 +1,6 @@
 # MT5 Bridge + Order Management — Design Spec
 
-**Fecha:** 2026-04-22 (noche, 20:55 MX)
+**Fecha:** 2026-04-22 (noche, 20:55 CR)
 **Branch:** `feature/mt5-bridge` (worktree `.worktrees/mt5-bridge`)
 **Status:** Approved via iterative section sign-off (sec 1-4)
 **Context:** Extensión del FTMO Profile System (mergeado en `086e754`). Agrega capacidad de encolar órdenes + ejecutarlas en MT5 (manual o vía EA bridge) + leer estado.

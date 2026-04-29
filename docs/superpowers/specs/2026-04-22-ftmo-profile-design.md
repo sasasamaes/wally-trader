@@ -287,7 +287,7 @@ Usuario puede escribir `OVERRIDE GUARDIAN` para ignorar BLOCK_HARD. Queda loggea
 
 ### 5.2 Universo de assets
 
-| Asset | MT5 Symbol | Sesión óptima MX | Régimen ideal |
+| Asset | MT5 Symbol | Sesión óptima CR | Régimen ideal |
 |---|---|---|---|
 | BTCUSD | `BTCUSD` | 06:00-10:00 | RANGE |
 | ETHUSD | `ETHUSD` | 06:00-10:00 | RANGE/TREND leve |
@@ -296,7 +296,7 @@ Usuario puede escribir `OVERRIDE GUARDIAN` para ignorar BLOCK_HARD. Queda loggea
 | NAS100 | `US100.cash` | 08:30-15:00 | TREND (ADX>25) |
 | SPX500 | `US500.cash` | 08:30-15:00 | TREND/RANGE |
 
-Ventana operativa FTMO: **MX 06:00–16:00**.
+Ventana operativa FTMO: **CR 06:00–16:00**.
 
 ### 5.3 Filtros de selección diaria
 
@@ -330,7 +330,7 @@ Selección: 1 A-grade → trade. 2+ A → menor spread + sesión activa. Todos B
 | TP1 (50%) | 0.6% (1.5R) → mueve SL a BE |
 | TP2 (50%) | 1.2% (3.0R) |
 | Trailing post-TP1 | Stop a mid |
-| Force exit | 16:00 MX |
+| Force exit | 16:00 CR |
 | Overnight | Prohibido |
 
 R:R efectivo: +0.9% notional / trade exitoso = **+0.45% equity** con size 0.5%.

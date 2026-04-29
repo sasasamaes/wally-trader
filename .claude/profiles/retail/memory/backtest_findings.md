@@ -36,4 +36,4 @@ Data más larga que esto NO es accesible con el plan actual del usuario. Para ba
 1. Lo que funciona en 4H NO funciona automáticamente en timeframes menores
 2. Leverage alto (15x+) aunque mejore retorno absoluto, empuja DD a zona de liquidación
 3. Fees (0.05% × 2) + slippage (0.02-0.05%) comen ~0.15% por trade en scalping — TPs deben ser >3x eso
-4. La "ventana óptima" MX 06-10 coincide con London/NY overlap donde BTC tiene 0.85% vol por barra 4H (vs 0.50% en Asia)
+4. La "ventana óptima" CR 06-10 coincide con London/NY overlap donde BTC tiene 0.85% vol por barra 4H (vs 0.50% en Asia)

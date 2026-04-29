@@ -72,7 +72,7 @@ SHORT (espejo):
 - Si dudas → default Mean Reversion (más probada, más conservadora)
 
 ### 3. Valida reglas duras de sesión
-- ¿Hora actual en MX 06:00-23:59? (fuera 00:00-05:59 → NO-GO; >22:00 → solo si hay tiempo para que el setup cierre antes de 23:59)
+- ¿Hora actual en CR 06:00-23:59? (fuera 00:00-05:59 → NO-GO; >22:00 → solo si hay tiempo para que el setup cierre antes de 23:59)
 - ¿Ya hubo 2 SLs hoy? (sí → NO-GO, stop día)
 - ¿Capital < 70% inicial? (sí → NO-GO, revisar)
 - ¿Hay noticia alto impacto próximas 4h? (sí → NO-GO)
@@ -159,9 +159,9 @@ ESPERA. No entres.
 - Si ADX < 25 → automatic NO-GO ("régimen no trending, MA Crossover no aplica — usa Mean Reversion")
 
 ### Si es fuera de horario
-- Recuérdale la ventana MX 06:00-23:59 (cripto 24/7 pero no dormir con trade abierto)
-- Si es 00:00-05:59 MX → NO-GO estricto (tiempo de dormir)
-- Si es >22:00 MX → valida que el setup tenga TP cerca y pueda cerrar antes de 23:59
+- Recuérdale la ventana CR 06:00-23:59 (cripto 24/7 pero no dormir con trade abierto)
+- Si es 00:00-05:59 CR → NO-GO estricto (tiempo de dormir)
+- Si es >22:00 CR → valida que el setup tenga TP cerca y pueda cerrar antes de 23:59
 
 ## Nunca
 

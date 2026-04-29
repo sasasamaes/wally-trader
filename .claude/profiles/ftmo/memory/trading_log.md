@@ -4,7 +4,7 @@ Registro de cada trade en FTMO demo/real. `journal-keeper` agent lo actualiza al
 
 ## Esquema por trade
 
-- **Fecha / Hora MX:** apertura y cierre
+- **Fecha / Hora CR:** apertura y cierre
 - **Asset:** BTCUSD / ETHUSD / EURUSD / etc.
 - **Dirección:** LONG / SHORT
 - **Entry / SL / TP1 / TP2:** precios exactos

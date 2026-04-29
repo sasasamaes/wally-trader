@@ -13,7 +13,7 @@ echo "PID: $$ (guarda este número para matar el proceso con: kill $$)"
 while [ "$(date +%s)" -lt "$END" ]; do
     # Placeholder: aquí iría lógica real de chequeo via MCP
     # Por ahora solo notifica cada hora "monitor activo"
-    HORA=$(TZ='America/Mexico_City' date +%H:%M)
+    HORA=$(TZ='America/Costa_Rica' date +%H:%M)
 
     # TODO: integrar con MCP TV para leer precio + Donchian + RSI + BB
     # Si 4/4 filtros alinean → osascript notify

@@ -13,7 +13,7 @@ Una estrategia NO es universal. La misma config que gana en trending PIERDE todo
 - Donchian Breakout 10x en 15m range (3 días): **-26% a 0% WR** (todas trampas)
 - Mean Reversion en 15m range: **100% WR, +15%**
 
-**Cómo detectar régimen (al abrir sesión, MX 05:30):**
+**Cómo detectar régimen (al abrir sesión, CR 05:30):**
 
 **RANGE (usar Mean Reversion):**
 - BTC se mantiene dentro de una caja de <5% de amplitud por **3+ días**

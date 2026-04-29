@@ -22,8 +22,8 @@ originSessionId: 870cfb36-0066-4b6c-a1b7-eeaebc9a6ca8
 - TP2 (40%): 4.0×SL
 - TP3 (20%): 6.0×SL
 - Leverage: 10x
-- Ventana: **MX 06:00 – 23:59** (cripto 24/7, trader no duerme con posición abierta)
-- Force exit: **23:59 MX** (06:00 UTC del día siguiente). Cierre anticipado permitido si ya hay ganancia buena del día o pendiente personal.
+- Ventana: **CR 06:00 – 23:59** (cripto 24/7, trader no duerme con posición abierta)
+- Force exit: **23:59 CR** (06:00 UTC del día siguiente). Cierre anticipado permitido si ya hay ganancia buena del día o pendiente personal.
 - Max 5 trades/día, stop en 2 SLs
 
 **4 filtros obligatorios (todos deben cumplirse):**
@@ -52,7 +52,7 @@ SHORT:
 **Regla de cambio de estrategia:**
 Si precio cierra **4H fuera** de la caja 73,500-78,300 **con volumen >2x promedio** → cambiar a Donchian Breakout (estrategia previa, documentada en backtest_findings.md)
 
-**Niveles vigentes al 2026-04-20 MX 09:00 aprox:**
+**Niveles vigentes al 2026-04-20 CR 09:00 aprox:**
 - Donchian High(15): **75,729**
 - Donchian Low(15): **74,816**
 - Mid: **75,272**

@@ -24,7 +24,7 @@ max_sl_consecutive: 2           # 2 SL seguidos → STOP día
 
 Ver `memory/mt5_symbols.md` para símbolos exactos en MT5 y pip values.
 
-| Asset | Sesión óptima MX | Régimen ideal |
+| Asset | Sesión óptima CR | Régimen ideal |
 |---|---|---|
 | BTCUSD | 06:00-10:00 | RANGE |
 | ETHUSD | 06:00-10:00 | RANGE/TREND leve |
@@ -35,8 +35,8 @@ Ver `memory/mt5_symbols.md` para símbolos exactos en MT5 y pip values.
 
 ## Ventana operativa
 
-- Inicio: MX 06:00
-- Force exit: MX 16:00 (cierre sesión US)
+- Inicio: CR 06:00
+- Force exit: CR 16:00 (cierre sesión US)
 - NO overnight — obligatorio cerrar trades antes de 16:00
 
 ## Reglas duras (ver `rules.md` para detalle formal)

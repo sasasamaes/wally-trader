@@ -10,5 +10,5 @@ SONIDO="${3:-Glass}"
 osascript -e "display notification \"${MENSAJE}\" with title \"${TITULO}\" sound name \"${SONIDO}\""
 
 # Log para historial
-FECHA=$(TZ='America/Mexico_City' date +'%Y-%m-%d %H:%M:%S')
+FECHA=$(TZ='America/Costa_Rica' date +'%Y-%m-%d %H:%M:%S')
 echo "[${FECHA}] ${TITULO}: ${MENSAJE}" >> ~/Documents/wally-trader/.claude/scripts/notifications.log

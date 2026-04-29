@@ -60,7 +60,7 @@ Cada señal validada se registra así:
 
 ## Estado actual
 
-### Señal #1 — 2026-04-21 04:15 MX
+### Señal #1 — 2026-04-21 04:15 CR
 **Fuente:** El Sabueso de Wall Street
 **Comunidad:** punkchainer's Discord
 **Señal:** SHORT XLMUSDT.P @ 0.1822 (sin SL/TP especificados)

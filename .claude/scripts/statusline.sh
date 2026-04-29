@@ -9,6 +9,32 @@ if [[ -x "$PROFILE_SCRIPT" ]]; then
 fi
 # ─────────────────────────────────
 
+# ─────── FX rate USD→CRC (Costa Rica colones) ───────
+FX_SCRIPT="$(dirname "$0")/fx_rate.sh"
+USD_CRC_RATE=""
+if [[ -x "$FX_SCRIPT" ]]; then
+  USD_CRC_RATE="$(bash "$FX_SCRIPT" 2>/dev/null)"
+fi
+
+# Convierte $USD a string ₡CRC con format "8,241" o "4.7M" si > 1M
+usd_to_crc() {
+  local usd="$1"
+  if [[ -z "$USD_CRC_RATE" || -z "$usd" ]]; then
+    echo ""
+    return
+  fi
+  python3 -c "
+usd = float('${usd}'); rate = float('${USD_CRC_RATE}'); crc = usd * rate
+if crc >= 1_000_000:
+    print(f'≈₡{crc/1_000_000:.1f}M')
+elif crc >= 10_000:
+    print(f'≈₡{crc:,.0f}')
+else:
+    print(f'≈₡{crc:,.0f}')
+" 2>/dev/null
+}
+# ─────────────────────────────────
+
 # ─────── Notion detection (opcional) ──
 # Lee .env y verifica si ambas NOTION_*_DB_ID están llenas
 NOTION_TAG=""
@@ -27,12 +53,16 @@ if [[ "$PROFILE" == "ftmo" ]]; then
   CURVE="$(dirname "$0")/../profiles/ftmo/memory/equity_curve.csv"
   if [[ -f "$CURVE" && $(wc -l < "$CURVE") -gt 1 ]]; then
     LAST_EQ="$(tail -n1 "$CURVE" | cut -d',' -f2)"
+    CRC_TAG="$(usd_to_crc "$LAST_EQ")"
+    [[ -n "$CRC_TAG" ]] && CRC_TAG=" $CRC_TAG"
     DAILY="$(python3 "$(dirname "$0")/guardian.py" --profile ftmo --action status --brief 2>/dev/null || echo "N/A")"
     EA_STATUS=$(python3 "$(dirname "$0")/mt5_bridge.py" ea-status 2>/dev/null || echo "EA N/A")
-    echo "[FTMO \$10k] Equity: \$$LAST_EQ  •  $DAILY  •  $EA_STATUS$NOTION_TAG"
+    echo "[FTMO \$10k] Equity: \$$LAST_EQ$CRC_TAG  •  $DAILY  •  $EA_STATUS$NOTION_TAG"
   else
+    CRC_TAG="$(usd_to_crc "10000")"
+    [[ -n "$CRC_TAG" ]] && CRC_TAG=" $CRC_TAG"
     EA_STATUS=$(python3 "$(dirname "$0")/mt5_bridge.py" ea-status 2>/dev/null || echo "EA N/A")
-    echo "[FTMO \$10k] Equity: \$10,000 (initial — run /equity)  •  $EA_STATUS$NOTION_TAG"
+    echo "[FTMO \$10k] Equity: \$10,000$CRC_TAG (initial — run /equity)  •  $EA_STATUS$NOTION_TAG"
   fi
   exit 0
 fi
@@ -53,8 +83,8 @@ if [[ "$PROFILE" == "fotmarkets" ]]; then
     3) NEXT_THRESHOLD="estándar"; MAX_TRADES=3 ;;
   esac
 
-  HORA_MX=$(TZ='America/Mexico_City' date +%H:%M)
-  FECHA=$(TZ='America/Mexico_City' date +%Y-%m-%d)
+  HORA_CR=$(TZ='America/Costa_Rica' date +%H:%M)
+  FECHA=$(TZ='America/Costa_Rica' date +%Y-%m-%d)
 
   TRADES_HOY=0
   if [[ -f "$LOG" ]]; then
@@ -63,7 +93,7 @@ if [[ "$PROFILE" == "fotmarkets" ]]; then
   fi
 
   # Ventana 07:00-11:00 (octal-safe con 10#)
-  HORA_HHMM=$(TZ='America/Mexico_City' date +%H%M)
+  HORA_HHMM=$(TZ='America/Costa_Rica' date +%H%M)
   if (( 10#$HORA_HHMM >= 700 && 10#$HORA_HHMM <= 1055 )); then
     VENTANA="🟢 VENT"
   elif (( 10#$HORA_HHMM > 1055 && 10#$HORA_HHMM <= 1100 )); then
@@ -72,7 +102,9 @@ if [[ "$PROFILE" == "fotmarkets" ]]; then
     VENTANA="🔴 OFF"
   fi
 
-  echo "[FOTMARKETS] \$$CAP | Fase $PHASE ($NEXT_THRESHOLD) | $VENTANA MX $HORA_MX | $TRADES_HOY/$MAX_TRADES trades$NOTION_TAG"
+  CRC_TAG="$(usd_to_crc "$CAP")"
+  [[ -n "$CRC_TAG" ]] && CRC_TAG=" $CRC_TAG"
+  echo "[FOTMARKETS] \$$CAP$CRC_TAG | Fase $PHASE ($NEXT_THRESHOLD) | $VENTANA CR $HORA_CR | $TRADES_HOY/$MAX_TRADES trades$NOTION_TAG"
   exit 0
 fi
 
@@ -92,12 +124,12 @@ if [ -f "$TRADING_LOG" ]; then
 fi
 CAP=${CAP:-13.63}
 
-# Hora MX (UTC-6)
-HORA_MX=$(TZ='America/Mexico_City' date +%H:%M)
-HORA_NUM=$(TZ='America/Mexico_City' date +%H)
+# Hora CR (UTC-6)
+HORA_CR=$(TZ='America/Costa_Rica' date +%H:%M)
+HORA_NUM=$(TZ='America/Costa_Rica' date +%H)
 HORA_NUM=${HORA_NUM#0}  # remove leading zero
 
-# Ventana MX 06:00-23:59 (cripto 24/7, trader no duerme con trade abierto)
+# Ventana CR 06:00-23:59 (cripto 24/7, trader no duerme con trade abierto)
 if [ "$HORA_NUM" -ge 6 ] 2>/dev/null && [ "$HORA_NUM" -le 23 ] 2>/dev/null; then
     VENTANA="🟢 VENT"
     VCOLOR=$'\e[0;32m'
@@ -113,7 +145,7 @@ else
 fi
 
 # Fecha + trades hoy
-FECHA=$(TZ='America/Mexico_City' date +%Y-%m-%d)
+FECHA=$(TZ='America/Costa_Rica' date +%Y-%m-%d)
 TRADES_HOY=0
 if [ -f "$TRADING_LOG" ]; then
     TRADES_HOY=$(grep -c "${FECHA}" "$TRADING_LOG" 2>/dev/null)
@@ -137,13 +169,17 @@ else
     DELTA_SIGN=""
 fi
 
-# Single line output (preserva formato retail original + profile tag + notion tag)
-printf "%s[RETAIL]%s %s💰 \$%s%s %s(%s\$%s)%s │ 📊 %s/3 │ %s%s%s │ 🕐 MX %s │ %sBTC.P%s%s" \
+# Conversión a CRC
+CRC_TAG="$(usd_to_crc "$CAP")"
+[[ -n "$CRC_TAG" ]] && CRC_DISPLAY=" $CRC_TAG" || CRC_DISPLAY=""
+
+# Single line output (preserva formato retail original + profile tag + CRC + notion tag)
+printf "%s[RETAIL]%s %s💰 \$%s%s%s %s(%s\$%s)%s │ 📊 %s/3 │ %s%s%s │ 🕐 CR %s │ %sBTC.P%s%s" \
     "$BOLD" "$RESET" \
-    "$BOLD" "$CAP" "$RESET" \
+    "$BOLD" "$CAP" "$RESET" "$CRC_DISPLAY" \
     "$DELTA_COLOR" "$DELTA_SIGN" "$DELTA" "$RESET" \
     "$TRADES_HOY" \
     "$VCOLOR" "$VENTANA" "$RESET" \
-    "$HORA_MX" \
+    "$HORA_CR" \
     "$YELLOW" "$RESET" \
     "$NOTION_TAG"

@@ -1,4 +1,4 @@
-# 🌅 Prompt Matutino COMPLETO — 5:30/6:00 AM MX
+# 🌅 Prompt Matutino COMPLETO — 5:30/6:00 AM CR
 
 Copia-pega este prompt en Claude cada mañana. Cubre análisis, psicología, reglas y disciplina.
 
@@ -7,7 +7,7 @@ Copia-pega este prompt en Claude cada mañana. Cubre análisis, psicología, reg
 ## 🔥 PROMPT PRINCIPAL (copy-paste)
 
 ```
-Análisis matutino BTCUSDT.P. Son las 6 AM MX. Ejecuta protocolo completo:
+Análisis matutino BTCUSDT.P. Son las 6 AM CR. Ejecuta protocolo completo:
 
 ═══ FASE 1: AUTO-CHECK PERSONAL ═══
 
@@ -85,6 +85,18 @@ NIVELES ADICIONALES A DIBUJAR:
 - Rejection (wick + vol alto) vs Acumulación (body + vol alto)
 - Volume profile: ¿dónde está el POC del día?
 
+═══ FASE 8.5: ORDERFLOW BOOKMAP (manual, retail/Binance) ═══
+
+- Abrir https://web.bookmap.com/ → BTCUSDT.P Binance Futures
+- Reportar:
+  * ¿Walls de bids/asks cerca de Donchian H/L y BB upper/lower? (liquidez defendiendo niveles)
+  * ¿Absorción en el nivel de entry? (wall siendo comido = nivel débil)
+  * ¿Cluster de stops visible? (gradiente claro debajo soporte / encima resistencia)
+  * ¿Spoofing detectado en el lado opuesto al trade?
+- Regla: walls a favor → convicción 100%; absorción del wall en entry → reducir 30% o skip
+- Solo profile retail/Binance (BingX/forex/indices no tienen feed free)
+- NO bloquea: si user no quiere usarlo o no aplica → continuar a FASE 9
+
 ═══ FASE 9: PATRONES TÉCNICOS ═══
 
 - Dojis, hammers, engulfing en últimas 5 velas 15m y 1H
@@ -106,7 +118,7 @@ Calcula según mi capital actual (revisar trading_log.md):
    * Mean Reversion: Donchian H/L + BB + zonas entry + MID + SL/TP3 ambos lados
    * Breakout: niveles ruptura + buffer + SL/TP3
 3. Añadir niveles extra: PDH/PDL (azul), Weekly Open (morado), VWAP (amarillo)
-4. Línea vertical cierre 23:59 MX
+4. Línea vertical cierre 23:59 CR
 5. Texto superior: "REGIMEN: X | ESTRATEGIA: Y | SESGO: Z | Entry en Q"
 
 ═══ FASE 12: PLAN DE ENTRADA ═══
@@ -115,7 +127,7 @@ Formato:
 - Entry zone exacto (precio)
 - SL calculado con 2% risk position sizing
 - TP1/TP2/TP3 con ATR
-- Hora óptima (priorizar MX 06:00-10:00 = London/NY overlap; ventana total 06:00-23:59)
+- Hora óptima (priorizar CR 06:00-10:00 = London/NY overlap; ventana total 06:00-23:59)
 - Los 4 filtros listados que deben alinearse
 - Invalidación (qué condiciones cancelan el setup)
 
@@ -125,7 +137,7 @@ Lista imprimible que debo tachar antes de apretar COMPRAR/VENDER:
 ☐ Régimen correcto identificado
 ☐ 4/4 filtros alineados (no 3/4)
 ☐ Multi-TF confluence (1H no contradice 15m)
-☐ Hora dentro de MX 06:00-23:59
+☐ Hora dentro de CR 06:00-23:59
 ☐ Sin noticia alto impacto en próximas 4h
 ☐ Correlaciones (ETH) en la misma dirección
 ☐ SL calculado y listo para poner
@@ -175,7 +187,7 @@ Devuelve todo estructurado con tablas, emojis para urgencia visual, y veredicto 
 
 ## 📋 Lo que Claude te va a entregar
 
-### 15 Secciones estructuradas:
+### 16 Secciones estructuradas:
 
 1. **Auto-check personal** — 5 preguntas SI/NO
 2. **Sentiment matrix** — F&G, funding, retail votes
@@ -185,6 +197,7 @@ Devuelve todo estructurado con tablas, emojis para urgencia visual, y veredicto 
 6. **Estrategia del día** — qué operar
 7. **Niveles multi-TF** — 4H/1H/15m + VWAP/PDH/PDL/Weekly
 8. **Money flow** — spikes, rejection vs acumulación
+8.5. **Orderflow Bookmap** — walls, absorción, stop hunts (Binance only, manual)
 9. **Patrones** — divergencias, doji, engulfing
 10. **Position sizing** — calculado con tu capital exacto
 11. **Chart TV actualizado** — limpio + redibujado
@@ -206,7 +219,7 @@ Decisión: entro o espero.
 
 ### Al ejecutar entrada:
 ```
-Ejecuté [LONG/SHORT] @ [precio] a las MX __:__. 
+Ejecuté [LONG/SHORT] @ [precio] a las CR __:__. 
 Actualiza niveles en TV + monitoreo activo.
 Dime cuándo mover SL a BE.
 ```
@@ -225,7 +238,7 @@ Analiza qué fallé en ambos. Lección del día.
 
 ### Cierre de sesión:
 ```
-Cierre MX 17:00. Resumen completo:
+Cierre CR 17:00. Resumen completo:
 - Trades del día
 - PnL total
 - Capital final
@@ -271,12 +284,13 @@ Identifica 1 patrón a cambiar la próxima semana.
 ║  ☐ Régimen identificado (R/T/V)           ║
 ║  ☐ Sin noticias high impact 4h            ║
 ║  ☐ ETH en dirección a mi bias             ║
-║  ☐ Hora MX 06:00-23:59 (no dormir open)   ║
+║  ☐ Hora CR 06:00-23:59 (no dormir open)   ║
 ║                                           ║
 ║  SETUP                                    ║
 ║  ☐ 4/4 filtros alineados                  ║
 ║  ☐ 1H no contradice 15m                   ║
 ║  ☐ Volumen confirma                       ║
+║  ☐ Bookmap orderflow OK (Binance)         ║
 ║                                           ║
 ║  EJECUCIÓN                                ║
 ║  ☐ SL calculado (____)                    ║
@@ -312,19 +326,19 @@ Estrategia usada: Mean Reversion / Breakout / NO OPERÉ
 ──────────────────────────────────────
 TRADE #1
 Setup: __________________________
-Entry: $_____ a las __:__ MX
+Entry: $_____ a las __:__ CR
 SL:    $_____ (calculado -__.__% → risk $_____)
 TP1:   $_____ (cerrar 40%, SL→BE)
 TP2:   $_____ (cerrar 40%)
 TP3:   $_____ (runner 20%)
 
-Exit:  $_____ a las __:__ MX
+Exit:  $_____ a las __:__ CR
 Razón: TP1 / TP2 / TP3 / SL / TIME / MANUAL
 PnL:   $______
 
 ¿Seguí TODOS los 4 filtros? SI / NO
 ¿Seguí checklist físico? SI / NO
-Hora de entrada dentro de MX 06:00-23:59? SI / NO
+Hora de entrada dentro de CR 06:00-23:59? SI / NO
 ──────────────────────────────────────
 [Trade #2 si hubo...]
 

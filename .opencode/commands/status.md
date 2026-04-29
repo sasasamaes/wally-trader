@@ -13,7 +13,7 @@ Pasos que ejecuta Claude:
      [RETAIL $13.63]
      Estrategia: Mean Reversion 15m
      Régimen: <detecta vía regime-detector rápido o cachea>
-     Hora MX: HH:MM
+     Hora CR: HH:MM
      Trades hoy: 0/3
      Último trade: <fecha> <resultado>
      ```
@@ -46,7 +46,7 @@ Pasos que ejecuta Claude:
      Risk por trade: 10% ($3.00)
      Max trades hoy: 1
      Estrategia: Fotmarkets-Micro
-     Ventana MX: 07:00–11:00
+     Ventana CR: 07:00–11:00
      Guardian: PASS/BLOCK <razón>
      Trades hoy: 0/1
      Último trade: <fecha> <resultado>

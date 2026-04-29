@@ -35,8 +35,8 @@ El sistema de trading actual soporta 2 profiles (`retail` y `ftmo`). El usuario 
 | Capital inicial | $30 USD (bonus no-deposit) |
 | Moneda | USD |
 | Assets operables | EURUSD, GBPUSD, USDJPY, XAUUSD, NAS100, SPX500, BTCUSD, ETHUSD |
-| Ventana operativa | **MX 07:00–11:00** (London/NY overlap) |
-| Force exit | MX 10:55 |
+| Ventana operativa | **CR 07:00–11:00** (London/NY overlap) |
+| Force exit | CR 10:55 |
 | Overnight | Prohibido |
 | Weekend | Prohibido |
 
@@ -121,7 +121,7 @@ Scalping de reversión tras pullback, en dirección de tendencia 15m. Sweet spot
 1. `ATR(14, 5m) > 2× promedio 50 velas` → NO operar (volatile)
 2. Spread EURUSD > 3 pips → NO operar (condición anormal)
 3. 15 min antes de noticia roja (NFP, FOMC, CPI) → cierre + no reentrar 30 min
-4. ECB day (jueves 07:00–09:00 MX) → NO operar en EUR pairs
+4. ECB day (jueves 07:00–09:00 CR) → NO operar en EUR pairs
 
 ## 6. Integración con sistema existente
 
@@ -169,7 +169,7 @@ Scalping de reversión tras pullback, en dirección de tendencia 15m. Sweet spot
 
 `.claude/scripts/fotmarkets_guard.sh` valida antes de cada `/validate`:
 
-1. Hora MX ∈ [07:00, 10:55]
+1. Hora CR ∈ [07:00, 10:55]
 2. No se excedió `max_trades_per_day` de la fase activa
 3. No hay SL consecutivos que disparen "stop día" de la fase
 4. No es weekend ni holiday
@@ -180,7 +180,7 @@ Output: `PASS` o `BLOCK: <razón>`. Es un wrapper liviano (~40 líneas), sin ló
 
 Cuando profile activo es `fotmarkets`:
 ```
-[FOTMARKETS] $30.00 | Fase 1 (→$100) | 07:00-11:00 MX | 0/1 trades hoy
+[FOTMARKETS] $30.00 | Fase 1 (→$100) | 07:00-11:00 CR | 0/1 trades hoy
 ```
 
 ### CLAUDE.md

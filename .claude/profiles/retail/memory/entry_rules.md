@@ -12,7 +12,7 @@ originSessionId: 870cfb36-0066-4b6c-a1b7-eeaebc9a6ca8
 4. Entrada: apertura de la vela 15m siguiente al cierre que rompió
 5. Colocar SL y 3 TPs inmediatamente en la plataforma al abrir posición
 
-**Why:** El 2026-04-20 MX 08:30 una vela 15m cerró en 75,530.7 — apenas 0.7 puntos arriba del nivel Donchian 75,530. Técnicamente cumplió "close > 75,530" pero en la práctica fue un fakeout clásico: la vela siguiente cayó 300 pts inmediatamente y tocó el SL. Sin buffer, la regla genera entradas en noise.
+**Why:** El 2026-04-20 CR 08:30 una vela 15m cerró en 75,530.7 — apenas 0.7 puntos arriba del nivel Donchian 75,530. Técnicamente cumplió "close > 75,530" pero en la práctica fue un fakeout clásico: la vela siguiente cayó 300 pts inmediatamente y tocó el SL. Sin buffer, la regla genera entradas en noise.
 
 **How to apply:** Cuando el usuario pregunte "¿entró ya?" o "¿dio entrada?", verificar no solo que el close esté fuera del nivel sino también que:
 - Esté al menos 30 pts (≈0.04%) fuera

@@ -18,7 +18,7 @@ Crea una nueva full-page database en Notion (workspace personal o página espec�
 |---|---|---|
 | **Name** | Title | (default — usar formato: `#N <asset> <direction>`) |
 | **Date** | Date | — |
-| **Time MX** | Text | — |
+| **Time CR** | Text | — |
 | **Asset** | Select | BTCUSDT.P |
 | **Direction** | Select | LONG, SHORT |
 | **Entry** | Number | — |
@@ -45,7 +45,7 @@ Similar a la retail pero con columnas adicionales específicas de FTMO:
 |---|---|---|
 | **Name** | Title | `#N <asset> <direction>` |
 | **Date** | Date | — |
-| **Time MX** | Text | — |
+| **Time CR** | Text | — |
 | **Asset** | Select | BTCUSD, ETHUSD, EURUSD, GBPUSD, NAS100, SPX500 |
 | **Direction** | Select | LONG, SHORT |
 | **Entry** | Number | — |

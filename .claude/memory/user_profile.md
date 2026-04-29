@@ -1,11 +1,11 @@
 ---
 name: User profile
-description: Trader retail en México operando BTCUSDT.P en BingX con capital pequeño
+description: Trader retail en Costa Rica operando BTCUSDT.P en BingX con capital pequeño
 type: user
 ---
 **Perfil operativo:**
 - Nombre: Francisco Campos Diaz (GitHub: @sasasamaes)
-- Ubicación: México (UTC-6)
+- Ubicación: Costa Rica (UTC-6)
 - Exchange: BingX (perpetuals)
 - Par activo: BTCUSDT.P
 - Capital inicial: $10
@@ -20,11 +20,11 @@ type: user
 
 **Ventana operativa (actualizada 2026-04-21):**
 - Cripto opera 24/7; regla personal: **no dormir con posición abierta**
-- Análisis desde MX 06:00 AM
-- Entradas: MX 06:00 – 23:59
-- Force exit default: **MX 23:59** (cerrar antes de dormir)
+- Análisis desde CR 06:00 AM
+- Entradas: CR 06:00 – 23:59
+- Force exit default: **CR 23:59** (cerrar antes de dormir)
 - Cierre anticipado permitido si: (a) ya acumuló ganancia buena del día, o (b) tiene pendiente/vuelta personal
-- Sesión de mayor volatilidad: MX 06:00–10:00 (London/NY overlap) — priorizar entradas en esa franja cuando sea posible
+- Sesión de mayor volatilidad: CR 06:00–10:00 (London/NY overlap) — priorizar entradas en esa franja cuando sea posible
 
 **Nivel de experiencia:**
 - Conoce conceptos básicos (entry, SL, TP, leverage) pero necesita reglas operativas explícitas y paso a paso

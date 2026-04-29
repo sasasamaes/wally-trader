@@ -20,8 +20,8 @@ Ver `strategy.md` en este directorio — **Mean Reversion 15m** (idéntica a `re
 
 ## Ventana operativa
 
-- Inicio: MX 06:00
-- Force exit: MX 23:59 (regla "no dormir con posición abierta")
+- Inicio: CR 06:00
+- Force exit: CR 23:59 (regla "no dormir con posición abierta")
 - Cripto 24/7 pero el trader no duerme con trade abierto
 
 ## Reglas duras

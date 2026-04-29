@@ -44,7 +44,7 @@ Pega estado MT5 actual o corre /sync
 8. **CROSS-REFERENCE CON NOTION FTMO DB (si Notion MCP activo):**
    - Lee `.claude/.env` para `NOTION_FTMO_DB_ID`. Verifica acceso a tools `mcp__notion_*`
    - Si disponible:
-     - Query `mcp__notion__query_database` con filter `Date == today` (timezone MX)
+     - Query `mcp__notion__query_database` con filter `Date == today` (timezone CR)
      - Para cada row hoy: cross-reference con mt5_state + pending_orders
      - Detecta discrepancias:
        - Row Notion con Status=filled pero no aparece en state.positions ni closed_today → flag warning

@@ -104,7 +104,7 @@ def _render_dashboard(active: list, suspended: list, prices: dict) -> None:
     path = _repo_root() / ".claude" / "watcher" / "dashboard.md"
     path.parent.mkdir(parents=True, exist_ok=True)
 
-    mx_now = (datetime.now(timezone.utc) - timedelta(hours=6)).strftime("%Y-%m-%d %H:%M MX")
+    mx_now = (datetime.now(timezone.utc) - timedelta(hours=6)).strftime("%Y-%m-%d %H:%M CR")
 
     lines = [
         f"# Watcher Dashboard — {mx_now}",

@@ -38,7 +38,7 @@ Pasos que ejecuta Claude:
      - "Modo FOTMARKETS activado — seguir sección FOTMARKETS-AWARE del agente"
      - "Analizar SOLO los siguientes assets: <allowed_assets de la fase actual>"
      - "Usar reglas de Fotmarkets-Micro (NO FTMO-Conservative): filtros de strategy.md"
-     - "Ventana operativa: MX 07:00-11:00 (no 06:00-16:00)"
+     - "Ventana operativa: CR 07:00-11:00 (no 06:00-16:00)"
      - "Risk per trade: <phase_risk_pct>% (phase-aware), cap $<phase_risk_usd_cap>"
      - "Max trades hoy: <phase_max_trades>"
      - "TF entry 5m / confirmación 15m / contexto 1H (no 4H)"
@@ -85,7 +85,7 @@ Pasos que ejecuta Claude:
 5. Detección de régimen (4H + 1H)
 6. Selección de estrategia
 7. Niveles técnicos multi-TF
-8. Money flow + patrones
+8. Money flow + patrones (incluye FASE 8.5: Bookmap orderflow manual, solo retail/Binance — https://web.bookmap.com/)
 9. Position sizing con capital actual
 10. Dibujo en TradingView (limpia + redibuja)
 11. Plan de entrada (entry, SL, TP1/2/3)

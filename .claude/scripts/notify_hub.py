@@ -40,7 +40,7 @@ def _repo_root() -> Path:
 def _now_mx() -> str:
     from datetime import timedelta, timezone as _tz
     mx = datetime.now(_tz.utc) - timedelta(hours=6)
-    return mx.strftime("%Y-%m-%d %H:%M:%S MX")
+    return mx.strftime("%Y-%m-%d %H:%M:%S CR")
 
 
 # ---------- Channel: macOS -----------------------------------

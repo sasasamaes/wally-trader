@@ -133,7 +133,7 @@ Cuando se analice BTC, identificar y dibujar:
 
 ## 🧭 Sesiones ICT (importante para timing)
 
-| Sesión | Hora UTC | Hora MX | Comportamiento típico |
+| Sesión | Hora UTC | Hora CR | Comportamiento típico |
 |---|---|---|---|
 | **Asian range** | 00:00-07:00 | 18:00-01:00 | Consolida, crea el rango del día |
 | **London open** | 07:00-10:00 | 01:00-04:00 | Manipulación + primer move |

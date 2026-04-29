@@ -2,9 +2,9 @@
 # Hook SessionStart: carga contexto de trading al iniciar Claude en este proyecto
 # Output format: JSON con hookSpecificOutput.additionalContext para inyectar al modelo
 
-HORA_MX=$(TZ='America/Mexico_City' date +%H)
-HORA_MX=${HORA_MX#0}
-HORA_STR=$(TZ='America/Mexico_City' date +%H:%M)
+HORA_CR=$(TZ='America/Costa_Rica' date +%H)
+HORA_CR=${HORA_CR#0}
+HORA_STR=$(TZ='America/Costa_Rica' date +%H:%M)
 
 # ─────── Profile detection ───────
 PROFILE_SCRIPT="$(dirname "$0")/profile.sh"
@@ -38,11 +38,11 @@ fi
 # ─────────────────────────────────
 
 # Determinar saludo según hora
-if [ "$HORA_MX" -ge 5 ] 2>/dev/null && [ "$HORA_MX" -le 9 ] 2>/dev/null; then
+if [ "$HORA_CR" -ge 5 ] 2>/dev/null && [ "$HORA_CR" -le 9 ] 2>/dev/null; then
     SALUDO="Buenos días — ventana de trading activa"
-elif [ "$HORA_MX" -ge 10 ] 2>/dev/null && [ "$HORA_MX" -le 16 ] 2>/dev/null; then
+elif [ "$HORA_CR" -ge 10 ] 2>/dev/null && [ "$HORA_CR" -le 16 ] 2>/dev/null; then
     SALUDO="Sesión en curso"
-elif [ "$HORA_MX" -ge 17 ] 2>/dev/null && [ "$HORA_MX" -le 20 ] 2>/dev/null; then
+elif [ "$HORA_CR" -ge 17 ] 2>/dev/null && [ "$HORA_CR" -le 20 ] 2>/dev/null; then
     SALUDO="Cierre de sesión — hora de journal"
 else
     SALUDO="Fuera de ventana — planeando o revisando"
@@ -85,7 +85,7 @@ CONTEXT=$(cat <<EOF
 $PROFILE_HEADER
 $STALE_MSG_OUTPUT
 
-**Hora MX:** $HORA_STR — $SALUDO
+**Hora CR:** $HORA_STR — $SALUDO
 $CAP_LINE
 **Símbolo:** BTCUSDT.P (BingX)
 **Estrategia activa:** Mean Reversion 15m (según régimen)

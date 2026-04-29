@@ -5,7 +5,7 @@
 #   30 5 * * 1-5 ~/Documents/wally-trader/.claude/scripts/daily_cron.sh
 
 LOG="$HOME/Documents/wally-trader/.claude/scripts/cron.log"
-FECHA=$(TZ='America/Mexico_City' date +'%Y-%m-%d %H:%M')
+FECHA=$(TZ='America/Costa_Rica' date +'%Y-%m-%d %H:%M')
 
 echo "[$FECHA] Cron matutino iniciado" >> "$LOG"
 

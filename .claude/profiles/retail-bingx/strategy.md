@@ -17,7 +17,7 @@ Validada con **100% WR** y **+15.1%** en backtest 3 días frente a 144 configs.
 | TP2 (40%) | 4.0 × SL |
 | TP3 (20%) | 6.0 × SL |
 | Leverage | 10x |
-| Ventana | MX 06:00 – 23:59 |
+| Ventana | CR 06:00 – 23:59 |
 
 ## Entradas — 4 filtros obligatorios
 

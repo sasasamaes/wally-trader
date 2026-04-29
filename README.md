@@ -200,8 +200,8 @@ trading/
 | TP3 (20%) | 6.0 × SL |
 | Leverage | 10x |
 | Position sizing | 2% risk del capital |
-| Ventana entradas | MX 06:00 – 23:59 |
-| Cierre forzado | MX 23:59 (no dormir con posición abierta) |
+| Ventana entradas | CR 06:00 – 23:59 |
+| Cierre forzado | CR 23:59 (no dormir con posición abierta) |
 | Max trades/día | 3 |
 | Stop sesión | 2 SLs → para |
 
@@ -239,7 +239,7 @@ claude
 ```
 
 Statusline refleja el profile activo:
-- `[RETAIL] 💰 $13.63 (+$3.63) │ 📊 0/3 │ 🟢 VENT │ 🕐 MX 06:00 │ BTC.P`
+- `[RETAIL] 💰 $13.63 (+$3.63) │ 📊 0/3 │ 🟢 VENT │ 🕐 CR 06:00 │ BTC.P`
 - `[FTMO $10k] Equity: $10,000 • Daily: $+0 (0.0%) • EA ✓ 3s • Pos: 0`
 
 ---
@@ -251,7 +251,7 @@ Statusline refleja el profile activo:
 - Actualizar `DAILY_TRADING_JOURNAL.md`
 - Dormir 7+ horas
 
-### 2. Mañana 5:30 AM MX
+### 2. Mañana 5:30 AM CR
 Abre Claude Code en este directorio:
 ```bash
 cd ~/Documents/trading
@@ -289,7 +289,7 @@ Claude ejecuta 17 fases en ~5-8 minutos:
 - Tacha cada ítem antes de apretar COMPRAR/VENDER
 - Si no puedes tachar los 15 → **no entres**
 
-### 5. Cierre de sesión MX 17:00
+### 5. Cierre de sesión CR 17:00
 ```
 "Cierre sesión. Resumen PnL + actualiza trading_log.md"
 ```
@@ -352,9 +352,9 @@ Guardian bloquea entradas nuevas si:
 - 2 SLs consecutivos hoy → **BLOCK_HARD**
 - 2 trades ya ejecutados → **BLOCK_HARD** (cap diario)
 
-### 6. Force exit 16:00 MX
+### 6. Force exit 16:00 CR
 
-FTMO no permite overnight (y el sistema lo refuerza). A las 16:00 MX cierra todo.
+FTMO no permite overnight (y el sistema lo refuerza). A las 16:00 CR cierra todo.
 
 ### 7. Cierre de día
 
@@ -382,7 +382,7 @@ Sistema autónomo para programar entries matutinos y que el sistema los vigile m
 
 ### Workflow típico
 
-**MX 06:00 — morning:**
+**CR 06:00 — morning:**
 ```bash
 /morning
 # Claude propone: BTC LONG @ 77521, SL 77101, TP 78571, invalid 76900
@@ -428,7 +428,7 @@ El watcher auto-cancela cuando:
 1. **TTL expired** — pasó `expires_at` sin tocar entry
 2. **Precio rompe `invalidation_price`** — tesis muerta (ej: LONG 77521 con invalid 76900 → si close 4H <76900, cancela)
 3. **2 SLs hoy en el profile** — regla STOP día hit, todas las pending del día mueren
-4. **Force exit MX 23:59 (retail) / 16:00 (ftmo) / 10:55 (fotmarkets)** — no dormir con trade abierto
+4. **Force exit CR 23:59 (retail) / 16:00 (ftmo) / 10:55 (fotmarkets)** — no dormir con trade abierto
 
 ### Matriz whitelist cross-profile
 
@@ -601,18 +601,18 @@ python3 scripts/ml_system/supervised/predict.py --auto
 
 ## 📋 Paso a paso diario (workflow óptimo)
 
-Un día operativo completo usando TODO el stack (técnico + sentiment + ML). Ventana **MX 06:00 – 23:59** (cripto 24/7, pero no dormir con trade abierto).
+Un día operativo completo usando TODO el stack (técnico + sentiment + ML). Ventana **CR 06:00 – 23:59** (cripto 24/7, pero no dormir con trade abierto).
 
-### 🌅 MX 05:30 — Despertar
+### 🌅 CR 05:30 — Despertar
 
 ```bash
 cd ~/Documents/trading
 claude
 ```
 
-El status line muestra: `💰 $13.63 (+$3.63) │ 📊 0/3 │ 🟢 VENT │ 🕐 MX 05:30 │ BTC.P`
+El status line muestra: `💰 $13.63 (+$3.63) │ 📊 0/3 │ 🟢 VENT │ 🕐 CR 05:30 │ BTC.P`
 
-### 🌄 MX 05:45-06:00 — Check personal
+### 🌄 CR 05:45-06:00 — Check personal
 
 - [ ] Dormí 6+ horas
 - [ ] Desayuné algo
@@ -621,7 +621,7 @@ El status line muestra: `💰 $13.63 (+$3.63) │ 📊 0/3 │ 🟢 VENT │ �
 
 Si alguno falla → **NO operar hoy**.
 
-### ☀️ MX 06:00 — Análisis matutino (17 fases + ML)
+### ☀️ CR 06:00 — Análisis matutino (17 fases + ML)
 
 ```
 /morning
@@ -637,7 +637,7 @@ El agente `morning-analyst` ejecuta el protocolo completo en 5-8 min. Al finaliz
 
 **Veredicto posible:** `ENTRAR LONG` / `ENTRAR SHORT` / `ESPERAR` / `NO OPERAR`.
 
-### 🎯 MX 06:00 – 23:30 — Monitoreo de setup
+### 🎯 CR 06:00 – 23:30 — Monitoreo de setup
 
 Durante la ventana, espera a que BTC toque una zona operativa (Donchian High/Low ±0.1%). Puedes dejar alerta activa:
 
@@ -666,7 +666,7 @@ Durante la ventana, espera a que BTC toque una zona operativa (Donchian High/Low
 ### 💥 Al entrar — Disciplina mecánica
 
 1. Loggear **ANTES** de pulsar "Abrir" en BingX:
-   - Hora MX exacta
+   - Hora CR exacta
    - Precio de entry
    - Los 4 filtros con checkmark uno por uno
    - SL planeado ($)
@@ -685,15 +685,15 @@ Durante la ventana, espera a que BTC toque una zona operativa (Donchian High/Low
 
 - **NUNCA mover SL en contra.** Es la regla más violada y más cara.
 - Si el precio se aleja del SL sin llegar a TP1 → puede pasar. Respira.
-- Si necesitas cerrar manual (hora MX 23:30, evento macro imprevisto, pendiente personal) → cerrar a mercado sin mover SL.
+- Si necesitas cerrar manual (hora CR 23:30, evento macro imprevisto, pendiente personal) → cerrar a mercado sin mover SL.
 
-### 🌙 MX 23:30 — Alarma de cierre próximo
+### 🌙 CR 23:30 — Alarma de cierre próximo
 
-Si el trade sigue abierto a las 23:30 MX:
+Si el trade sigue abierto a las 23:30 CR:
 - Evalúa si hay chance real de tocar TP antes de 23:59
 - Si no → cerrar a mercado
 
-### 🔚 MX 23:59 — Force exit
+### 🔚 CR 23:59 — Force exit
 
 **Cerrar toda posición abierta. Sin excepción.** Cripto es 24/7; tu sueño no. Un wick de madrugada con leverage 10x puede liquidar la cuenta mientras duermes.
 
@@ -963,7 +963,7 @@ siguiente paso si uno falla — explícame el error y cómo resolverlo.
    DB 1: "Trades Retail" con schema (exacto):
      - Name (Title)
      - Date (Date)
-     - Time MX (Text)
+     - Time CR (Text)
      - Asset (Select: BTCUSDT.P)
      - Direction (Select: LONG, SHORT)
      - Entry (Number)
@@ -985,7 +985,7 @@ siguiente paso si uno falla — explícame el error y cómo resolverlo.
    DB 2: "Trades FTMO" con schema (exacto):
      - Name (Title)
      - Date (Date)
-     - Time MX (Text)
+     - Time CR (Text)
      - Asset (Select: BTCUSD, ETHUSD, EURUSD, GBPUSD, NAS100, SPX500)
      - Direction (Select: LONG, SHORT)
      - Entry (Number)
@@ -1229,7 +1229,7 @@ Atajos rápidos. La mayoría se adaptan al profile activo automáticamente.
 
 ### `.claude/scripts/` — Automatización
 
-- **statusline.sh** — Status line siempre visible: `💰 $13.63 (+$3.63) │ 📊 0/3 │ 🟢 VENT │ 🕐 MX 06:00 │ BTC.P`
+- **statusline.sh** — Status line siempre visible: `💰 $13.63 (+$3.63) │ 📊 0/3 │ 🟢 VENT │ 🕐 CR 06:00 │ BTC.P`
 - **session_start.sh** — Carga contexto al iniciar Claude (capital, reglas, comandos)
 - **stop_hook.sh** — Auto-commit del journal al cerrar sesión
 - **preprompt_check.sh** — Detecta "arriesgar todo", "mover SL", "aumentar leverage" y alerta
@@ -1250,10 +1250,10 @@ Atajos rápidos. La mayoría se adaptan al profile activo automáticamente.
 Siempre visible en tu terminal:
 
 ```
-💰 $13.63 (+$3.63) │ 📊 0/3 │ 🟢 VENT │ 🕐 MX 06:00 │ BTC.P
+💰 $13.63 (+$3.63) │ 📊 0/3 │ 🟢 VENT │ 🕐 CR 06:00 │ BTC.P
 ```
 
-Muestra: capital actual, delta desde inicial, trades hoy, si estás en ventana, hora MX, símbolo.
+Muestra: capital actual, delta desde inicial, trades hoy, si estás en ventana, hora CR, símbolo.
 
 ---
 

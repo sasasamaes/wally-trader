@@ -99,12 +99,12 @@ if lots < 0.01 → ABORTAR (trade imposible con min lot)
 1. `ATR(14, 5m) > 2× promedio 50 velas` → NO operar (régimen volatile)
 2. Spread EURUSD > 3 pips → NO operar (condición anormal, probablemente pre-noticia)
 3. 15 min antes de noticia roja (NFP, FOMC, CPI) → cierre preventivo + no reentrar 30 min
-4. Jueves 07:00–09:00 MX si hay ECB meeting → NO operar en EUR pairs
+4. Jueves 07:00–09:00 CR si hay ECB meeting → NO operar en EUR pairs
 
 ## 8. Checklist pre-entry
 
 - [ ] Profile activo = fotmarkets (verificar statusline)
-- [ ] Hora MX ∈ [07:00, 10:55]
+- [ ] Hora CR ∈ [07:00, 10:55]
 - [ ] Asset ∈ allowed_assets de la fase actual
 - [ ] Filtro 1: Trend ✓
 - [ ] Filtro 2: Momentum ✓

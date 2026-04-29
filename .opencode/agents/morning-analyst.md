@@ -1,7 +1,7 @@
 ---
 description: '**IMPORTANTE:** Este agente es específico para profile RETAIL (BTCUSDT.P
   BingX single-asset, 17 fases). Para profile FTMO (multi-asset) usa `morning-analyst-ftmo`.
-  — Use PROACTIVELY cuando el usuario inicie sesión de trading entre MX 05:00-09:00
+  — Use PROACTIVELY cuando el usuario inicie sesión de trading entre CR 05:00-09:00
   AM o diga "análisis matutino", "morning analysis", "empezar sesión", "check del
   día". Ejecuta el protocolo completo de 17 fases documentado en MORNING_PROMPT.md'
 mode: subagent
@@ -109,6 +109,31 @@ Chequea próximas 6h. Si hay FOMC/CPI/NFP/Powell/ETF → NO OPERAR.
 ### FASE 8: Money Flow
 Volumen 5m vs avg 24h. Identifica spikes + rejection vs acumulación.
 
+### FASE 8.5: Orderflow Bookmap (manual, retail/Binance only)
+
+Bookmap NO tiene MCP — es validación visual manual. Solo aplica a profile retail (Binance Futures tiene feed free; BingX no).
+
+Pídele al usuario que abra **https://web.bookmap.com/** con BTCUSDT.P Binance Futures y reporte 3 datos:
+
+1. **Walls visibles** cerca de los niveles Donchian/BB que dibujaste en FASE 11 (¿hay liquidez defendiendo el soporte/resistencia?)
+2. **Absorción** en el nivel de entry candidato (¿el wall se está comiendo al toque? color cayendo = nivel débil = riesgo de ruptura)
+3. **Cluster de stops** (gradiente claro debajo de soporte / encima de resistencia = stop hunt probable)
+
+Reporta como tabla compacta:
+
+| Nivel | Bookmap | Veredicto |
+|---|---|---|
+| DC Low <P> | Wall bids ~X BTC | Refuerza LONG / Sin liquidez = nivel frágil |
+| DC High <P> | Heatmap vacío arriba | Ruta libre breakout / Wall pesado = rejection esperado |
+
+**Reglas de uso:**
+- Si Bookmap confirma walls del lado del trade → mantener convicción 100%
+- Si Bookmap muestra absorción del wall en el nivel de entry → reducir convicción 30% o skip
+- Si user no quiere abrir Bookmap o no aplica al profile → continuar a FASE 9 sin bloqueo (NO obligatorio)
+- Spoofing detectado del lado opuesto al trade → flag de cautela en VEREDICTO
+
+Ver `~/.claude/projects/<project-path-encoded>/memory/bookmap.md` para guía completa.
+
 ### FASE 9: Patrones
 Doji, hammer, engulfing últimas 5 velas 15m y 1H. Divergencias RSI.
 
@@ -142,7 +167,7 @@ Lee capital actual de `~/.claude/projects/<project-path-encoded>/memory/trading_
    - draw_shape horizontal_line TP1  → color verde claro     label "TP1 <precio>"
    - draw_shape horizontal_line TP2  → color verde           label "TP2 <precio>"
    - draw_shape horizontal_line TP3  → color verde oscuro    label "TP3 <precio>"
-5. draw_shape trend_line vertical en hora 23:59 MX como recordatorio "Force exit"
+5. draw_shape trend_line vertical en hora 23:59 CR como recordatorio "Force exit"
 6. Si régimen es VOLATILE o no hay setup → dibujar SOLO Donchian + BB + PDH/PDL (chart de vigilancia)
 ```
 

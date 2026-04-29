@@ -99,10 +99,10 @@ future_time = current_time + 86400  # 24h forward
    - SHORT SL: red (#E53935), width 2, linestyle 2
    - SHORT TP3: dark green (#1B5E20), width 2, linestyle 0
 
-7. **Línea vertical cierre 23:59 MX (no dormir con posición):**
-   - vertical_line en time = próximo 23:59 MX (05:59 UTC del día siguiente)
+7. **Línea vertical cierre 23:59 CR (no dormir con posición):**
+   - vertical_line en time = próximo 23:59 CR (05:59 UTC del día siguiente)
    - color naranja fuerte (#FF6F00), linestyle 2
-   - texto "CIERRE 23:59 MX"
+   - texto "CIERRE 23:59 CR"
 
 8. **Texto superior con resumen:**
    - text shape en (current_time + 36000, donchian_high * 1.02)
@@ -142,7 +142,7 @@ SHORT setup (si dispara):
 - SL: XX,XXX (+X.XX%)
 - TP1/TP2/TP3: XX,XXX / XX,XXX / XX,XXX
 
-Cierre forzado: MX 17:00 (línea naranja vertical)
+Cierre forzado: CR 17:00 (línea naranja vertical)
 
 Precio actual: XX,XXX
 Estado: DENTRO zona / CERCA LONG / CERCA SHORT

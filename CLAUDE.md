@@ -7,12 +7,14 @@ Guía operativa para sesiones de trading con Claude. Lee esto al inicio de cada 
 
 ## Perfil del trader
 
+- **Ubicación:** Costa Rica (CR, UTC-6 sin DST). Sistema etiqueta horarios como `CR HH:MM`.
+- **USD↔CRC:** statusline muestra capital en USD + equivalente en colones (`$18.09 ≈₡8,241`). Tipo de cambio vía `bash .claude/scripts/fx_rate.sh` (cache 1h, API open.er-api.com).
 - **Exchanges activos:** Binance Futures (main) + BingX (micro account residual)
-- **Zona horaria:** México (UTC-6)
+- **Zona horaria:** Costa Rica (UTC-6)
 - **Capital retail main (Binance):** $18.09 (post-migración 2026-04-23)
 - **Capital retail-bingx:** $0.93 (residual, uso pedagógico)
 - **TradingView:** Plan Basic (máx 2 indicadores — Neptune Signals + Neptune Oscillator)
-- **Ventana operativa retail:** MX 06:00 – 23:59 (análisis desde 06:00, force exit 23:59 MX)
+- **Ventana operativa retail:** CR 06:00 – 23:59 (análisis desde 06:00, force exit 23:59 CR)
   - Cripto opera 24/7, pero el trader NO duerme con posición abierta
   - Cierre anticipado permitido si: ya acumuló ganancia buena del día **O** tiene un pendiente personal
 - **Estilo:** scalping intraday, no day-trading de múltiples días
@@ -25,7 +27,7 @@ El sistema soporta **4 profiles aislados**. Se switchean con `/profile` o con en
 - Capital **$18.09** real en Binance Futures `BTCUSDT.P`
 - Símbolo TV: `BINANCE:BTCUSDT.P`
 - Estrategia Mean Reversion 15m
-- Ventana MX 06:00–23:59
+- Ventana CR 06:00–23:59
 - Log arranca limpio (Binance fresh start 2026-04-23)
 - Ver `.claude/profiles/retail/config.md`
 
@@ -42,7 +44,7 @@ El sistema soporta **4 profiles aislados**. Se switchean con `/profile` o con en
 - Multi-asset: BTC + ETH + EURUSD + GBPUSD + NAS100 + SPX500
 - Estrategia FTMO-Conservative (SL 0.4%, risk 0.5%, target 1.5%/día)
 - Reglas FTMO duras: 3% daily (BLOCK), 10% trailing (WARN), Best Day 50% (INFO)
-- Ventana MX 06:00–16:00 (no overnight)
+- Ventana CR 06:00–16:00 (no overnight)
 - Ver `.claude/profiles/ftmo/config.md` y `rules.md`
 
 ### Profile `fotmarkets` (bonus $30)
@@ -51,7 +53,7 @@ El sistema soporta **4 profiles aislados**. Se switchean con `/profile` o con en
 - Multi-asset (8 assets, desbloqueados por fase): EURUSD/GBPUSD → USDJPY/XAUUSD/NAS100 → SPX500/BTCUSD/ETHUSD
 - Estrategia **Fotmarkets-Micro** (scalping reversal post-pullback 5m)
 - Escalation risk: **10% → 5% → 2%** según fase ($30→$100→$300+)
-- Ventana **MX 07:00–11:00** (London/NY overlap)
+- Ventana **CR 07:00–11:00** (London/NY overlap)
 - Ejecución **manual en MT5** (sin EA bridge)
 - Ver `.claude/profiles/fotmarkets/config.md`, `strategy.md`, `rules.md`
 
@@ -77,7 +79,7 @@ no reemplaza el profile FTMO/retail real.
 
 ## Estrategia oficial — DEPENDE DEL RÉGIMEN DE MERCADO
 
-**Principio crítico:** NO hay estrategia universal. Cada día al iniciar sesión (MX 05:30), detectar el régimen ANTES de elegir estrategia.
+**Principio crítico:** NO hay estrategia universal. Cada día al iniciar sesión (CR 05:30), detectar el régimen ANTES de elegir estrategia.
 
 ### Detección de régimen (primer paso obligatorio)
 
@@ -104,8 +106,8 @@ Validada con **100% WR** y **+15.1%** en backtest 3 días frente a 144 configs.
 | TP2 (40%) | **4.0 × SL** |
 | TP3 (20%) | **6.0 × SL** |
 | Leverage | **10x** |
-| Ventana | **MX 06:00 – 23:59** |
-| Force exit | **23:59 MX** (regla "no dormir con trade abierto"); cierre anticipado permitido si ya hay ganancia del día o pendiente personal |
+| Ventana | **CR 06:00 – 23:59** |
+| Force exit | **23:59 CR** (regla "no dormir con trade abierto"); cierre anticipado permitido si ya hay ganancia del día o pendiente personal |
 | Max 5 trades/día | 2 SLs → stop |
 
 **Entradas (4 filtros obligatorios, todos simultáneos):**
@@ -218,7 +220,7 @@ Antes de operar, verificar:
    - L/S smart money: `https://fapi.binance.com/futures/data/topLongShortAccountRatio?symbol=BTCUSDT&period=1h&limit=24`
    - Buscar drops OI >$100M en 1h (liq event), L/S <0.8 (short squeeze setup) o >1.5 (long squeeze)
 5. **Volumen 5m/15m vs promedio** — spike sin seguimiento = rejection (trampa). TV chart tiene Volume cargado.
-6. **Sesión horaria óptima:** MX 06:00–10:00 (London/NY overlap, mayor volatilidad 0.85%)
+6. **Sesión horaria óptima:** CR 06:00–10:00 (London/NY overlap, mayor volatilidad 0.85%)
 
 ## Hallazgos clave del backtesting
 
@@ -280,6 +282,7 @@ Datos históricos Binance se cachean en `scripts/ml_system/data/`. Modelos entre
 - **OKX funding:** https://www.okx.com/api/v5/public/funding-rate?instId=BTC-USDT-SWAP
 - **CoinGecko BTC:** https://api.coingecko.com/api/v3/coins/bitcoin
 - **Mempool stats:** https://mempool.space/api/
+- **Bookmap (orderflow + heatmap liquidez):** https://web.bookmap.com/ — confirmación visual de entries (walls bids/asks, absorción, spoofing, stop hunts). Solo Binance Futures, uso manual no automatizable. Ver `memory/bookmap.md`.
 
 ## Disclaimer
 

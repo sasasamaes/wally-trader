@@ -1,10 +1,10 @@
 ---
-name: Morning protocol COMPLETO — rutina 5:30/6:00 AM MX
+name: Morning protocol COMPLETO — rutina 5:30/6:00 AM CR
 description: Protocolo de 15 fases que debe ejecutar Claude cuando usuario inicia sesión de trading diario. Incluye auto-check personal, sentiment, correlaciones, técnica, position sizing y journal.
 type: project
 originSessionId: 870cfb36-0066-4b6c-a1b7-eeaebc9a6ca8
 ---
-**Cuando el usuario diga "análisis matutino", "morning analysis", "empezar sesión" o equivalente en ventana MX 05:00-09:00 AM** → ejecutar TODO este protocolo en orden. No omitir fases.
+**Cuando el usuario diga "análisis matutino", "morning analysis", "empezar sesión" o equivalente en ventana CR 05:00-09:00 AM** → ejecutar TODO este protocolo en orden. No omitir fases.
 
 ## FASE 1: Auto-check personal (obligatorio al inicio)
 Preguntarle al usuario directamente:
@@ -116,14 +116,14 @@ Leer capital actual de trading_log.md. Calcular:
    - Mean Reversion: Donchian H/L + BB + zonas entry + MID + SL/TP3 ambos lados
    - Breakout: niveles ruptura + buffer + SL/TP3
 3. Niveles extra: PDH/PDL (azul), Weekly Open (morado), VWAP (amarillo)
-4. Línea vertical cierre 23:59 MX (no dormir con posición)
+4. Línea vertical cierre 23:59 CR (no dormir con posición)
 5. Texto superior con resumen
 
 ## FASE 12: Plan de Entrada
 - Entry zone exacto (precio)
 - SL con 2% risk sizing
 - TP1/TP2/TP3 con ATR
-- Hora óptima (priorizar MX 06:00-10:00 = London/NY overlap UTC 12-16)
+- Hora óptima (priorizar CR 06:00-10:00 = London/NY overlap UTC 12-16)
 - 4 filtros obligatorios listados
 - Invalidación del setup
 

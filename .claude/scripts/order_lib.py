@@ -70,7 +70,7 @@ def build_order(
     now = datetime.now().astimezone()
     expires_at = (now + timedelta(hours=ttl_hours)).isoformat(timespec="seconds")
     if force_exit_mx is None:
-        # End of today at 23:59 MX (UTC-6)
+        # End of today at 23:59 CR (UTC-6)
         mx_now = datetime.now(timezone.utc) - timedelta(hours=6)
         mx_eod = mx_now.replace(hour=23, minute=59, second=0, microsecond=0)
         force_exit_mx = mx_eod.isoformat(timespec="seconds")

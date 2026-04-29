@@ -5,14 +5,15 @@ Escrito automáticamente por `/journal`.
 
 ## Formato de tabla
 
-| Fecha | Hora MX | Asset | Dir | Lots | Entry | SL | TP | Resultado | PnL $ | R | Fase | Notas |
+| Fecha | Hora CR | Asset | Dir | Lots | Entry | SL | TP | Resultado | PnL $ | R | Fase | Notas |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 
 ## Trades
 
-| Fecha | Hora MX | Asset | Dir | Lots | Entry | SL | TP | Resultado | PnL $ | R | Fase | Notas |
+| Fecha | Hora CR | Asset | Dir | Lots | Entry | SL | TP | Resultado | PnL $ | R | Fase | Notas |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | 2026-04-23 | ~09:24 | EURUSD | LONG (Buy Limit) | 0.03 | 1.17000 | 1.16900 | 1.17220 | SL | -2.91 | -0.97R | 1 | 1er trade fotmarkets; entry via Buy Limit llenado en pullback; precio hit SL 1.16900 antes de tocar zona de trigger 1.17020 con confirmación técnica |
+| 2026-04-27 | ~09:14 | EURUSD | LONG (Market) | 0.03 | 1.17367 | 1.17287 | 1.17580 | OPEN | — | — | 1 | 2do trade fotmarkets; entrado contra NO-TRADE veredicto matutino (3.5/4 filtros, vela 5m roja en formación). Entró debajo de zona óptima 1.17400-1.17420. Sin SL inicial → corregido post-entry a 1.17287 (8 pips, $2.40 risk, 2.66R). Bias técnico LONG: EMA50(15m)>EMA200(15m), DXY -0.51%. Cierre manual si vela 5m <1.17320 (invalidación bias). Equidad inicial $33.84 (Balance $5.07 + Crédito $30, indica deposit propio ~$8 contra filosofía profile). |
 
 ## Lecciones 2026-04-23 (trade #1 EURUSD SL)
 

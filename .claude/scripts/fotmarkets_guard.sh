@@ -7,10 +7,10 @@
 #     → imprime "PASS" y sale 0, O "BLOCK: <razón>" y sale 1
 #
 # Checks:
-#   1. Hora MX ∈ [07:00, 10:55]
+#   1. Hora CR ∈ [07:00, 10:55]
 #   2. Trades hoy < max_trades_per_day de la fase
 #   3. SLs consecutivos < max_sl_consecutive de la fase
-#   4. No es weekend (sábado/domingo MX)
+#   4. No es weekend (sábado/domingo CR)
 
 set -euo pipefail
 
@@ -36,15 +36,15 @@ if [[ "$ACTIVE_PROFILE" != "fotmarkets" ]]; then
   fail "profile activo es '$ACTIVE_PROFILE' (no fotmarkets). Este guard solo aplica cuando fotmarkets está activo."
 fi
 
-# Check 1: Ventana horaria MX
+# Check 1: Ventana horaria CR
 # Nota: 10# fuerza base-10 (evita que bash interprete 0638 u 0900 como octal inválido)
-HORA_HHMM=$(TZ='America/Mexico_City' date +%H%M)
+HORA_HHMM=$(TZ='America/Costa_Rica' date +%H%M)
 if (( 10#$HORA_HHMM < 700 || 10#$HORA_HHMM > 1055 )); then
-  fail "Fuera de ventana operativa MX 07:00-10:55 (hora actual: ${HORA_HHMM:0:2}:${HORA_HHMM:2:2})"
+  fail "Fuera de ventana operativa CR 07:00-10:55 (hora actual: ${HORA_HHMM:0:2}:${HORA_HHMM:2:2})"
 fi
 
 # Check 2: Weekend
-DOW=$(TZ='America/Mexico_City' date +%u)   # 1=Mon ... 7=Sun
+DOW=$(TZ='America/Costa_Rica' date +%u)   # 1=Mon ... 7=Sun
 if [[ "$DOW" -ge 6 ]]; then
   fail "Weekend: mercados Forex cerrados (día $DOW)"
 fi
@@ -67,7 +67,7 @@ esac
 # Check 4: Trades hoy
 # Nota: `grep -c` sin matches imprime "0" pero exit 1. Usamos `|| true` para capturar
 # el "0" sin que `|| echo 0` duplique el valor (bug clásico de multi-línea).
-FECHA=$(TZ='America/Mexico_City' date +%Y-%m-%d)
+FECHA=$(TZ='America/Costa_Rica' date +%Y-%m-%d)
 TRADES_HOY=0
 if [[ -f "$LOG_FILE" ]]; then
   TRADES_HOY=$(grep -c "^| $FECHA " "$LOG_FILE" 2>/dev/null || true)

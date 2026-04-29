@@ -6,8 +6,8 @@ originSessionId: 870cfb36-0066-4b6c-a1b7-eeaebc9a6ca8
 ---
 **Trade #1 — 2026-04-20 (PRIMER WIN)**
 - Setup: Mean Reversion LONG en Donchian Low(15)
-- Entry: 74,801 (MX ~08:45 aprox)
-- Exit: 75,729 (MX ~09:15 aprox)
+- Entry: 74,801 (CR ~08:45 aprox)
+- Exit: 75,729 (CR ~09:15 aprox)
 - Cierre: TOTAL al tocar TP2
 - Move: +1.24% / 10x leverage
 - **PnL neto: +$1.14 (+11.4%)**
@@ -43,7 +43,7 @@ Este fue el primer trade ganador con la estrategia Mean Reversion. Valida que:
 ---
 
 **Trade #2 — 2026-04-21 (SEGUNDO WIN — CON VIOLACIÓN DE REGLA)**
-- Exit: 76,312.7 MX 18:43:33 (43 min DESPUÉS del force exit 18:00 vigente ese día)
+- Exit: 76,312.7 CR 18:43:33 (43 min DESPUÉS del force exit 18:00 vigente ese día)
 - PnL: +$1.09 (+9.8%)
 - Capital: $11.14 → $12.23
 - Sin entry/hora/4 filtros registrados → no auditable

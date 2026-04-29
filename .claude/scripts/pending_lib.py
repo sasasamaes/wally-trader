@@ -203,7 +203,7 @@ def evaluate_invalidation(
 
 
 def count_sls_today(profile: str) -> int:
-    """Parse trading_log.md of profile; count SL trades dated today (MX tz).
+    """Parse trading_log.md of profile; count SL trades dated today (CR tz).
 
     Relaxed parser: any line containing 'SL' or 'stop loss' AND today's date
     in YYYY-MM-DD format. Good enough for stop-day rule.
@@ -213,7 +213,7 @@ def count_sls_today(profile: str) -> int:
     )
     if not log_path.exists():
         return 0
-    # today in MX tz (UTC-6)
+    # today in CR tz (UTC-6)
     from datetime import timedelta as _td
     mx_now = datetime.now(timezone.utc) - _td(hours=6)
     today_str = mx_now.strftime("%Y-%m-%d")

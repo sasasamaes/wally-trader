@@ -13,7 +13,7 @@ Diseñada para pasar el challenge FTMO 1-Step en 10-30 días con bajo riesgo.
 
 ## Universo
 
-| Asset | MT5 Symbol (validar) | Sesión óptima MX | Régimen ideal |
+| Asset | MT5 Symbol (validar) | Sesión óptima CR | Régimen ideal |
 |---|---|---|---|
 | BTCUSD | `BTCUSD` | 06:00-10:00 | RANGE |
 | ETHUSD | `ETHUSD` | 06:00-10:00 | RANGE/TREND leve |
@@ -22,7 +22,7 @@ Diseñada para pasar el challenge FTMO 1-Step en 10-30 días con bajo riesgo.
 | NAS100 | `US100.cash` o `NAS100` | 08:30-15:00 | TREND (ADX>25) |
 | SPX500 | `US500.cash` o `SPX500` | 08:30-15:00 | TREND/RANGE |
 
-**Ventana operativa:** MX 06:00–16:00. Post-16:00 = no operar (cierre sesión US).
+**Ventana operativa:** CR 06:00–16:00. Post-16:00 = no operar (cierre sesión US).
 
 ## Filtros de selección diaria
 
@@ -59,7 +59,7 @@ Score A/B/C/D por asset (morning-analyst-ftmo lo calcula):
 | TP1 (50%) | 0.6% (1.5R) → mueve SL a BE |
 | TP2 (50%) | 1.2% (3.0R) |
 | Trailing post-TP1 | Stop a mid entre entry y TP2 (default) **o** EMA(20) 15m si ADX>25 |
-| Force exit | 16:00 MX |
+| Force exit | 16:00 CR |
 | Overnight | PROHIBIDO |
 
 **Trailing EMA(20) 15m** (alternativa al stop discreto): tras TP1, en lugar de saltar SL a

@@ -14,7 +14,7 @@ Mecánica:
 1. Crea un script en background en `.claude/scripts/alert_$TIMESTAMP.sh`
 2. Script monitorea la condición cada 60 segundos
 3. Cuando se cumple → `osascript -e 'display notification ...'`
-4. Se auto-mata después de notificar o a las 23:59 MX (fin de ventana operativa)
+4. Se auto-mata después de notificar o a las 23:59 CR (fin de ventana operativa)
 
 Alerta a configurar:
 $ARGUMENTS

@@ -116,7 +116,7 @@ Pasos que ejecuta Claude:
    - Para cada trade registrado hoy en el `.md` (nuevo append desde última vez):
      - Usa tool Notion apropiada (`mcp__notion__create_page` o equivalente con parent=database)
      - Mapea campos del .md a columnas de la DB (ver `docs/NOTION_SETUP.md` para schema)
-     - Columnas retail: Name, Date, Time MX, Asset, Direction, Entry, SL, TP1, TP2, TP3, Size (BTC), Leverage, Result, PnL $, PnL %, R multiple, Filters passed, ML score, Sentiment, Notes
+     - Columnas retail: Name, Date, Time CR, Asset, Direction, Entry, SL, TP1, TP2, TP3, Size (BTC), Leverage, Result, PnL $, PnL %, R multiple, Filters passed, ML score, Sentiment, Notes
      - Columnas FTMO: igual + Lots, Magic, Ticket MT5, Status, Guardian verdict, Equity pre, Equity post
    - Si creación falla (404 DB ID inválido, 429 rate limit, network):
      - Warning al usuario: "⚠️ Notion write failed: <error>. .md local preservado."

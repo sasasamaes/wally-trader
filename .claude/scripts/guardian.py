@@ -201,7 +201,7 @@ def check_entry(cfg, curve, trade, now=None):
                 "blocking": True,
                 "reason": (
                     f"Daily loss ya en ${-daily:.2f} ({-daily/initial*100:.2f}%). "
-                    f"Ningún size permitido hoy. Reset mañana 06:00 MX."
+                    f"Ningún size permitido hoy. Reset mañana 06:00 CR."
                 ),
                 "warnings": [],
                 "size_adjustment": None,

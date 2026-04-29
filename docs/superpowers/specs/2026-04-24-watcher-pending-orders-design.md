@@ -7,7 +7,7 @@
 
 ## Problema
 
-El usuario hace morning analysis MX 06:00–07:00 y luego trabaja como programador
+El usuario hace morning analysis CR 06:00–07:00 y luego trabaja como programador
 el resto del día. Hoy debe vigilar el chart manualmente para detectar cuándo se
 dan los 4 filtros de entrada — lo cual rompe la concentración o causa que pierda
 setups. No existe infraestructura para:
@@ -81,7 +81,7 @@ infraestructura de `pending_orders.json` ya existente en ftmo.
 ### Flujo end-to-end
 
 ```
-USUARIO: /morning (MX 06:00)
+USUARIO: /morning (CR 06:00)
        → Claude propone: entry 77521 LONG, SL 77101, TP 78571, invalidación 76900
 
 USUARIO: /order BTCUSDT.P LONG 77521 sl=77101 tp=78571 ttl=6h
@@ -528,10 +528,10 @@ Default si no responde en 10s: `suspend` + notif "decide con /pending".
 Añadir bloque:
 ```
 ## Watcher
-Last tick: 11:00 MX (0.8s OK)
+Last tick: 11:00 CR (0.8s OK)
 Pendings activos: 2 | suspended: 1
-Próximo tick launchd: 12:00 MX
-Próxima recomendación re-análisis: 13:00 MX
+Próximo tick launchd: 12:00 CR
+Próxima recomendación re-análisis: 13:00 CR
 ```
 
 ## Notificaciones — templates por evento

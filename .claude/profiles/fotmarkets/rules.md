@@ -47,15 +47,15 @@ phase_3: capital ∈ [300, ∞)
 **Enforcement:** `fotmarkets_guard.sh` lee últimos N trades del día (N = max + 1);
 si todos son SL → BLOCK.
 
-## R5 — Ventana operativa MX 07:00–11:00
+## R5 — Ventana operativa CR 07:00–11:00
 
 **Definición:** Entries nuevos solo en [07:00, 10:55]. Force exit a 10:55.
 
-**Enforcement:** `fotmarkets_guard.sh` chequea hora MX actual.
+**Enforcement:** `fotmarkets_guard.sh` chequea hora CR actual.
 
 ## R6 — No overnight / no weekend
 
-**Definición:** Toda posición debe cerrarse antes de 10:55 MX del día. Nunca entrar
+**Definición:** Toda posición debe cerrarse antes de 10:55 CR del día. Nunca entrar
 viernes si queda <1h para cierre de mercado (overnight implícito weekend).
 
 **Enforcement:** Semi-automatizado — usuario cierra manualmente en MT5; `/journal`
@@ -73,7 +73,7 @@ Aplican en TODAS las fases:
 1. ATR explotado (>2× promedio 50 velas en 5m) → NO operar
 2. Spread anómalo (>3 pips EURUSD base, escalado para otros pairs) → NO operar
 3. 15 min pre-noticia roja → cerrar posiciones abiertas + no reentrar 30 min post
-4. ECB jueves 07:00–09:00 MX → no EUR pairs
+4. ECB jueves 07:00–09:00 CR → no EUR pairs
 
 **Enforcement:** Manual via checklist en strategy.md + recordatorio en `/morning`.
 
