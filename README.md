@@ -48,9 +48,9 @@ trading/
 ├── README.md                      # Este archivo
 │
 ├── system/                        # 📌 CANONICAL SOURCE OF TRUTH (multi-CLI)
-│   ├── commands/                  # 23 slash commands markdown (formato CC)
+│   ├── commands/                  # 33 slash commands markdown (formato CC)
 │   ├── agents/                    # 12 agentes (incluye morning-analyst-ftmo)
-│   ├── skills/                    # 14 skills custom
+│   ├── skills/                    # 21 skills custom (incluye Neptune + punkchainer playbook)
 │   ├── mcp/servers.json           # MCP config neutral
 │   ├── hooks/                     # placeholder para hooks compartidos
 │   └── README.md                  # Flujo de sync + adapters
@@ -69,7 +69,7 @@ trading/
 │   ├── commands/ → ../system/commands/   # symlink
 │   ├── agents/   → ../system/agents/     # symlink
 │   ├── skills/   → ../system/skills/     # symlink
-│   ├── profiles/                  # 🆕 Profile-scoped config + memoria (4 profiles)
+│   ├── profiles/                  # 🆕 Profile-scoped config + memoria (7 profiles)
 │   │   ├── retail/                # Binance main $18.09 (post-migración)
 │   │   │   ├── config.md
 │   │   │   ├── strategy.md
@@ -83,11 +83,25 @@ trading/
 │   │   │   ├── rules.md
 │   │   │   ├── memory/            # equity_curve, pending_orders, challenge
 │   │   │   └── mt5_ea/            # ClaudeBridge.mq5 (EA bridge)
-│   │   └── fotmarkets/            # Bonus $30 MT5 (Mauritius, bonus-only)
+│   │   ├── fotmarkets/            # Bonus $30 MT5 (Mauritius, bonus-only)
+│   │   │   ├── config.md
+│   │   │   ├── strategy.md        # Fotmarkets-Micro (5m reversal)
+│   │   │   ├── rules.md
+│   │   │   └── memory/            # phase_progress + pending_orders + session_notes
+│   │   ├── fundingpips/           # 🆕 $10k funded MT5 (real money desde día 1)
+│   │   │   ├── config.md
+│   │   │   ├── strategy.md        # FundingPips-Conservative (0.3% risk, 5% DD)
+│   │   │   └── rules.md
+│   │   ├── bitunix/               # 🆕 Copy-trading punkchainer's $50 (validar señales)
+│   │   │   ├── config.md
+│   │   │   ├── strategy.md        # 8-step pipeline + 4-pilar SMC + Saturday Protocol
+│   │   │   ├── rules.md
+│   │   │   └── memory/            # signals_received.md tracking
+│   │   └── quantfury/             # 🆕 BTC-denominated 0.01 BTC (outperformance vs HODL)
 │   │       ├── config.md
-│   │       ├── strategy.md        # Fotmarkets-Micro (5m reversal)
+│   │       ├── strategy.md
 │   │       ├── rules.md
-│   │       └── memory/            # phase_progress + pending_orders + session_notes
+│   │       └── memory/hodl_benchmark.md
 │   └── scripts/
 │       ├── profile.sh             # Switch profile activo
 │       ├── guardian.py            # 🆕 Rules engine FTMO (3%/10%/Best Day)
@@ -223,7 +237,7 @@ trading/
 
 ## 🌅 Uso diario
 
-El sistema opera en **5 profiles aislados**. Al iniciar el día eliges cuál operar — no mezclar profiles distintos el mismo día.
+El sistema opera en **7 profiles aislados**. Al iniciar el día eliges cuál operar — no mezclar profiles distintos el mismo día (regla cross-asset BTC: nunca BTC simultáneo en múltiples profiles).
 
 ### Profile switching (inicio de día)
 
@@ -238,7 +252,9 @@ claude
 /profile ftmo          # switch a FTMO ($10k demo, challenge 1-step)
 /profile fotmarkets    # switch a fotmarkets (bonus $30 MT5, sin depósito)
 /profile fundingpips   # switch a fundingpips ($10k funded directo, dinero real)
-/profile status        # resumen de los 5 profiles
+/profile bitunix       # 🆕 switch a bitunix (copy-validated punkchainer's $50)
+/profile quantfury     # 🆕 switch a quantfury (BTC-denominated 0.01 BTC)
+/profile status        # resumen de los 7 profiles
 ```
 
 Statusline refleja el profile activo + equivalente en colones:
@@ -246,6 +262,8 @@ Statusline refleja el profile activo + equivalente en colones:
 - `[FTMO $10k] Equity: $10,000 ≈₡4.6M • Daily: $+0 (0.0%) • EA ✓ 3s • Pos: 0`
 - `[FOTMARKETS] $33.84 ≈₡15,415 | Fase 1 (→$100) | 🟢 VENT CR 07:30 | 0/1 trades`
 - `[FUNDINGPIPS $10k] $10000.00 ≈₡4.5M | DD 🟢+0.00% | Daily 0.00% | 🟢 VENT CR 09:57 | 0/2 trades`
+- `[BITUNIX] $50.00 ≈₡22,750 | 0/3 signals | 🟢 24/7 | hit_rate_filtered: —`
+- `[QUANTFURY] 0.01000 BTC ≈$830 ≈₡378K | Daily Δ: +0 sats | vs HODL: +0.00%`
 
 ### Comparación rápida de profiles
 
@@ -256,6 +274,8 @@ Statusline refleja el profile activo + equivalente en colones:
 | `ftmo` | $10k | Demo challenge | **0.5%** | 10% trailing | 3 | MT5 (FTMO-Demo) |
 | `fotmarkets` | $30→$100→$300+ | Bonus no-deposit | 10%/5%/2% (phase) | 12% | 1-3 (phase) | MT5 (Fotmarkets) |
 | `fundingpips` | $10k | **Real funded** ($99) | **0.3%** | **5% from initial** | **2** | MT5 (FundingPips-Live) |
+| `bitunix` 🆕 | $50 | Copy-validated | 2% | -30% pause | 3 | Bitunix (referral `punkchainer`) |
+| `quantfury` 🆕 | 0.01 BTC | BTC-denominated | 2% del BTC | -10% BTC stack | 3 | Quantfury (broker app) |
 
 ### Comandos cuantitativos disponibles (33 total)
 
@@ -452,9 +472,93 @@ Detalles en `docs/superpowers/plans/2026-04-22-ftmo-profile-IMPLEMENTATION-LOG.m
 
 ---
 
+### 🪙 Workflow BITUNIX (copy-trading punkchainer's $50)
+
+> Filosofía: el edge NO es generar señales, es **filtrar las malas**. Validas señales de Discord con tu sistema antes de copiarlas.
+
+#### 1. Inicio de día Bitunix
+```
+/profile bitunix
+# Statusline: [BITUNIX] $50.00 ≈₡22,750 | 0/3 signals | 🟢 24/7
+```
+
+#### 2. Cuando aparece señal en Discord punkchainer's
+Ej: `MSTRUSDT Short 20x entry 166.57 sl=170 tp=160`
+
+```
+/signal MSTRUSDT short 166.57 sl=170 tp=160 leverage=20
+```
+
+El agente `signal-validator` ejecuta el pipeline 8-step:
+1. **Parse + null-checks** (sin SL → REJECT)
+2. **4 filtros técnicos** (RSI/Donchian/BB/cierre)
+3. **Multi-Factor + ML** cross-validation
+4. **Chainlink** delta vs entry señal (<1%)
+5. **Régimen + sentiment** check
+6. 🆕 **4-Pilar Neptune SMC checklist** (visual manual con OB/FVG + Sweep + CHoCH + SFP)
+7. 🆕 **Saturday Precision Protocol** (si fecha == sábado/domingo, gates más estrictos)
+8. **Veredicto final** con override leverage 20→10
+
+#### 3. Si APPROVE → ejecutar manual en Bitunix
+- Login Bitunix (referral `punkchainer`)
+- Open MSTR-PERP, side SHORT, leverage **10x** (override)
+- Size 2% del capital ($1.00 max loss)
+- SL en 170 (con +0.5% buffer si es alt low-cap)
+- **DUREX rule:** mover SL a BE en 20% recorrido a TP1 (1R en weekend)
+
+#### 4. Tracking obligatorio
+Cada señal validada (PASS/FLAG/REJECT) → `signals_received.md`:
+```markdown
+## 2026-04-30 09:35 — MSTRUSDT Short 20x
+**Decisión:** EJECUTAR override 10x (4/4 pilares)
+**Resultado:** TP1 hit en 165.61 → +$0.45
+**Aprendizaje:** flow MSTR-correlated funcionó como esperado
+```
+
+#### 5. Métricas clave (`/journal bitunix`)
+- `hit_rate_filtered` — WR de señales aprobadas por tu sistema
+- `hit_rate_all` — WR si copiaras blindly (control)
+- Si `filtered > all` → tus filtros agregan valor. Si `<` → over-restricción.
+
+Skills críticos: `@punkchainer-glossary` (DUREX/GORRAS), `@punkchainer-playbook` (4-pilar + Saturday Protocol), `@neptune-community-config` (configs indicadores).
+
+---
+
+### ₿ Workflow QUANTFURY (BTC-denominated 0.01 BTC)
+
+> Filosofía: "Bitcoin is the unit. USD is the noise." Mide PnL en BTC absoluto y compara contra **HODL benchmark** — si HODL hubiera dado más BTC stack, tu trading no tiene edge.
+
+#### 1. Inicio de día Quantfury
+```
+/profile quantfury
+# Statusline: [QUANTFURY] 0.01000 BTC ≈$830 ≈₡378K | vs HODL: +0.00%
+```
+
+#### 2. Análisis régimen-aware
+- **TRENDING UP** → prefer HODL > longs (replica spot)
+- **TRENDING DOWN** → SHORTS direccionales (fase oro para acumular BTC)
+- **RANGE** → Mean Reversion ambos lados (igual que retail)
+- **VOLATILE** → NO operar
+
+#### 3. Sizing en BTC absoluto
+Con 0.01 BTC, risk 2% = 0.0002 BTC. Calcular qty con SL distance, leverage cap 5x effective.
+
+#### 4. Outperformance check (semanal)
+```bash
+bash .claude/scripts/btc_outperform.py --period 30d
+# Output: tu_PnL_BTC vs HODL_PnL_BTC = delta% (positivo = added value)
+```
+
+#### 5. Reglas duras
+- Daily BTC PnL ≤ -2% → BLOCK día
+- Total DD ≤ -10% del BTC stack → BLOCK profile
+- **Outperformance vs HODL <-2% mensual → PAUSAR profile 30 días** (admite que no hay edge)
+
+---
+
 ## 🔔 Watcher & Set-and-Forget Orders (v1)
 
-Sistema autónomo para programar entries matutinos y que el sistema los vigile mientras trabajas en otras cosas. Funciona en los 4 profiles (`retail`, `retail-bingx`, `ftmo`, `fotmarkets`) — virtual-only en v1 (notifica cuando disparar, tú ejecutas manual).
+Sistema autónomo para programar entries matutinos y que el sistema los vigile mientras trabajas en otras cosas. Funciona en los 4 profiles principales (`retail`, `retail-bingx`, `ftmo`, `fotmarkets`) — virtual-only en v1 (notifica cuando disparar, tú ejecutas manual).
 
 ### Workflow típico
 
@@ -887,7 +991,7 @@ opencode
 - `AGENTS.md` raíz — leído por OpenCode automáticamente al iniciar sesión
 - `.opencode/agents/` — 12 subagents (`@morning-analyst`, `@regime-detector`, etc.) auto-traducidos
 - `.opencode/commands/` — 29 slash commands (`/morning`, `/profile`, `/risk`, etc.)
-- `.opencode/skills/` — symlink a `system/skills/` (14 skills técnicas)
+- `.opencode/skills/` — symlink a `system/skills/` (21 skills técnicas + Neptune + punkchainer playbook)
 - `.opencode/config.json` — back-compat (legacy MCP block)
 
 **Auto-sync:** un git pre-commit hook (instalado por `install.sh`) regenera `.opencode/` + `opencode.json` cada vez que tocas `system/commands/`, `system/agents/`, o `system/mcp/`. No tienes que ejecutar el adapter manualmente.
@@ -942,7 +1046,7 @@ hermes setup
 hermes config set mcp.tradingview.command node
 hermes config set mcp.tradingview.args '["./tradingview-mcp/src/server.js"]'
 
-# 7. Lanza Hermes — auto-loads AGENTS.md + 55 skills (12 agents + 29 commands + 14 skills)
+# 7. Lanza Hermes — auto-loads AGENTS.md + 66 skills (12 agents + 33 commands + 21 skills)
 cd /Users/josecampos/Documents/wally-trader
 hermes
 ```
@@ -950,7 +1054,7 @@ hermes
 **Qué obtienes:**
 - `.hermes/skills/wally-agents/` — 12 skills traducidos desde `system/agents/`
 - `.hermes/skills/wally-commands/` — 29 skills (`/morning`, `/risk`, `/profile`, …)
-- `.hermes/skills/wally-skills/` — symlink a `system/skills/` (14 skills técnicas: ICT, Fibonacci, ADX, etc.)
+- `.hermes/skills/wally-skills/` — symlink a `system/skills/` (21 skills técnicas: ICT, Fibonacci, ADX, Neptune comunidad, punkchainer playbook, etc.)
 - `AGENTS.md` raíz leído automáticamente por Hermes (mismo archivo que OpenCode usa)
 
 **Conceptual mapping CC → Hermes:**
@@ -994,7 +1098,7 @@ bash .claude/scripts/chainlink_price.sh BTC        # precio Chainlink BTC
 # 6. Abrir Claude Code y test inicial
 claude
 # → /status   (debe mostrar profile retail + capital + hora CR)
-# → /profile  (debe listar 5 profiles: retail/retail-bingx/ftmo/fotmarkets/fundingpips)
+# → /profile  (debe listar 7 profiles: retail/retail-bingx/ftmo/fotmarkets/fundingpips/bitunix/quantfury)
 
 # 7. Instalar TradingView MCP (ver sección "Instalar TradingView MCP" abajo)
 #    Luego abrir TV Desktop con --remote-debugging-port=9222
@@ -1183,6 +1287,73 @@ Si NO setup:
 - ⚠️ Cualquier violación de regla → cuenta cerrada, $99 perdido
 
 Detalles completos: `.claude/profiles/fundingpips/config.md`, `strategy.md`, `rules.md`.
+
+### Setup Bitunix profile (opcional, copy-validated punkchainer's)
+
+```bash
+# 1. Registro en Bitunix con código de referido
+#    https://bitunix.com — usa código `punkchainer` para descuento en fees
+
+# 2. Depósito inicial $50 USDT (vía BSC/Polygon, low fee)
+
+# 3. (Opcional) llenar credenciales API en .env si quieres tracking automático:
+#    BITUNIX_API_KEY=<...>           # solo para read-only (no execution)
+#    BITUNIX_API_SECRET=<...>
+#    BITUNIX_REFERRAL_CODE=punkchainer
+
+# 4. Switch profile
+/profile bitunix
+
+# 5. Acceso a comunidad punkchainer's (Discord) — los indicadores Neptune (Bangchan10)
+#    son invitation-only. Sin acceso, este profile NO funciona efectivamente.
+#    - Discord: solicitar invite via canal #neptune-indicators
+#    - Manual oficial: docs/Neptune_Manual_Usuario_Completo.pdf
+
+# 6. Test con primera señal (cuando aparezca en Discord)
+/signal MSTRUSDT short 166.57 sl=170 tp=160 leverage=20
+```
+
+**Reglas duras Bitunix:**
+- ⚠️ Override leverage **20x → 10x cap** SIEMPRE (las señales agresivas liquidan rápido a 20x)
+- ⚠️ Pillars 4-pilar SMC: 4/4 = full size, 3/4 = half size, <3/4 = REJECT
+- ⚠️ Daily loss -6% (3 SLs) → BLOCK día
+- ⚠️ DUREX obligatorio: SL → BE en 20% recorrido o TP1 (1R en weekend)
+- ⚠️ Saturday Precision Protocol activo sábado/domingo (gates más estrictos)
+- ⚠️ Cross-asset BTC exclusion: NO BTC simultáneo en bitunix + retail/ftmo/fundingpips/quantfury
+
+Detalles: `.claude/profiles/bitunix/config.md`, `strategy.md`, `rules.md`.
+Skills: `@punkchainer-glossary`, `@punkchainer-playbook`, `@neptune-community-config`, `@neptune-alert-placeholders`.
+
+### Setup Quantfury profile (opcional, BTC-denominated)
+
+```bash
+# 1. Crear cuenta en Quantfury
+#    https://quantfury.com — broker app crypto-native con custodia
+
+# 2. Depósito inicial 0.01 BTC (≈$830 a $83k/BTC, ajustable)
+
+# 3. Switch profile
+/profile quantfury
+
+# 4. Establecer benchmark HODL (al cambio actual de BTC/USD)
+#    El sistema trackea PnL en BTC absoluto y compara vs HODL pasivo
+bash .claude/scripts/btc_outperform.py --init 0.01
+
+# 5. Análisis régimen-aware (mismo que retail pero BTC-denominated)
+/morning
+```
+
+**Reglas duras Quantfury:**
+- ⚠️ Métricas TODAS en BTC (no USD) — incluye Sharpe, max DD, daily PnL
+- ⚠️ Outperformance vs HODL **es la métrica clave** — si trading <-2% vs HODL mensual → PAUSAR 30d
+- ⚠️ Risk 2% del BTC capital (0.0002 BTC en 0.01)
+- ⚠️ Leverage cap 5x effective (no 10x)
+- ⚠️ Daily BTC PnL -2% → BLOCK día. Total DD -10% → BLOCK profile.
+- ⚠️ Régimen TRENDING UP → prefiere HODL pasivo > longs activos
+- ⚠️ Cross-asset BTC exclusion: NO BTC simultáneo con otros profiles
+
+Helper único: `bash .claude/scripts/btc_outperform.py --period 30d`
+Detalles: `.claude/profiles/quantfury/config.md`, `strategy.md`, `rules.md`, `memory/hodl_benchmark.md`.
 
 ### Setup OpenCode (opcional, hedge multi-CLI)
 
@@ -1546,7 +1717,7 @@ Claude detectará automáticamente cuál invocar según tu pregunta:
 | **technical-analyst** | "TA profundo", "smart money", "armónico", "elliot", "fibonacci" |
 | **signal-validator** | "valida señal", "[comunidad] dice...", "/signal Short XLM" |
 
-### `system/commands/` — 23 Slash commands (profile-aware)
+### `system/commands/` — 33 Slash commands (profile-aware)
 
 Atajos rápidos. La mayoría se adaptan al profile activo automáticamente.
 
@@ -1598,7 +1769,7 @@ Atajos rápidos. La mayoría se adaptan al profile activo automáticamente.
 | `/ml` | ML score del setup actual (XGBoost, probabilidad TP-first) |
 | `/ml-train` | Re-entrena el modelo XGBoost con histórico Binance |
 
-### `.claude/skills/` — 8 Skills custom
+### `system/skills/` — 21 Skills custom
 
 **Análisis técnico avanzado (metodologías):**
 - **smart-money-ict** — Order Blocks, Fair Value Gaps, Liquidity, BoS/ChoCh, Premium/Discount
@@ -1614,8 +1785,19 @@ Atajos rápidos. La mayoría se adaptan al profile activo automáticamente.
 - **divergence-analysis** — Regular/hidden, bull/bear, clase A/B/C con RSI/MACD/OBV
 - **trendlines-sr** — Soportes, resistencias, trendlines, canales, breakouts vs fakeouts
 
-**Indicadores de comunidad:**
-- **neptune-indicators** — Neptune® Signals/Oscillator/SMC/Money Flow/Pivots (Bangchan10) — usa la salida de estos indicadores privados de la comunidad punkchainer's para validar cruzadamente
+**Indicadores de comunidad punkchainer's (Neptune by Bangchan10):**
+- **neptune-indicators** — Lectura conceptual outputs Neptune Signals/Oscillator/SMC/Money Flow/Pivots
+- **neptune-community-config** 🆕 — Configs EXACTAS validadas (Sensitivity MANUAL, Money Flow "Smart Money", Modern UI ON, Anomalies Signals)
+- **neptune-alert-placeholders** 🆕 — Placeholders + JSON templates para webhooks 3Commas/Cornix
+
+**Playbooks operativos comunidad punkchainer's:**
+- **punkchainer-glossary** 🆕 — Glosario SMC/ICT + términos exclusivos comunidad: **DUREX** (mover SL a BE en 20% recorrido o TP1) y **GORRAS** (filtro anti-fake gurus)
+- **punkchainer-playbook** 🆕 — 4-Pilar Entry Checklist Neptune SMC (LONG/SHORT) + Saturday Precision Protocol (rules estrictos weekend) + Reglas de Oro (no perseguir, filtro Adjusted, alts +0.5%)
+
+**Cross-source validation cuantitativa:**
+- **chainlink-cross-check** 🆕 — Validar precio TV vs Chainlink Data Feeds (oráculo on-chain) — detecta wicks fakeados, feed stale, divergencia exchange
+- **multifactor-scoring** 🆕 — Score 0-100 cuantitativo (Momentum + Volatility + Trend + Volume) complementario al ML XGBoost
+- **risk-quant** 🆕 — VaR/CVaR sizing adaptativo + Risk Parity multi-asset (FTMO/fotmarkets)
 
 **Análisis contextual:**
 - **btc-regime-analysis** — Deep dive de régimen con MTF + divergencias + cycle analysis
