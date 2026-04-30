@@ -32,6 +32,7 @@ jobs:
 
       - name: Verify canonical Python scripts
         run: |
+          export PYTHONIOENCODING=utf-8
           python .claude/scripts/profile.py --help 2>&1 || python .claude/scripts/profile.py
           python .claude/scripts/fotmarkets_phase.py check 150
           python .claude/scripts/cross_profile_guard.py status
