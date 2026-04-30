@@ -287,11 +287,48 @@ Antes de operar, verificar:
 
 ## Hallazgos clave del backtesting
 
+### Hallazgos legacy
 - **$10 → $100 en un solo trade es matemáticamente imposible a 20x** (requiere +45% move sin liquidación)
 - **20x con SL 1% en 4H = -48% en 50 días** (winrate 10%). NO usar esa config.
 - **10x ST(2,7) en 4H** ganó +87% en 50 días pero con DD 51% (casi liquidación)
 - **Pasado NO equivale a futuro** — data disponible en TV MCP está capada a 300 barras por timeframe (3-50 días según TF)
 - Ruta realista $10→$100: **6-12 meses compoundeando** al 2-5% neto diario
+
+### 🆕 Hallazgos backtest 2026-04-30 (autoritativo)
+
+📄 **Reporte completo:** `docs/backtest_findings_2026-04-30.md` (lectura obligatoria)
+
+**3 fixes aplicados al sistema:**
+
+1. **Regime gate ADX<20 hard precondition** (retail/retail-bingx/quantfury)
+   - MR sin gate en período TRENDING dio -34.83% Ret / WR 22.7% / 66 trades
+   - Con gate ADX<20: -4.01% (4 trades) — **prevención de pérdidas 88%**
+   - **Antes de evaluar 4 filtros MR**, `/regime` debe arrojar RANGE_CHOP
+
+2. **Fotmarkets risk recalibrado fase 1: 10% → 1%**
+   - Risk 10% legacy generó DD 70.20% (viola regla 12% DD)
+   - Risk 1% en EURUSD: DD 10.53% ✅ Ret +39.8% / WR 49.67% / PF 1.5
+   - **GBPUSD removido** del whitelist (sin edge a ningún risk)
+
+3. **Quantfury HODL pre-flight obligatorio**
+   - Backtest demostró outperformance vs HODL fue **-49.81pp** en período
+   - Strategy -34.83% vs HODL pasivo +14.98%
+   - Pre-flight check antes de cada entry; regla "<-2% mensual → PAUSAR 30d"
+
+**Strategy mapping per-asset (FTMO/FundingPips):**
+
+| Asset | Strategy ganadora | TF | WR | PF |
+|---|---|---|---|---|
+| **XAUUSD** ⭐ | Donchian Breakout | 4H | 66.67 | 2.175 |
+| USDJPY | MA Crossover (9/21) | 1H | 55.17 | 1.861 |
+| EURUSD | Donchian Breakout | 1H | 55.17 | 1.357 |
+| BTCUSDT/ETH | Mean Reversion | 1H | 31.25 | 1.048 |
+| GBPUSD ❌ | (sin edge) | — | — | — |
+
+**Hallazgos no implementados (futuro):**
+- **Bitunix backtest real**: requiere dataset histórico de señales reales de la comunidad. Iniciar log en `signals_received.md` desde 2026-04-30 (template + CSV listos).
+- **NAS100/SPX500**: data backtest insuficiente (8/3 trades) — más data needed.
+- **Donchian Breakout en BTC**: probar como alternativa para períodos TRENDING.
 
 ## Niveles técnicos vigentes (al 2026-04-20)
 

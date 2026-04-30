@@ -2,6 +2,39 @@
 
 > Más conservadora que FTMO-Conservative. 5% max DD = sin margen para experimentar.
 
+> 🆕 **Backtest 2026-04-30 — strategy mapping per-asset (NUEVO):**
+>
+> Mean Reversion 1H tiene WR 22-37% en forex (sin edge). Backtest probó alternativas
+> y encontró edge claro en **Donchian Breakout** y **MA Crossover** según asset:
+>
+> | Asset | Strategy ganadora | TF | WR% | PF | Ret% (60d) |
+> |---|---|---|---|---|---|
+> | **XAUUSD** ⭐ | Donchian Breakout | **4H** | **66.67** | **2.175** | +2.40 |
+> | XAUUSD | Donchian Breakout | 1H | 54.35 | 1.291 | +3.05 |
+> | USDJPY ⭐ | MA Crossover (9/21) | 1H | 55.17 | **1.861** | +5.66 |
+> | USDJPY | Donchian Breakout | 4H | 58.33 | 1.671 | +1.69 |
+> | EURUSD | Donchian Breakout | 1H | 55.17 | 1.357 | +2.37 |
+> | BTCUSDT | Mean Reversion | 1H | 31.25 | 1.048 | +0.16 |
+> | **GBPUSD** ❌ | **REMOVED** | — | — | — | — |
+>
+> **GBPUSD removido** del whitelist — sin edge en ninguna estrategia/TF testeada.
+> Ver `docs/backtest_findings_2026-04-30.md` Group F.
+
+## 🎯 Strategy mapping per-asset (HARD)
+
+| Asset | Strategy | TF | Risk |
+|---|---|---|---|
+| **XAUUSD** ⭐ (asset principal) | Donchian Breakout | 4H | 0.3% |
+| USDJPY | MA Crossover (9/21) | 1H | 0.3% |
+| EURUSD | Donchian Breakout | 1H | 0.3% |
+| BTCUSDT/ETHUSDT | Mean Reversion | 1H | 0.3% |
+| NAS100/SPX500 | TBD (data insuficiente backtest) | — | — |
+| GBPUSD | ❌ NO TRADEAR | — | — |
+
+⚠️ **Aplicar la estrategia correcta al asset correcto** — las pruebas demostraron que
+estrategia universal (Mean Reversion para todo) no funciona. El sistema debe respetar
+este mapping antes de evaluar filtros de entrada.
+
 ## Parámetros core
 
 | Parámetro | Valor | Razón |

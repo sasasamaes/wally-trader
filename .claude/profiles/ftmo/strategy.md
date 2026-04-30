@@ -2,6 +2,34 @@
 
 Diseñada para pasar el challenge FTMO 1-Step en 10-30 días con bajo riesgo.
 
+> 🆕 **Backtest 2026-04-30 — strategy mapping per-asset (NUEVO):**
+>
+> Mean Reversion 1H universal tenía WR 22-67% disparity (no universal).
+> Backtest probó alternativas — winners por asset:
+>
+> | Asset | Estrategia ganadora | TF | WR | PF |
+> |---|---|---|---|---|
+> | XAUUSD ⭐ | Donchian Breakout | 4H | 66.67 | 2.175 |
+> | USDJPY | MA Crossover (9/21) | 1H | 55.17 | 1.861 |
+> | EURUSD | Donchian Breakout | 1H | 55.17 | 1.357 |
+> | BTCUSDT | Mean Reversion | 1H | 31.25 | 1.048 |
+> | GBPUSD ❌ | (sin edge en ninguna) | — | — | — |
+>
+> Ver `docs/backtest_findings_2026-04-30.md` Group F. **GBPUSD removido del universo.**
+
+## 🎯 Strategy mapping per-asset (override universal MR)
+
+ANTES del análisis multi-asset diario, aplicar este mapping según asset elegido:
+
+| Asset | Strategy aplicable | TF |
+|---|---|---|
+| BTCUSD/ETHUSD | Mean Reversion | 1H |
+| EURUSD | **Donchian Breakout** | 1H |
+| USDJPY | **MA Crossover (9/21)** | 1H |
+| XAUUSD | **Donchian Breakout** | 4H |
+| NAS100/SPX500 | TBD (data insuficiente backtest) | — |
+| GBPUSD | ❌ NO TRADEAR | — |
+
 ## Principios
 
 1. Target diario **1.0-1.5%** (no persigues más aunque tengas setup)
