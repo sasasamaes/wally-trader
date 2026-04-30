@@ -67,6 +67,66 @@ if [[ "$PROFILE" == "ftmo" ]]; then
   exit 0
 fi
 
+# FUNDINGPIPS path (Zero $10k — direct funded MT5)
+if [[ "$PROFILE" == "fundingpips" ]]; then
+  SCRIPT_DIR="$(dirname "$0")"
+  CURVE="$SCRIPT_DIR/../profiles/fundingpips/memory/equity_curve.csv"
+  LOG="$SCRIPT_DIR/../profiles/fundingpips/memory/trading_log.md"
+
+  # Equity actual (default $10,000 si curve vacía)
+  if [[ -f "$CURVE" && $(wc -l < "$CURVE") -gt 1 ]]; then
+    LAST_EQ="$(tail -n1 "$CURVE" | cut -d',' -f2)"
+  else
+    LAST_EQ="10000.00"
+  fi
+
+  # Total DD vs balance inicial fijo $10k
+  DD_PCT=$(python3 -c "eq=float('${LAST_EQ}'); init=10000; print(f'{((eq-init)/init)*100:+.2f}')" 2>/dev/null || echo "0.00")
+
+  # Daily PnL (compara primera entrada de hoy con última)
+  FECHA=$(TZ='America/Costa_Rica' date +%Y-%m-%d)
+  DAILY_PCT="0.00"
+  if [[ -f "$CURVE" ]] && [[ $(wc -l < "$CURVE") -gt 1 ]]; then
+    DAILY_PCT=$(awk -F',' -v f="$FECHA" 'BEGIN{first="";last=""} $1 ~ f {if(first=="") first=$2; last=$2} END{if(first!="" && last!="" && first+0!=0) printf "%+.2f", ((last-first)/first)*100; else print "0.00"}' "$CURVE")
+  fi
+
+  # Trades hoy
+  TRADES_HOY=0
+  if [[ -f "$LOG" ]]; then
+    TRADES_HOY=$(grep -c "^| $FECHA " "$LOG" 2>/dev/null || true)
+    TRADES_HOY=${TRADES_HOY:-0}
+  fi
+
+  # Conversión a CRC
+  CRC_TAG="$(usd_to_crc "$LAST_EQ")"
+  [[ -n "$CRC_TAG" ]] && CRC_TAG=" $CRC_TAG"
+
+  # Ventana CR 06:00-16:00 (forex/indices) — crypto extiende a 20:00
+  HORA_CR=$(TZ='America/Costa_Rica' date +%H:%M)
+  HORA_HHMM=$(TZ='America/Costa_Rica' date +%H%M)
+  HORA_NUM=$((10#$HORA_HHMM))
+  if (( HORA_NUM >= 600 && HORA_NUM < 1600 )); then
+    VENTANA="🟢 VENT"
+  elif (( HORA_NUM >= 1600 && HORA_NUM < 2000 )); then
+    VENTANA="🟡 CRYPTO"
+  else
+    VENTANA="🔴 OFF"
+  fi
+
+  # Color del DD según severidad
+  DD_COLOR=""
+  if awk "BEGIN {exit !($DD_PCT <= -3)}"; then
+    DD_COLOR="🔴"  # BLOCK zone
+  elif awk "BEGIN {exit !($DD_PCT <= -2)}"; then
+    DD_COLOR="🟡"  # WARN zone
+  else
+    DD_COLOR="🟢"
+  fi
+
+  echo "[FUNDINGPIPS \$10k] \$$LAST_EQ$CRC_TAG | DD ${DD_COLOR}${DD_PCT}% | Daily ${DAILY_PCT}% | $VENTANA CR $HORA_CR | $TRADES_HOY/2 trades$NOTION_TAG"
+  exit 0
+fi
+
 # FOTMARKETS path
 if [[ "$PROFILE" == "fotmarkets" ]]; then
   SCRIPT_DIR="$(dirname "$0")"

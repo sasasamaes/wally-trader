@@ -223,24 +223,88 @@ trading/
 
 ## 🌅 Uso diario
 
-El sistema opera en **dos profiles aislados**. Al iniciar el día eliges cuál operar — no ambos el mismo día.
+El sistema opera en **4 profiles aislados**. Al iniciar el día eliges cuál operar — no mezclar profiles distintos el mismo día.
 
 ### Profile switching (inicio de día)
 
 ```bash
-cd ~/Documents/trading
+cd ~/Documents/wally-trader
 claude
 
 # Dentro de Claude Code:
-/profile              # ver profile activo + timestamp
-/profile retail       # switch a retail (BingX $13.63)
-/profile ftmo         # switch a FTMO ($10k demo)
-/profile status       # resumen de ambos profiles
+/profile               # ver profile activo + timestamp
+/profile retail        # switch a retail (Binance $18.09 — main)
+/profile retail-bingx  # switch a retail-bingx (BingX $0.93 — residual)
+/profile ftmo          # switch a FTMO ($10k demo)
+/profile fotmarkets    # switch a fotmarkets (bonus $30 MT5)
+/profile status        # resumen de los 4 profiles
 ```
 
-Statusline refleja el profile activo:
-- `[RETAIL] 💰 $13.63 (+$3.63) │ 📊 0/3 │ 🟢 VENT │ 🕐 CR 06:00 │ BTC.P`
-- `[FTMO $10k] Equity: $10,000 • Daily: $+0 (0.0%) • EA ✓ 3s • Pos: 0`
+Statusline refleja el profile activo + equivalente en colones:
+- `[RETAIL] 💰 $18.09 ≈₡8,241 (+$8.09) │ 📊 0/3 │ 🟢 VENT │ 🕐 CR 06:00 │ BTC.P`
+- `[FTMO $10k] Equity: $10,000 ≈₡4.6M • Daily: $+0 (0.0%) • EA ✓ 3s • Pos: 0`
+- `[FOTMARKETS] $33.84 ≈₡15,415 | Fase 1 (→$100) | 🟢 VENT CR 07:30 | 0/1 trades`
+
+### Comandos cuantitativos disponibles (33 total)
+
+**Análisis matutino y validación:**
+```
+/morning           análisis matutino completo (17 fases) profile-aware
+/regime            detectar régimen rápido (RANGE/TRENDING/VOLATILE)
+/validate          validar entry actual (4 filtros)
+/signal            validar señal externa de comunidad
+/ta                análisis técnico avanzado (ICT + harmónicos + Elliott + Fib)
+/sentiment         score sentiment 0-100 (F&G + Reddit + News + Funding)
+/levels            niveles técnicos actuales (Donchian, BB, RSI, ATR)
+/multifactor       ⭐ score 0-100 (Momentum + Vol + Trend + Volume)
+/chainlink         ⭐ cross-check precio TV vs Chainlink Data Feeds
+```
+
+**Risk management y sizing:**
+```
+/risk              position sizing flat 2% (regla simple)
+/risk-var          ⭐ VaR/CVaR adaptativo (auto-reduce en alta vol)
+/risk-parity       ⭐ multi-asset weights inverse-vol (FTMO/fotmarkets)
+/trail             trailing stop EMA(20) para runner TP3
+```
+
+**ML / quant:**
+```
+/ml                XGBoost score TP-first del setup actual
+/ml-train          re-entrenar modelo (descarga 1yr Binance + fit)
+/macross           señal MA Crossover (EMA 9/21) — strategy TRENDING
+/backtest          backtest config sobre data histórica
+```
+
+**Watcher / pending orders:**
+```
+/order             encolar orden limit virtual
+/pending           listar pending orders activas
+/watch             tick manual del watcher
+/watch-deep        validación profunda de pending vía MCP
+/sync              sync con MT5 state (FTMO)
+/filled            confirmar fill manual
+```
+
+**Journal / review:**
+```
+/journal           ⭐ cierra día con métricas (Sharpe, Max DD, IC)
+/review            review semanal/mensual
+/status            estado completo del sistema
+/equity <valor>    actualizar equity FTMO manualmente
+/challenge         dashboard FTMO progress
+/trades            dashboard MT5 fotmarkets
+```
+
+**Misc:**
+```
+/profile           switch profile
+/chart             redibujar niveles en TradingView
+/alert             configurar alerta macOS
+/neptune           leer outputs de indicadores Neptune
+```
+
+⭐ = nuevos en esta versión (Chainlink + QuantMuse-inspired features).
 
 ---
 
@@ -645,23 +709,30 @@ Durante la ventana, espera a que BTC toque una zona operativa (Donchian High/Low
 /alert 4 filtros
 ```
 
-**Cuando el setup 4/4 aparezca:**
+**Cuando el setup 4/4 aparezca (validación completa):**
 
 ```
-/validate           # confirma los 4 filtros técnicos (GO/NO-GO)
-/ml                 # 5° filtro: probabilidad TP-first según modelo
-/risk               # position sizing según regla 2%
+/validate           # 4 filtros técnicos (GO/NO-GO)
+/ml                 # ML XGBoost: probabilidad TP-first
+/multifactor        # ⭐ Multi-Factor score 0-100 (cross-validation con ML)
+/chainlink          # ⭐ cross-check precio TV vs Chainlink (detecta wicks fake)
+/risk-var           # ⭐ position sizing VaR/CVaR adaptativo (mejor que flat 2%)
+/sentiment          # contrarian al extremo (F&G + Reddit + News + Funding)
 ```
 
-**Decisión matriz:**
+**Decisión matriz extendida (6 capas de validación):**
 
-| Técnico 4/4 | ML Score | Sentiment | Acción |
-|---|---|---|---|
-| ✅ GO | >55 | Alineado | **ENTRAR** con size normal |
-| ✅ GO | 40-55 | Alineado o neutral | **ENTRAR** con size 75% |
-| ✅ GO | <40 | — | **REDUCIR size a 50%** o esperar siguiente setup |
-| ✅ GO | — | Contrario extremo (setup LONG + sentiment 90) | **PASAR** — no pelees el sentiment extremo |
-| ❌ 3/4 o menos | — | — | **NO ENTRAR** — nunca forzar |
+| Técnico 4/4 | ML | Multi-Factor | Chainlink | Sentiment | Acción |
+|---|---|---|---|---|---|
+| ✅ GO | >60 | >70 | OK | Alineado | **MAX conviction** — full size con `/risk-var` |
+| ✅ GO | >60 | 50-70 | OK | Neutral | **ENTRAR** con size 75% |
+| ✅ GO | 40-60 | 40-60 | OK | Cualquiera | **ENTRAR** con size 50% |
+| ✅ GO | >60 | <30 | OK | — | **DIVERGEN** — flag, reducir size 50% o skip |
+| ✅ GO | <40 | <30 | OK | — | **PASAR** — esperar mejor setup |
+| ✅ GO | cualquiera | cualquiera | **WARN** (delta 0.3-1%) | — | **CAUTION** — entrar con size 50%, validar feed |
+| ✅ GO | cualquiera | cualquiera | **ALERT** (delta >1%) | — | **NO OPERAR** — feed stale o manipulación |
+| ✅ GO | — | — | OK | Extremo contrario (LONG + F&G 90) | **PASAR** — sentiment contrarian wins |
+| ❌ 3/4 o menos | — | — | — | — | **NO ENTRAR** — nunca forzar |
 
 ### 💥 Al entrar — Disciplina mecánica
 
@@ -740,25 +811,39 @@ Recalibra el modelo con data reciente para adaptarse al régimen. Verifica AUC e
 
 ### Requisitos
 
-**Core (ambos profiles):**
-- **Claude Code** (Anthropic CLI) — primario, mejor soporte
-- **TradingView Desktop** (plan Basic mínimo) + MCP conectado
+**Core (todos los profiles):**
+- **Claude Code** (Anthropic CLI) — primario, mejor soporte (statusline, hooks, watcher)
+- **TradingView Desktop** (plan Basic mínimo) + MCP conectado vía `--remote-debugging-port=9222`
 - **Python 3.9+** con PyYAML (`pip3 install pyyaml`)
-- **Homebrew** (macOS) para `libomp` (XGBoost) y `fswatch` (opcional)
+- **Homebrew** (macOS) para `libomp` (XGBoost), `fswatch` (opcional dev), `jq` (opcional)
+- **Zona horaria:** sistema corre en CR (UTC-6, sin DST). Trabaja también para MX/CDMX (mismo offset).
 
-**Retail profile (BingX):**
+**Retail profile (Binance — main, default):**
+- **Binance Futures** con BTCUSDT.P activado
+- Capital real actual: **$18.09** (post-migración 2026-04-23)
+
+**Retail-bingx profile (residual, pedagógico):**
 - **BingX Futures** con BTCUSDT.P activado
-- Capital real (actual $13.63)
+- Capital actual: $0.93 (residual histórico)
 
 **FTMO profile (opcional, para challenge):**
 - **Cuenta FTMO Demo** (gratis 14 días Free Trial) o challenge $93.43
 - **MT5 Desktop for Mac** instalado y loggeado al menos una vez
 - Credenciales FTMO (login, password, server FTMO-Demo)
 
+**Fotmarkets profile (bonus $30):**
+- Bonus no-deposit Fotmarkets (Mauritius, MT5 Standard 1:500)
+- Sin requerir depósito propio
+- Multi-asset desbloqueado por fase (8 assets: forex/oro/indices/cripto)
+
 **Multi-CLI (opcional, hedge):**
 - **OpenCode** — `curl -fsSL https://opencode.ai/install | bash` (free, soporte total v2)
-- **Hermes Agent** (NousResearch) — `curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash` (free, soporte total v1, requiere cuenta API LLM)
+- **Hermes Agent** (NousResearch) — `curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash` (free, soporte total v1, requiere cuenta API LLM como OpenRouter)
 - **Codex** — OpenAI API key + `npm install -g @openai/codex` (adapter UNTESTED)
+
+**Datos opcionales (gratis, sin auth):**
+- **Chainlink price feeds** — usados por `chainlink_price.sh` vía RPC público (no requiere setup)
+- **USD↔CRC FX rate** — `fx_rate.sh` usa `open.er-api.com` (no requiere setup)
 
 ### Usar este proyecto en OpenCode (soporte total)
 
@@ -865,35 +950,49 @@ Hermes NO tiene "subagents" ni "slash commands" como filesystem entries — todo
 - MCP config exacta no completamente documentada upstream — usar `hermes config set` o el wizard `hermes setup`
 - Subagents CC se proyectan como skills (funciona, pero pierde semántica de "subagent" explícito)
 
-### Instalación
+### Instalación (5 minutos)
 
 ```bash
-# 1. Clonar este repo
-git clone git@github.com:sasasamaes/trading.git
-cd trading
+# 1. Clonar el repo
+git clone git@github.com:sasasamaes/wally-trader.git
+cd wally-trader
 
-# 2. Instalar TradingView MCP (ver "prompt listo para Claude Code" abajo)
-#    Luego abrir TradingView Desktop con --remote-debugging-port=9222
+# 2. Instalar dependencias Python core
+pip3 install pyyaml
 
-# 3. Abrir Claude Code
-claude
-
-# 4. Instalar indicador Pine en TV (manual):
-#    Pine Editor → copiar MEAN_REVERSION_INDICATOR.pine → guardar "MR Signals" → añadir al chart
-
-# 5. Instalar adapter Claude Code (sincroniza symlinks .claude/ → system/)
+# 3. Instalar adapter Claude Code (sincroniza symlinks .claude/ → system/)
 bash adapters/claude-code/install.sh
 
-# 6. Verificar profile default (debe ser "retail")
+# 4. Verificar profile default (debe ser "retail" = Binance main)
 bash .claude/scripts/profile.sh show
 # → retail | <iso>
 
-# 7. (Opcional) Setup ML
+# 5. Verificar helpers críticos
+bash .claude/scripts/fx_rate.sh                    # USD→CRC del día
+bash .claude/scripts/chainlink_price.sh BTC        # precio Chainlink BTC
+
+# 6. Abrir Claude Code y test inicial
+claude
+# → /status   (debe mostrar profile retail + capital + hora CR)
+# → /profile  (debe listar 4 profiles)
+
+# 7. Instalar TradingView MCP (ver sección "Instalar TradingView MCP" abajo)
+#    Luego abrir TV Desktop con --remote-debugging-port=9222
+
+# 8. Instalar indicador Pine en TV (manual, ~2min):
+#    Pine Editor → copiar MEAN_REVERSION_INDICATOR.pine → guardar "MR Signals" → añadir al chart
+
+# 9. (Opcional) Setup ML XGBoost — entrena 1 año BTC 15m
 cd scripts/ml_system
 ./setup.sh
-brew install libomp
+brew install libomp                                # macOS only
 python3 supervised/train.py --days 365
 cd ../..
+# → modelo en scripts/ml_system/supervised/model/
+
+# 10. (Opcional) Multi-CLI: OpenCode y/o Hermes
+bash adapters/opencode/install.sh                  # 15 tests, soporte total v2
+bash adapters/hermes/install.sh                    # 12 tests, soporte total v1
 ```
 
 ### Setup FTMO profile (opcional)
@@ -938,26 +1037,94 @@ bash .claude/scripts/statusline.sh
 
 Guía completa paso a paso: `.claude/profiles/ftmo/mt5_ea/README.md`.
 
-### Setup OpenCode (opcional, hedge)
+### Setup Fotmarkets profile (opcional, bonus $30)
+
+```bash
+# 1. Activar bonus en Fotmarkets — registro + verificación + recibir $30
+#    https://fotmarkets.com (sin depósito propio)
+
+# 2. Recibir credenciales MT5 Standard 1:500
+
+# 3. Login MT5 con esas credenciales una vez (igual que FTMO)
+
+# 4. Switch profile
+/profile fotmarkets
+# → bash .claude/scripts/fotmarkets_guard.sh check
+
+# 5. Verificar fase actual (default fase 1: $30→$100, risk 10%)
+cat .claude/profiles/fotmarkets/memory/phase_progress.md
+
+# 6. Workflow manual (sin EA bridge):
+/morning                # análisis fase-aware
+/order EURUSD BUY ...   # encola virtualmente
+# Tú ejecutas manual en MT5 cuando watcher avise
+```
+
+Filosofía: capital es bonus ("casa de juego"), NO depositar dinero propio. Ver `.claude/profiles/fotmarkets/config.md`.
+
+### Setup OpenCode (opcional, hedge multi-CLI)
 
 ```bash
 # 1. Instalar OpenCode
 curl -fsSL https://opencode.ai/install | bash
 
-# 2. Generar .opencode/ desde system/ + instalar git pre-commit hook
+# 2. Generar .opencode/ + opencode.json (raíz) desde system/ + git pre-commit hook
 bash adapters/opencode/install.sh
 
-# 3. (Opcional) Real-time sync durante edición activa
-brew install fswatch
-bash adapters/opencode/watch.sh   # en terminal aparte
+# 3. Verificar (15 tests)
+python3 -m pytest adapters/opencode/test_opencode_transform.py -v
 
-# 4. Probar
-cd ~/Documents/trading
+# 4. (Opcional) Real-time sync durante edición activa
+brew install fswatch
+bash adapters/opencode/watch.sh   # daemon en terminal aparte
+
+# 5. Probar dentro del repo
+cd ~/Documents/wally-trader
 opencode
-# → dentro de OpenCode: /status
+# → dentro de OpenCode: /status, /morning, /risk, etc.
+# OC lee automáticamente AGENTS.md + CLAUDE.md
 ```
 
-Detalles en `adapters/opencode/README.md`.
+Detalles + tabla de diferencias OC vs CC en `adapters/opencode/README.md`.
+
+### Setup Hermes Agent (opcional, multi-CLI con cron + delivery)
+
+```bash
+# 1. Instalar Hermes
+curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
+
+# 2. Generar .hermes/skills/ desde system/ + symlink a ~/.hermes/skills/wally-trader/
+bash adapters/hermes/install.sh
+
+# 3. Verificar (12 tests)
+python3 -m pytest adapters/hermes/test_hermes_transform.py -v
+
+# 4. Setup Hermes (model + provider — requiere cuenta API tipo OpenRouter)
+hermes setup
+
+# 5. (Opcional) Configurar TradingView MCP en Hermes
+hermes config set mcp.tradingview.command node
+hermes config set mcp.tradingview.args '["./tradingview-mcp/src/server.js"]'
+
+# 6. Lanzar
+cd ~/Documents/wally-trader
+hermes
+# → Hermes lee AGENTS.md + carga 12 agents + 33 commands + 17 skills
+```
+
+**Use cases únicos de Hermes (vs CC/OC):**
+- `hermes cron add "0 6 * * *" /morning` → análisis automático CR 06:00 sin abrir laptop
+- `hermes gateway setup` → recibir alertas en Telegram/Discord/WhatsApp
+- Backend serverless (Modal/Daytona) → corre 24/7 hibernando, costa centavos
+
+Detalles en `adapters/hermes/README.md`.
+
+### Correr todos los tests del adapter (verificación)
+
+```bash
+python3 -m pytest adapters/ -v
+# 27 tests pasando: 15 OpenCode + 12 Hermes
+```
 
 ### Instalar TradingView MCP (prompt listo para Claude Code)
 

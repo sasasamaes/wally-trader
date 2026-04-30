@@ -19,9 +19,9 @@ Guía operativa para sesiones de trading con Claude. Lee esto al inicio de cada 
   - Cierre anticipado permitido si: ya acumuló ganancia buena del día **O** tiene un pendiente personal
 - **Estilo:** scalping intraday, no day-trading de múltiples días
 
-## Profile System (4 profiles)
+## Profile System (5 profiles)
 
-El sistema soporta **4 profiles aislados**. Se switchean con `/profile` o con env var `WALLY_PROFILE` (multi-terminal).
+El sistema soporta **5 profiles aislados**. Se switchean con `/profile` o con env var `WALLY_PROFILE` (multi-terminal).
 
 ### Profile `retail` — Binance main (default)
 - Capital **$18.09** real en Binance Futures `BTCUSDT.P`
@@ -60,13 +60,41 @@ El sistema soporta **4 profiles aislados**. Se switchean con `/profile` o con en
 **⚠️ Filosofía Fotmarkets:** capital es bonus ("casa de juego"), NO depositar dinero propio,
 no reemplaza el profile FTMO/retail real.
 
+### Profile `fundingpips` (Zero $10k — direct funded MT5)
+- **Capital $10,000 USD** real-money funded (NO demo, NO challenge)
+- **Costo cuenta:** $99 USD ($79 con HELLO -20%)
+- **Provider:** [FundingPips](https://fundingpips.com), modelo "Zero" (sin evaluación)
+- **MT5** server `FundingPips-Live` (reusa EA bridge del profile FTMO)
+- **Multi-asset universe** (20+): forex majors/crosses, indices (NAS/SPX/US30/DAX/FTSE/JPN), crypto (BTC/ETH), commodities (XAU/XAG/oil)
+- Estrategia **FundingPips-Conservative** (más estricta que FTMO-Conservative)
+  - Risk per trade: **0.3%** ($30) — NO 0.5% como FTMO
+  - Target diario: 0.5-0.7% (consistency-friendly)
+  - Max trades/día: **2**
+  - TP fijo (NO trailing — incompatible con regla 15% consistency)
+- **Reglas duras:**
+  - 3% daily loss → BLOCK sistema en -2%
+  - **5% max DD vs balance fijo** $10k → BLOCK sistema en -3% (más estricto que FTMO 10% trailing)
+  - **15% consistency:** biggest day NO puede exceder 15% del profit total → BLOCK en 12%
+  - 7 días min trading antes de retirar
+  - Leverage 1:50 (vs FTMO 1:100)
+- **Payout:** Bi-weekly 95% al trader
+- Ventana **CR 06:00–16:00** (forex/indices) o **06:00–20:00** (crypto)
+- Guardian: `.claude/scripts/fundingpips_guard.sh` antes de cada entry
+- Ver `.claude/profiles/fundingpips/config.md`, `strategy.md`, `rules.md`
+
+**⚠️ Filosofía FundingPips:** dinero real desde día 1, $99 perdido si rompes 5% DD. **El edge no es ganar — es no perder.** Estrategia ultra-conservadora.
+
+**Plan declarado:** usar payouts FundingPips para fondear retail (Binance) y eventualmente comprar otra cuenta FTMO $100k.
+
 ### Reglas de operación multi-profile
 1. **No operar el mismo setup en `retail` y `retail-bingx` simultáneamente** (doble exposición direccional al mismo BTC). Uno u otro por sesión/día.
-2. **No mezclar profiles distintos (retail / ftmo / fotmarkets) el mismo día.** Switch al inicio de sesión.
-3. **Nunca cruzar memorias** — trade FTMO no se escribe al log retail/fotmarkets y viceversa. Tampoco cruzar entre `retail` y `retail-bingx`.
+2. **No mezclar profiles distintos (retail / ftmo / fotmarkets / fundingpips) el mismo día.** Switch al inicio de sesión.
+3. **Nunca cruzar memorias** — trade FTMO no se escribe al log retail/fotmarkets/fundingpips y viceversa.
 4. **Guardian** (`.claude/scripts/guardian.py`) obligatorio en FTMO antes de cada entry.
 5. **Lite Guardian** (`.claude/scripts/fotmarkets_guard.sh`) obligatorio en fotmarkets antes de cada entry.
-6. **Statusline** muestra `[PROFILE]` en todo momento para prevenir confusión.
+6. **FundingPips Guardian** (`.claude/scripts/fundingpips_guard.sh`) obligatorio en fundingpips antes de cada entry.
+7. **CRÍTICO en fundingpips:** NO operar BTC/ETH simultáneo en fundingpips + ftmo + retail. Doble/triple exposición direccional al mismo asset = riesgo correlacionado.
+8. **Statusline** muestra `[PROFILE]` en todo momento para prevenir confusión.
 
 ### Comandos específicos multi-profile
 - `/profile` — ver/cambiar profile activo

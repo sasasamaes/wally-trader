@@ -1,4 +1,4 @@
-Actualiza el equity actual del profile FTMO (no aplica a retail).
+Actualiza el equity actual del profile FTMO o FundingPips (no aplica a retail).
 
 Uso:
 - `/equity <valor>` — registra nuevo equity en USD
@@ -9,9 +9,21 @@ Pasos que ejecuta Claude:
 
 1. Lee profile activo: `bash .claude/scripts/profile.sh get`
 
-2. Si profile != "ftmo":
-   - Mensaje: "/equity solo aplica al profile FTMO. Profile activo: <X>. Usa /profile ftmo para switchear."
+2. Si profile == "retail" o "retail-bingx" o "fotmarkets":
+   - Mensaje: "/equity solo aplica a profiles ftmo y fundingpips. Profile activo: <X>."
    - NO ejecutar
+
+3. Si profile == "fundingpips":
+   - Si sin argumentos: lee última línea de `.claude/profiles/fundingpips/memory/equity_curve.csv`
+   - Si hay valor: append al CSV con timestamp + recalcula daily_pnl_pct + total_dd_pct
+   - Calcula y muestra:
+     - Equity actual: $X (vs initial $10,000 = +/-N.NN%)
+     - Total DD: N.NN% (BLOCK en -3%, oficial -5%)
+     - Daily PnL: N.NN% (BLOCK en -2%, oficial -3%)
+     - Trades hoy: N/2
+     - Días operados: N/7 mínimo
+   - Si total DD ≤ -3% → ⚠️ "BLOCK threshold alcanzado, NO operar más hoy"
+   - Si daily PnL ≤ -2% → ⚠️ "Daily BLOCK alcanzado, force close si hay open"
 
 3. Si sin argumentos:
    - Lee última línea de `.claude/profiles/ftmo/memory/equity_curve.csv`

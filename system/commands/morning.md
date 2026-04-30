@@ -73,7 +73,32 @@ Pasos que ejecuta Claude:
      - "Verificar bonus T&C en memory/session_notes.md antes de ejecutar."
      - "Ejecución manual en MT5 — TV solo vigila, no ejecuta."
 
-5. Si argumento opcional: pasa como contexto adicional al agente (ej: "/morning sin café")
+5. SI profile == "fundingpips":
+   - Ejecuta validación previa OBLIGATORIA:
+     ```bash
+     bash .claude/scripts/fundingpips_guard.sh check --verbose
+     ```
+     Si BLOCK por ventana o reglas duras → muestra el BLOCK + continúa análisis preparativo SIN entry sugerida.
+   - Despacha `morning-analyst-ftmo` con instrucción especial:
+     - "Modo FUNDINGPIPS activado — sigue las reglas de `.claude/profiles/fundingpips/strategy.md` (FundingPips-Conservative)"
+     - "Universo MULTI-ASSET 20+: forex (EURUSD/GBPUSD/USDJPY/USDCHF/AUDUSD/USDCAD/NZDUSD + crosses) + indices (NAS100/SPX500/US30/GER40/UK100/JPN225) + crypto (BTCUSD/ETHUSD) + commodities (XAUUSD/XAGUSD)"
+     - "Risk per trade: 0.3% del capital ($30 sobre $10k) — NO 0.5% como FTMO"
+     - "Target diario: 0.5-0.7% (consistency-friendly, NO 1.5% FTMO)"
+     - "Max trades hoy: 2 (NO 3 como FTMO)"
+     - "TP fijo (NO trailing) — incompatible con regla 15% consistency"
+     - "Daily loss BLOCK en -2% (oficial -3%); Total DD BLOCK en -3% (oficial -5%)"
+     - "Plataforma MT5 con server FundingPips-Live (mismo EA bridge que FTMO, magic 88888)"
+     - **"FASE PRE-SCAN: ejecutar `/multifactor` en cada asset candidato + `/risk-var --target-var-pct 0.5` para sizing"**
+     - **"FASE SELECCIÓN A-grade: pick 1 asset con multifactor>+50 (long) o <-50 (short) + ML score >55 + Chainlink OK"**
+     - **"FASE TV OBLIGATORIA — cambiar chart al símbolo TV del ganador (mapeos OANDA/BINANCE/TVC)"**
+     - **"FASE BIAS: indicar BIAS LONG/SHORT/NEUTRAL con trigger condicional explícito"**
+     - **"FASE WATCHLIST: 3-5 precios con alertas TV sugeridas"**
+   - Al final, recordatorio explícito:
+     - "⚠️ FundingPips Zero = dinero real. $99 perdido si rompes 5% DD. NO operar setups de baja convicción."
+     - "Verificar status en `.claude/profiles/fundingpips/memory/session_notes.md` antes de ejecutar."
+     - "Ejecución manual en MT5 (login FundingPips-Live)."
+
+6. Si argumento opcional: pasa como contexto adicional al agente (ej: "/morning sin café")
 
 ## Fases del morning-analyst retail (17 fases, incluye Pre-flight TV)
 

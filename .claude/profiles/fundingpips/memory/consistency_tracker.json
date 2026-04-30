@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "profile": "fundingpips",
+  "biggest_day_pnl": 0.0,
+  "biggest_day_date": null,
+  "total_profit_to_date": 0.0,
+  "current_day_pnl": 0.0,
+  "current_day_date": null,
+  "consistency_pct": 0.0,
+  "violation_threshold_pct": 15,
+  "warn_threshold_pct": 10,
+  "block_threshold_pct": 12,
+  "status": "OK",
+  "last_update": null
+}
