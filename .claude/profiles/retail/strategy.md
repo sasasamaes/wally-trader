@@ -2,6 +2,33 @@
 
 Validada con **100% WR** y **+15.1%** en backtest 3 días frente a 144 configs.
 
+> ⚠️ **Backtest 60d 2026-04-30**: en período TRENDING UP (BTC +15%) sin regime gate, MR
+> dio -34.83% Ret / WR 22.7% / 66 trades. Con regime gate ADX<20 las pérdidas bajaron
+> a -4.01% (4 trades) — el gate es **prevención de pérdidas**, no generador de edge.
+> **Consecuencia**: regime gate ADX<20 ahora es **HARD PRECONDITION** (ver abajo).
+> Detalles: `docs/backtest_findings_2026-04-30.md`.
+
+## 🚨 Regime gate (precondition obligatoria, agregada 2026-04-30)
+
+**ANTES de evaluar los 4 filtros**, verificar régimen 1H:
+
+```bash
+/regime
+# → debe arrojar RANGE_CHOP (ADX < 20) para permitir Mean Reversion
+```
+
+| ADX(14) 1H | Régimen | Acción |
+|---|---|---|
+| < 20 | RANGE_CHOP | ✅ MR habilitada — evalúa los 4 filtros |
+| 20-25 | TRANSITION | ⚠️ NO MR — esperar confirmación |
+| 25-30 | TREND_LEVE | 🔄 Switch a MA Crossover (`/macross`) |
+| 30-40 | TREND_FUERTE | 🔄 Switch a Donchian Breakout |
+| > 40 | TREND_EXTREMO | 🚫 NO operar (volatilidad extrema) |
+
+Si ADX ≥ 20 → **abortar entry MR**, anotar en log "skipped: regime no chop".
+Esto **es bloqueo hard** — los 4 filtros pueden alinear pero si ADX ≥ 20 la entrada
+se descarta. Backtest valida que esto reduce losses 88% en períodos de tendencia.
+
 ## Parámetros
 
 | Parámetro | Valor |

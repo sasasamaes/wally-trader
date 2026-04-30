@@ -15,13 +15,24 @@ phase_3: capital ∈ [300, ∞)
 
 **Enforcement:** `fotmarkets_phase.sh` emite la fase; comandos profile-aware la leen.
 
-## R2 — Risk per trade (phase-aware)
+## R2 — Risk per trade (phase-aware) — RECALIBRADO 2026-04-30
 
-| Fase | Risk % | Cap USD |
-|---|---|---|
-| 1 | 10% | $3.00 fijo |
-| 2 | 5% | dinámico |
-| 3 | 2% | dinámico |
+⚠️ **Backtest 60d demuestra que risk 10% en fase 1 generó DD 70-95%**, violando R5
+sistemáticamente. Recalibración basada en backtest:
+
+| Fase | Risk % (NUEVO) | Risk % (legacy) | Cap USD | Razón |
+|---|---|---|---|---|
+| 1 | **1%** | ~~10%~~ | $0.30 sobre $30 | Solo EURUSD respeta DD<12% a 1% (bk: DD 10.53%, Ret +39.8%) |
+| 2 | **2%** | ~~5%~~ | dinámico | Reducción proporcional |
+| 3 | **2%** | 2% | dinámico | Sin cambios |
+
+**Backtest fase 1 (60d 5m EURUSD):**
+- Risk 1%: DD 10.53% ✅ (respeta 12% DD), Ret +39.8% / 153 trades
+- Risk 2%: DD 20.12% ❌ (viola 12% DD)
+- Risk 10%: DD 70.20% ❌❌ (cuenta liquidada antes del retorno)
+
+**Whitelist fase 1**: SOLO EURUSD habilitado (GBPUSD inviable — backtest PF 0.94 +
+DD 18% incluso a 1% risk). Ver `docs/backtest_findings_2026-04-30.md`.
 
 **Enforcement:** `/risk` aplica automáticamente según fase.
 

@@ -2,6 +2,36 @@
 
 > El objetivo es maximizar BTC, no USD. Cada decisión se evalúa en sats.
 
+> 🚨 **Backtest 60d 2026-04-30**: Mean Reversion 15m BTC dio **-49.81pp vs HODL** en este período
+> (strategy -34.83% vs HODL +14.98%). La regla del strategy "outperformance <-2% mensual → PAUSAR
+> profile 30 días" se activaría inmediatamente. **Acción obligatoria**: pre-flight HODL check antes
+> de cada entry + regime gate ADX<20 hard. Ver `docs/backtest_findings_2026-04-30.md`.
+
+## 🚨 Pre-flight checks (obligatorios, agregados 2026-04-30)
+
+Antes de cada entry:
+
+```bash
+# 1. Regime gate — solo MR en RANGE_CHOP
+/regime
+# → ADX(14) 1H debe ser <20. Si ADX ≥ 20 → NO entrar MR (igual que retail).
+
+# 2. HODL outperformance check (rolling 30d)
+bash .claude/scripts/btc_outperform.py --period 30d
+# → si outperformance <-2% acumulado → PAUSAR profile 30 días (regla del rules.md)
+```
+
+| Test | Threshold | Acción si falla |
+|---|---|---|
+| Regime ADX 1H | < 20 | NO MR — esperar regime |
+| HODL outperformance 30d | > -2% | PAUSAR profile 30 días |
+| TRENDING UP detectado | — | Prefer **HODL pasivo** > entries activos |
+
+**TRENDING UP regla especial**: si régimen es TREND_LEVE/FUERTE alcista, considera que
+HODL pasivo replica spot con cero esfuerzo. Solo activar trading si tu setup es
+**direccionalmente alineado** (LONGS en TRENDING UP). NO contrariar a la dirección
+del spot — el backtest demuestra que perderías BTC stack.
+
 ## Parámetros core
 
 | Parámetro | Valor | Razón |

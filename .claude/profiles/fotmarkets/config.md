@@ -42,22 +42,26 @@ no_weekend: true
 phase_1:
   capital_min: 0
   capital_max: 100
-  risk_per_trade_pct: 10
-  risk_per_trade_usd_cap: 3.0
+  # 2026-04-30: RECALIBRADO desde 10% → 1% (backtest demostró DD 70% a 10% risk)
+  risk_per_trade_pct: 1
+  risk_per_trade_usd_cap: 0.30  # $0.30 sobre $30 (1%)
   max_trades_per_day: 1
   max_sl_consecutive: 1
   tp_r_multiple: 2.0
-  allowed_assets: [EURUSD, GBPUSD]
+  # 2026-04-30: GBPUSD removido — backtest PF 0.94 / DD 18% incluso a 1% risk
+  allowed_assets: [EURUSD]
 
 phase_2:
   capital_min: 100
   capital_max: 300
-  risk_per_trade_pct: 5
+  # 2026-04-30: RECALIBRADO 5% → 2%
+  risk_per_trade_pct: 2
   max_trades_per_day: 2
   max_sl_consecutive: 2
   tp_r_multiple: 2.0
   break_even_trigger_r: 1.0
-  allowed_assets: [EURUSD, GBPUSD, USDJPY, XAUUSD, NAS100]
+  # 2026-04-30: GBPUSD desbloqueado solo si backtest fase 2 lo valide
+  allowed_assets: [EURUSD, USDJPY, XAUUSD, NAS100]
 
 phase_3:
   capital_min: 300

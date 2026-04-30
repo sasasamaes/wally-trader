@@ -2,6 +2,14 @@
 
 Validada con **100% WR** y **+15.1%** en backtest 3 días frente a 144 configs.
 
+> ⚠️ **Backtest 60d 2026-04-30**: ver `docs/backtest_findings_2026-04-30.md`. Regime gate
+> ADX<20 ahora es HARD PRECONDITION (idéntico a retail/Binance — comparten estrategia).
+
+## 🚨 Regime gate (precondition obligatoria, agregada 2026-04-30)
+
+Antes de evaluar los 4 filtros, `/regime` debe arrojar **RANGE_CHOP (ADX<20)**.
+Si ADX ≥ 20 → abortar entry MR. Ver `.claude/profiles/retail/strategy.md` para tabla completa.
+
 ## Parámetros
 
 | Parámetro | Valor |
