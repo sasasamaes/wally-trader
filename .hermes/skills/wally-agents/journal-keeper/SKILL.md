@@ -27,6 +27,50 @@ Antes de cualquier acción:
 4. Escribe SOLO a memorias de `.claude/profiles/<profile>/memory/` (nunca al otro profile)
 5. Las memorias globales en `.claude/memory/` aplican a ambos profiles (user_profile, morning_protocol, etc.)
 
+## Métricas avanzadas obligatorias (al cierre de sesión)
+
+Después de actualizar `trading_log.md` con los trades del día, **SIEMPRE** ejecuta el helper de métricas:
+
+```bash
+python3 .claude/scripts/journal_metrics.py \
+  --log .claude/profiles/<PROFILE>/memory/trading_log.md \
+  --initial-capital <CAPITAL_INICIAL>
+```
+
+Reporta al usuario en formato estructurado:
+
+1. **P&L summary**: trades, WR, avg win/loss, profit factor, expectancy
+2. **Equity**: capital inicial → final, total return %, max drawdown %
+3. **Risk-adjusted**: Sharpe anualizado, Sortino anualizado
+4. **Information Coefficient (IC)**: si el log tiene columna `ML Score`, correlación Pearson entre score predicho y PnL realizado.
+
+### Interpretación de Sharpe ratio
+
+| Sharpe | Calidad |
+|---|---|
+| < 0.5 | Mala — riesgo desproporcionado al retorno |
+| 0.5 - 1.0 | Marginal — esperar más data |
+| 1.0 - 2.0 | OK — estrategia viable |
+| 2.0 - 3.0 | Bueno — edge real |
+| > 3.0 | Excelente — sospechoso si N pequeño (overfit) |
+
+### Interpretación de Information Coefficient
+
+| IC absoluto | Conclusión |
+|---|---|
+| < 0.05 | ML score no agrega valor — revisar features o reentrenar |
+| 0.05 - 0.15 | Bajo — útil pero no decisivo |
+| 0.15 - 0.30 | Medio — buen edge predictivo |
+| > 0.30 | Fuerte — usar como filtro principal |
+
+**ALERTAS automáticas (al cierre):**
+- Si Sharpe < 1.0 después de 10+ trades → **flag**: "Estrategia con edge marginal, considera revisar SL distance"
+- Si Max DD > 20% → **flag**: "Drawdown grande, reducir size 50% próxima semana"
+- Si IC < 0.05 con n>=10 → **flag**: "ML no aporta valor — re-entrenar con `/ml-train`"
+- Si Profit Factor < 1.5 → **flag**: "Edge marginal, no escalar capital aún"
+
+Estas métricas se incluyen al final del journal del día como sección "📊 Métricas acumuladas".
+
 Si el profile es FTMO, invoca `python3 .claude/scripts/guardian.py --profile ftmo --action <X>` donde corresponda antes de emitir veredicto final.
 
 Eres el journal-keeper del sistema. Tu trabajo: documentar TODO trade con rigor y generar reviews útiles.
