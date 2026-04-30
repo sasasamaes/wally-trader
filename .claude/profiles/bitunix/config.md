@@ -47,13 +47,38 @@ Histórico observado en señales punkchainer's:
 | Auto-blacklist asset | Después de 2 SLs consecutivos en mismo asset | filter |
 | Ventana | 24/7 (cripto) — pero mejor London/NY overlap | INFO |
 
+## Setup TradingView (indicadores Neptune comunidad)
+
+La comunidad punkchainer's usa **4 indicadores Neptune** (Bangchan10, requieren invitación):
+1. Neptune® - Oscillator™
+2. Neptune® - Signals™
+3. Neptune® - SMC™
+4. Neptune® - ICT™
+
+**Configuraciones exactas:** ver skill `@neptune-community-config` (configs validadas por la comunidad para 15M-4H).
+
+**Placeholders/webhooks:** ver skill `@neptune-alert-placeholders` (templates JSON listos para 3Commas/Cornix/webhooks).
+
+**Reglas críticas:**
+- Neptune Signals: Sensitivity **MANUAL** (NO Auto — confirma comunidad).
+- Money Flow: "**Smart Money**" en Oscillator (no "Neptune").
+- Confluences Lines + Square + Volume Analysis ON.
+- Modern UI ON en SMC.
+- Plan TV Basic = max 2 indicadores → combo: **Signals + Oscillator** (default day-to-day).
+
+**Setup específico bitunix:** `memory/neptune_setup.md` documenta el workflow de validación visual + cuantitativa para cada señal.
+
 ## Cómo funciona el flow
 
 ```
 [Discord punkchainer's]
    ↓ señal nueva: "MSTRUSDT Short 20x entry 166.57"
    
-[Tú lees y ejecutas]
+[Tú lees y validas con Neptune en TU chart]
+   1. Aplica config Neptune (ver skill neptune-community-config)
+   2. Verifica visualmente: ¿flecha Signals? ¿confluencias Oscillator? ¿OB/FVG SMC?
+   
+[Si visual confirma → cuantitativo]
 /signal MSTRUSDT short 166.57 sl=170 tp=160 leverage=20
    ↓
 [Sistema valida con 4 capas]
