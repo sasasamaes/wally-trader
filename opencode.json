@@ -16,12 +16,12 @@
   },
   "mcp": {
     "tradingview": {
-      "type": "stdio",
-      "command": "node",
-      "args": [
+      "type": "local",
+      "command": [
+        "node",
         "./tradingview-mcp/src/server.js"
       ],
-      "env": {},
+      "environment": {},
       "enabled": true
     }
   },
