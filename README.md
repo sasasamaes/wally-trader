@@ -930,9 +930,83 @@ Recalibra el modelo con data reciente para adaptarse al régimen. Verifica AUC e
 **Core (todos los profiles):**
 - **Claude Code** (Anthropic CLI) — primario, mejor soporte (statusline, hooks, watcher)
 - **TradingView Desktop** (plan Basic mínimo) + MCP conectado vía `--remote-debugging-port=9222`
-- **Python 3.9+** con PyYAML (`pip3 install pyyaml`)
+- **Python 3.9+** con PyYAML (`pip3 install pyyaml` o `pip install pyyaml` en Windows)
 - **Homebrew** (macOS) para `libomp` (XGBoost), `fswatch` (opcional dev), `jq` (opcional)
 - **Zona horaria:** sistema corre en CR (UTC-6, sin DST). Trabaja también para MX/CDMX (mismo offset).
+
+### 🪟 Windows 11 setup (con OpenCode u otro CLI)
+
+> **Nota**: el sistema fue diseñado en macOS pero soporta Windows 11 con caveats. Lee esta sección antes de usar OpenCode/Hermes en Windows.
+
+**Prereqs Windows:**
+1. **Python 3.9+** desde [python.org](https://python.org) o Microsoft Store. **CRÍTICO**: marcar "Add Python to PATH" durante install.
+2. **Git for Windows** (incluye **Git Bash** + utilidades POSIX: bash, awk, sed, cut, curl, jq via choco)
+   - Descarga: [git-scm.com](https://git-scm.com/download/win)
+   - Esencial: muchos slash commands invocan `bash .claude/scripts/profile.sh ...`
+3. **OpenCode** (recomendado para Windows): `npm install -g opencode-ai` o sigue [opencode.ai/docs](https://opencode.ai/docs)
+4. **TradingView Desktop** Windows + MCP — funciona idéntico a macOS
+
+**Setup steps:**
+```powershell
+# 1. Clone
+git clone https://github.com/sasasamaes/wally-trader.git
+cd wally-trader
+
+# 2. Install Python deps
+pip install pyyaml pandas numpy yfinance xgboost requests python-dotenv
+
+# 3. (Opcional) sync OpenCode adapters
+python adapters\opencode\transform.py
+
+# 4. Test que profile.py funciona (canónico cross-platform)
+python .claude\scripts\profile.py get
+# → debería imprimir profile activo o "no profile set"
+
+# 5. Test el wrapper Windows
+.claude\scripts\win\profile.cmd get
+# o desde PowerShell:
+.\.claude\scripts\win\profile.ps1 get
+
+# 6. Test el wrapper bash (si tienes Git Bash)
+bash .claude/scripts/profile.sh get
+
+# 7. Lanza OpenCode
+opencode
+```
+
+**Cross-platform abstraction**:
+- ✅ `profile.py` canónico (Python) — funciona en macOS/Linux/Windows
+- ✅ `profile.sh` (bash wrapper) — delega a `profile.py` con `python3` o `python`
+- ✅ `profile.cmd` y `profile.ps1` (Windows nativo) — delegan a `profile.py`
+- Los slash commands referencian `bash .claude/scripts/profile.sh`. En Windows + Git Bash, esto **funciona transparente**.
+
+**Limitaciones conocidas en Windows 11:**
+
+| Feature | Estado Windows | Workaround |
+|---|---|---|
+| Statusline | ⚠️ Parcial — formato puede romperse en cmd.exe | Usar OpenCode UI o Windows Terminal con UTF-8 |
+| Watcher daemon (.app + launchd) | ❌ macOS-only | Manual: corre `/watch` cuando necesites OR Windows Task Scheduler |
+| macOS notifications (`osascript`) | ❌ no funciona | Notificaciones desactivadas o usar `plyer` Python (TODO future) |
+| Cron daily 5:30 AM | ⚠️ Manual | Setup vía Windows Task Scheduler (`taskschd.msc`) |
+| `.env` shell loader | ✅ Funciona en Git Bash | — |
+| Hooks (SessionStart/Stop/PrePrompt) | ✅ Funcionan en OpenCode | — |
+| Slash commands con `bash` | ✅ Git Bash | Necesario instalar Git for Windows |
+| MT5 EA bridge (FTMO/FundingPips) | ✅ Nativo | MT5 Windows > MT5 Mac (mejor soporte oficial) |
+| TradingView MCP | ✅ Funciona | TradingView Desktop Windows + Chrome remote-debugging |
+| Pine Editor (TV chart) | ✅ — | — |
+
+**Profiles probados en Windows:**
+- ✅ retail / retail-bingx (BTC trading) — funciona con Git Bash
+- ✅ ftmo / fundingpips (MT5) — Windows ES más nativo que Mac para MT5
+- ✅ fotmarkets (MT5) — idem
+- ⚠️ bitunix (community signals) — funciona pero notifs desactivadas
+- ⚠️ quantfury — funciona, statusline BTC-denominated necesita test
+
+**Si algo no funciona en Windows:**
+1. Verifica que tienes Git Bash en PATH: abrir terminal, escribir `bash --version`
+2. Verifica Python en PATH: `python --version` o `python3 --version`
+3. Para issues con paths: prefiere usar forward slashes (`/`) o raw strings en Python (`r"C:\..."`)
+4. Reportar issue en GitHub con: SO version, terminal usado, error completo
 
 **Retail profile (Binance — main, default):**
 - **Binance Futures** con BTCUSDT.P activado
