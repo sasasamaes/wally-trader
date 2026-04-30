@@ -6,7 +6,7 @@ Calcula position sizing según el profile activo.
 
 Pasos que ejecuta Claude:
 
-1. Lee profile: `PROFILE=$(bash .claude/scripts/profile.sh get)`
+1. Lee profile: `PROFILE=$(python3 .claude/scripts/profile.py get)`
 
 2. SI profile == "retail":
    - Usa regla clásica 2% del capital actual (desde profiles/retail/config.md)
@@ -31,8 +31,8 @@ Pasos que ejecuta Claude:
    - Si BLOCK_HARD → NO-GO total
 
 3.5. SI profile == "fotmarkets":
-   - Lee capital actual: `CAP=$(bash .claude/scripts/fotmarkets_phase.sh capital)`
-   - Detecta fase: `PHASE=$(bash .claude/scripts/fotmarkets_phase.sh)`
+   - Lee capital actual: `CAP=$(python3 .claude/scripts/fotmarkets_phase.py capital)`
+   - Detecta fase: `PHASE=$(python3 .claude/scripts/fotmarkets_phase.py)`
    - Mapea fase → risk_pct y risk_usd_cap:
      - Fase 1: risk_pct=10, cap=$3.00
      - Fase 2: risk_pct=5, cap=null (dinámico)
@@ -60,7 +60,7 @@ Pasos que ejecuta Claude:
      ```
    - Valida que trade sea viable con el Lite Guardian:
      ```
-     bash .claude/scripts/fotmarkets_guard.sh check
+     python3 .claude/scripts/fotmarkets_guard.py check
      ```
      Si BLOCK → comunicar razón y sugerir posponer.
 

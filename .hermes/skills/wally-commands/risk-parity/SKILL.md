@@ -22,7 +22,7 @@ Pasos que ejecuta Claude:
 
 1. **Validar profile (multi-asset only):**
    ```bash
-   PROFILE=$(bash .claude/scripts/profile.sh get)
+   PROFILE=$(python3 .claude/scripts/profile.py get)
    ```
    - Si profile == `retail` o `retail-bingx` → ABORTAR con: "Risk Parity requiere profile multi-asset (ftmo o fotmarkets)"
    - Si profile == `ftmo` → universo: BTC, ETH, EURUSD, GBPUSD, NAS100, SPX500

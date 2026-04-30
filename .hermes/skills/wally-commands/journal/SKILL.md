@@ -21,7 +21,7 @@ Cierra el día y actualiza el log del profile activo.
 
 Pasos que ejecuta Claude:
 
-1. Lee profile: `PROFILE=$(bash .claude/scripts/profile.sh get)`
+1. Lee profile: `PROFILE=$(python3 .claude/scripts/profile.py get)`
 
 2. Despacha `journal-keeper` agent con el profile explícito.
 

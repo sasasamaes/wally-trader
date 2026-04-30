@@ -7,7 +7,7 @@ Pasos que ejecuta Claude:
 
 1. **Detectar profile activo:**
    ```bash
-   PROFILE=$(bash .claude/scripts/profile.sh get)
+   PROFILE=$(python3 .claude/scripts/profile.py get)
    ```
    Capital según profile:
    - `retail` → leer `Capital actual: $X.XX` de trading_log.md (default $18.09)

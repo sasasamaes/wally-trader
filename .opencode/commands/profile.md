@@ -12,7 +12,7 @@ Uso:
 Pasos que ejecuta Claude:
 
 1. Si el argumento es vacío:
-   - Corre `bash .claude/scripts/profile.sh show`
+   - Corre `python3 .claude/scripts/profile.py show`
    - Devuelve el profile actual + timestamp
 
 2. Si el argumento es `status`:
@@ -25,7 +25,7 @@ Pasos que ejecuta Claude:
 
 3. Si el argumento es `ftmo`, `retail` o `fotmarkets`:
    - **Validación previa**: pregunta "¿tienes trade abierto en el profile actual?" — si sí, BLOCK switch con mensaje "cierra primero"
-   - Corre `bash .claude/scripts/profile.sh set <arg>`
+   - Corre `python3 .claude/scripts/profile.py set <arg>`
    - Confirma con el nuevo statusline
    - Si destino es `ftmo`: prompt "¿actualizar equity FTMO ahora? (último: $X @ <timestamp>)"
    - Si destino es `fotmarkets`: prompt "¿ya leíste bonus T&C? Ver memory/session_notes.md"
@@ -91,7 +91,7 @@ Antes de cambiar de profile, checkear pending orders activas:
 
 6. Aplicar elección. Para `reopen`: update_status a `pending`.
 
-7. **Seguir con el set profile existente** (`bash .claude/scripts/profile.sh set <target>`).
+7. **Seguir con el set profile existente** (`python3 .claude/scripts/profile.py set <target>`).
 
 8. Al final, disparar un `/watch` tick (o llamar directo `python3 .claude/scripts/watcher_tick.py`)
    para refresh del dashboard con el nuevo estado.

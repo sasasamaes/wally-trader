@@ -2,7 +2,7 @@ Muestra el estado completo del sistema según el profile activo.
 
 Pasos que ejecuta Claude:
 
-1. Lee profile activo: `PROFILE=$(bash .claude/scripts/profile.sh get)`
+1. Lee profile activo: `PROFILE=$(python3 .claude/scripts/profile.py get)`
 
 2. SI profile == "retail":
    - Lee `.claude/profiles/retail/config.md` (capital, estrategia activa)
@@ -36,8 +36,8 @@ Pasos que ejecuta Claude:
 4. SI profile == "fotmarkets":
    - Lee `.claude/profiles/fotmarkets/memory/phase_progress.md` (capital + fase)
    - Lee `.claude/profiles/fotmarkets/memory/trading_log.md` (trades hoy)
-   - Invoca: `bash .claude/scripts/fotmarkets_phase.sh detail`
-   - Invoca: `bash .claude/scripts/fotmarkets_guard.sh check` (captura PASS/BLOCK)
+   - Invoca: `python3 .claude/scripts/fotmarkets_phase.py detail`
+   - Invoca: `python3 .claude/scripts/fotmarkets_guard.py check` (captura PASS/BLOCK)
    - Muestra statusline fotmarkets expandido:
      ```
      [FOTMARKETS $30.00]

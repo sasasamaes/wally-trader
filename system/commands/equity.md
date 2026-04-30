@@ -7,7 +7,7 @@ Uso:
 
 Pasos que ejecuta Claude:
 
-1. Lee profile activo: `bash .claude/scripts/profile.sh get`
+1. Lee profile activo: `python3 .claude/scripts/profile.py get`
 
 2. Si profile == "retail" o "retail-bingx" o "fotmarkets":
    - Mensaje: "/equity solo aplica a profiles ftmo y fundingpips. Profile activo: <X>."

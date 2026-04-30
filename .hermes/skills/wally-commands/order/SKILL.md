@@ -28,7 +28,7 @@ Uso:
 
 Pasos que ejecuta Claude:
 
-1. **Lee profile activo:** `PROFILE=$(bash .claude/scripts/profile.sh get)`
+1. **Lee profile activo:** `PROFILE=$(python3 .claude/scripts/profile.py get)`
 2. **Parsea args:** Si vacíos, busca último setup en la conversación con bloque
    `ENTRY|SL|TP|INVALIDATION`. Si no encuentra → error "Dame params explícitos o corre /morning primero".
 3. **Valida profile-specific:**
@@ -51,7 +51,7 @@ Pasos que ejecuta Claude:
      - Igual que retail pero capital=0.93 (lee de config.md).
      - `--real` no aplica (BingX sin API integrada). Siempre virtual.
    - `fotmarkets`:
-     - `bash .claude/scripts/fotmarkets_guard.sh check` → si BLOCK, abortar con reason.
+     - `python3 .claude/scripts/fotmarkets_guard.py check` → si BLOCK, abortar con reason.
      - Verifica asset in `allowed_assets` de la phase (Phase 1 = [EURUSD, GBPUSD] solo).
      - `order_lib.sizing_for_profile('fotmarkets', entry, sl, capital_from_phase_progress)` → qty/risk.
      - Recuerda: ejecución MT5 manual. Watcher solo notifica trigger.

@@ -21,7 +21,7 @@ Análisis matutino adaptado al profile activo.
 
 Pasos que ejecuta Claude:
 
-1. Lee profile: `PROFILE=$(bash .claude/scripts/profile.sh get)`
+1. Lee profile: `PROFILE=$(python3 .claude/scripts/profile.py get)`
 
 2. SI profile == "retail":
    - Despacha `morning-analyst` (BTC-BingX single-asset, 17 fases, ver abajo)
@@ -44,7 +44,7 @@ Pasos que ejecuta Claude:
 4. SI profile == "fotmarkets":
    - Ejecuta validación previa:
      ```
-     bash .claude/scripts/fotmarkets_guard.sh check
+     python3 .claude/scripts/fotmarkets_guard.py check
      ```
      Si BLOCK por ventana u otras razones → muestra el BLOCK pero continúa con análisis "preparativo" (sin entry sugerida).
    - Lee `.claude/profiles/fotmarkets/config.md` para obtener `phase` actual y `allowed_assets`
@@ -90,7 +90,7 @@ Pasos que ejecuta Claude:
 5. SI profile == "fundingpips":
    - Ejecuta validación previa OBLIGATORIA:
      ```bash
-     bash .claude/scripts/fundingpips_guard.sh check --verbose
+     python3 .claude/scripts/fundingpips_guard.py check --verbose
      ```
      Si BLOCK por ventana o reglas duras → muestra el BLOCK + continúa análisis preparativo SIN entry sugerida.
    - Despacha `morning-analyst-ftmo` con instrucción especial:

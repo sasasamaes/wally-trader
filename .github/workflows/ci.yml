@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:  # manual trigger
+
+jobs:
+  test:
+    name: Tests + Lint + Adapter Sync
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.9", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pyyaml pandas numpy requests python-dotenv ruff
+
+      - name: Verify canonical Python scripts
+        run: |
+          python .claude/scripts/profile.py --help 2>&1 || python .claude/scripts/profile.py
+          python .claude/scripts/fotmarkets_phase.py check 150
+          python .claude/scripts/cross_profile_guard.py status
+        shell: bash
+
+      - name: Run pytest suite
+        run: pytest .claude/scripts/tests/ -v --tb=short
+        shell: bash
+
+      - name: Lint (ruff — soft fail)
+        run: |
+          ruff check .claude/scripts/*.py || echo "::warning::Ruff found lint issues (non-blocking)"
+        continue-on-error: true
+        shell: bash
+
+      - name: Verify adapter sync (OpenCode + Hermes)
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.11'
+        run: |
+          python adapters/opencode/transform.py
+          python adapters/hermes/transform.py
+          # Check: any uncommitted changes after sync = adapters out of sync
+          if [ -n "$(git status --porcelain .opencode .hermes)" ]; then
+            echo "::error::Adapters out of sync. Run python adapters/opencode/transform.py + adapters/hermes/transform.py and commit."
+            git status --porcelain .opencode .hermes
+            exit 1
+          fi
+        shell: bash
+
+  smoke-test-setup:
+    name: Smoke test setup.py
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python setup.py --check

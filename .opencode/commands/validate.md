@@ -6,7 +6,7 @@ Valida un setup de entrada ANTES de ejecutar el trade.
 
 Pasos que ejecuta Claude:
 
-1. Lee profile: `PROFILE=$(bash .claude/scripts/profile.sh get)`
+1. Lee profile: `PROFILE=$(python3 .claude/scripts/profile.py get)`
 
 2. SI profile == "retail":
    - Despacha agente `trade-validator`
@@ -32,7 +32,7 @@ Pasos que ejecuta Claude:
 3.5. SI profile == "fotmarkets":
    - Invoca Lite Guardian primero:
      ```
-     GUARD=$(bash .claude/scripts/fotmarkets_guard.sh check)
+     GUARD=$(python3 .claude/scripts/fotmarkets_guard.py check)
      ```
      Si `GUARD` empieza con `BLOCK`:
        - Muestra razón al usuario
@@ -45,7 +45,7 @@ Pasos que ejecuta Claude:
      - 4 filtros obligatorios LONG o SHORT según dirección propuesta
    
    - Verifica que asset esté en whitelist de la fase actual:
-     - `PHASE=$(bash .claude/scripts/fotmarkets_phase.sh)`
+     - `PHASE=$(python3 .claude/scripts/fotmarkets_phase.py)`
      - Cargar `phase_N.allowed_assets` de config.md
      - Si asset NO en whitelist → NO-GO con mensaje "Asset <X> desbloqueado en Fase Y+"
    

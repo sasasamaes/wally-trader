@@ -19,7 +19,7 @@ Pasos que ejecuta Claude:
 
 3. **Llamar al helper:**
    ```bash
-   bash .claude/scripts/chainlink_price.sh $PAIR --compare $TV_PRICE
+   python3 .claude/scripts/chainlink_price.py $PAIR --compare $TV_PRICE
    ```
 
 4. **Interpretar veredicto:**

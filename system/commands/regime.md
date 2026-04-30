@@ -17,7 +17,7 @@ Tiempo estimado: < 1 minuto.
 
 Comportamiento según profile activo (retail / ftmo / fotmarkets).
 
-1. Lee profile: `PROFILE=$(bash .claude/scripts/profile.sh get)`
+1. Lee profile: `PROFILE=$(python3 .claude/scripts/profile.py get)`
 
 2. SI profile == "retail":
    - BTCUSDT.P 4H + 1H
