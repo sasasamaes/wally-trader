@@ -63,7 +63,7 @@ def get_active_profile() -> str:
         return os.environ["WALLY_PROFILE"].strip()
     flag = SCRIPT_DIR.parent / "active_profile"
     if flag.exists():
-        return flag.read_text().strip().split("|", 1)[0].strip()
+        return flag.read_text(encoding='utf-8').strip().split("|", 1)[0].strip()
     return ""
 
 
@@ -73,7 +73,7 @@ def get_open_pendings(profile: str) -> List[Dict]:
     if not pending_file.exists():
         return []
     try:
-        data = json.loads(pending_file.read_text())
+        data = json.loads(pending_file.read_text(encoding='utf-8'))
         orders = data.get("pending", []) if isinstance(data, dict) else []
     except (json.JSONDecodeError, OSError):
         return []
@@ -96,7 +96,7 @@ def get_recent_open_trades(profile: str, last_n: int = 5) -> List[Dict]:
         return []
     out = []
     try:
-        for line in log_file.read_text().splitlines():
+        for line in log_file.read_text(encoding='utf-8').splitlines():
             if not line.startswith("| 20"):  # year prefix
                 continue
             cols = [c.strip() for c in line.split("|")]
