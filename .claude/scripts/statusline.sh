@@ -67,6 +67,75 @@ if [[ "$PROFILE" == "ftmo" ]]; then
   exit 0
 fi
 
+# BITUNIX path (copy trading punkchainer's community)
+if [[ "$PROFILE" == "bitunix" ]]; then
+  SCRIPT_DIR="$(dirname "$0")"
+  CURVE="$SCRIPT_DIR/../profiles/bitunix/memory/equity_curve.csv"
+  LOG="$SCRIPT_DIR/../profiles/bitunix/memory/trading_log.md"
+
+  CAP="50.00"
+  if [[ -f "$CURVE" && $(wc -l < "$CURVE") -gt 1 ]]; then
+    CAP=$(tail -n1 "$CURVE" | cut -d',' -f2)
+  fi
+
+  CRC_TAG="$(usd_to_crc "$CAP")"
+  [[ -n "$CRC_TAG" ]] && CRC_TAG=" $CRC_TAG"
+
+  HORA_CR=$(TZ='America/Costa_Rica' date +%H:%M)
+  FECHA=$(TZ='America/Costa_Rica' date +%Y-%m-%d)
+
+  TRADES_HOY=0
+  if [[ -f "$LOG" ]]; then
+    TRADES_HOY=$(grep -c "^| $FECHA " "$LOG" 2>/dev/null | head -1 || true)
+    TRADES_HOY=$(echo "${TRADES_HOY:-0}" | tr -cd '0-9')
+    TRADES_HOY=${TRADES_HOY:-0}
+  fi
+
+  echo "[BITUNIX copy] \$$CAP$CRC_TAG | code:punkchainer | $TRADES_HOY/3 signals hoy | 🕐 CR $HORA_CR$NOTION_TAG"
+  exit 0
+fi
+
+# QUANTFURY path (BTC-denominated trading)
+if [[ "$PROFILE" == "quantfury" ]]; then
+  SCRIPT_DIR="$(dirname "$0")"
+  CURVE="$SCRIPT_DIR/../profiles/quantfury/memory/equity_curve.csv"
+  LOG="$SCRIPT_DIR/../profiles/quantfury/memory/trading_log.md"
+
+  # Default capital 0.01 BTC
+  BTC_EQ="0.01000000"
+  USD_EQ="750.00"
+  OUTPERF="0.00"
+  if [[ -f "$CURVE" && $(wc -l < "$CURVE") -gt 1 ]]; then
+    LAST_LINE=$(tail -n1 "$CURVE")
+    BTC_EQ=$(echo "$LAST_LINE" | cut -d',' -f2)
+    USD_EQ=$(echo "$LAST_LINE" | cut -d',' -f4)
+    OUTPERF=$(echo "$LAST_LINE" | cut -d',' -f8)
+  fi
+
+  HORA_CR=$(TZ='America/Costa_Rica' date +%H:%M)
+  FECHA=$(TZ='America/Costa_Rica' date +%Y-%m-%d)
+
+  TRADES_HOY=0
+  if [[ -f "$LOG" ]]; then
+    TRADES_HOY=$(grep -c "^| $FECHA " "$LOG" 2>/dev/null | head -1 || true)
+    TRADES_HOY=$(echo "${TRADES_HOY:-0}" | tr -cd '0-9')
+    TRADES_HOY=${TRADES_HOY:-0}
+  fi
+
+  # Color outperformance
+  PERF_ICON="⚪"
+  if awk "BEGIN {exit !(${OUTPERF:-0} >= 5)}"; then
+    PERF_ICON="🟢"
+  elif awk "BEGIN {exit !(${OUTPERF:-0} >= 0)}"; then
+    PERF_ICON="🟡"
+  else
+    PERF_ICON="🔴"
+  fi
+
+  echo "[QUANTFURY] ₿${BTC_EQ} (≈\$${USD_EQ}) | vs HODL ${PERF_ICON}${OUTPERF}% | $TRADES_HOY/3 trades | 🕐 CR $HORA_CR$NOTION_TAG"
+  exit 0
+fi
+
 # FUNDINGPIPS path (Zero $10k — direct funded MT5)
 if [[ "$PROFILE" == "fundingpips" ]]; then
   SCRIPT_DIR="$(dirname "$0")"

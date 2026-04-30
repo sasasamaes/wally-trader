@@ -1,0 +1,140 @@
+# Estrategia: Bitunix Copy-Validated
+
+> No generas. Validas. Copias selectivamente.
+
+## Parámetros core
+
+| Parámetro | Valor | Razón |
+|---|---|---|
+| Risk per signal | **2%** ($1.00 sobre $50) | Mismo que retail |
+| Max leverage | **10x** | Override a las señales de 20x para reducir riesgo asimétrico |
+| Max signals/día | **3** | Disciplina anti-FOMO |
+| Min validation score | **60%** (4/4 filtros + multifactor>50) | Gate hard |
+| Daily loss BLOCK | **-6%** (3 SLs) | STOP día |
+| Min lookback antes de copiar | 1 hora | Si la señal es muy reciente, espera 1h para validar que no fue hyped |
+
+## Pipeline de validación (cada señal)
+
+Cuando aparece una señal de la comunidad:
+
+### Paso 1: Parse de la señal
+Extraer: SYMBOL, SIDE, entry_price, SL, TP, leverage.
+Si la señal no incluye SL → **REJECT inmediato** (no copiar señales sin SL definido).
+
+### Paso 2: 4 filtros técnicos (`/signal` agent)
+- ¿RSI compatible con la dirección? (LONG → RSI<35, SHORT → RSI>65)
+- ¿Donchian band toque? (LONG → low(15), SHORT → high(15))
+- ¿BB toque?
+- ¿Vela cierra en dirección señal?
+
+Si <4/4 → REJECT.
+
+### Paso 3: Multi-Factor + ML cross-validation
+```bash
+# En el TF base del asset (15m default)
+/multifactor                  # debe ser >+50 (long) o <-50 (short)
+/ml --side <signal_side>      # debe ser >55
+```
+
+Si multifactor o ML divergen de la señal → **flag** ("la comunidad ve algo que tu sistema no ve").
+Si MF >70 + ML >65 → **MAX conviction**, ejecutar.
+
+### Paso 4: Chainlink cross-check (cripto only)
+```bash
+/chainlink <SYMBOL>           # delta vs entry señal <0.5%
+```
+Si delta >1% → **REJECT** (señal con feed stale o exchange-specific).
+
+### Paso 5: Régimen + sentiment
+- `/regime` debe ser compatible con dirección (no SHORT en TRENDING UP fuerte)
+- `/sentiment` extremo contrarian → flag pero NO bloqueo
+
+### Paso 6: Veredicto final
+```
+PASS_ALL_GATES (≥60% confidence) → EJECUTAR con tu sizing (override leverage 20→10)
+FLAG (50-60% confidence) → ejecutar con HALF size (1% en vez de 2%)
+REJECT (<50% confidence) → SKIP, anotar razón
+```
+
+## Sizing canónico
+
+```bash
+# Asume señal: MSTRUSDT short, entry 166.57, SL 170 (2% adverso)
+# Capital: $50, risk 2% = $1.00 max loss
+
+# Cálculo:
+# - SL distance: |170 - 166.57| / 166.57 = 2.06% (señal pide SL en 170)
+# - Notional max @ 10x leverage: $1.00 / 0.0206 = $48.54
+# - Margin used: $48.54 / 10 = $4.85 (9.7% del capital)
+# - Qty MSTRUSDT: $48.54 / 166.57 = 0.2914 unidades
+
+/signal MSTRUSDT short 166.57 sl=170 tp=160 leverage=20
+# → Sistema dice: "OK con override leverage 10x. Size 0.2914 MSTRUSDT, margin $4.85"
+```
+
+## Override de leverage (regla dura)
+
+Aunque la señal diga 20x, **siempre opera 10x max**. Por qué:
+
+- Las señales de la comunidad usan leverage agresivo para mostrar % de profit grandes
+- Tu cuenta es pequeña — un wick puede liquidar a 20x antes de tocar SL
+- Reducir leverage a 10x **mantiene el R:R** (mismo SL distance) pero baja la prob de liquidación
+- Trade-off: tu PnL en USD es 50% menor que la señal mostrada — accept it
+
+## Cuándo NO copiar (filtros adicionales)
+
+**REJECT automático si:**
+- La señal aparece >4 horas después de la entry price → "fuera de timing"
+- La señal es de un altcoin con liquidez <$5M 24h → riesgo de wick
+- Asset ya operado HOY en bitunix → max 3 trades/día rule
+- Asset operado en retail/ftmo/fundingpips/quantfury HOY → doble exposición
+- Daily PnL ≤ -6% (3 SLs) → STOP día
+- Total DD ≤ -30% del capital → STOP profile + review
+
+**FLAG (size 50%) si:**
+- Multifactor está entre +30 y +50 (borderline)
+- ML score entre 45 y 55
+- Chainlink delta entre 0.3% y 1% (WARN)
+- Sentiment extremo contrarian a la señal
+
+## Tracking de señales recibidas
+
+Cada señal vista (haya sido copiada o rechazada) va a `memory/signals_received.md`:
+
+```markdown
+## 2026-04-30 09:35 — MSTRUSDT Short 20x
+
+**Señal:** entry 166.57, SL 170, TP 160, lev 20x
+**Mi sistema dice:** PASS (4/4 filtros, MF +62, ML 68, CL OK)
+**Decisión:** EJECUTAR con leverage override 10x
+**Resultado:** TP1 hit en 165.61 → +$0.45 (después de fee)
+**Aprendizaje:** flow MSTR-correlated funcionó como esperado
+```
+
+Esto te da feedback histórico para mejorar tus filtros.
+
+## Outperformance metric (clave)
+
+```
+hit_rate_filtered  = wins / (wins + losses) de SEÑALES QUE TU SISTEMA APROBÓ
+hit_rate_all       = wins / (wins + losses) si copiaras TODAS las señales blindly
+hit_rate_rejected  = wins / (wins + losses) de las que RECHAZASTE (si fueran ejecutadas)
+
+Si hit_rate_filtered > hit_rate_all → tus filtros agregan valor
+Si hit_rate_filtered < hit_rate_all → tus filtros son demasiado restrictivos (paradoja)
+Si hit_rate_rejected > 50% → estás rechazando demasiado, recalibra
+```
+
+Calculado por `/journal bitunix` automáticamente.
+
+## Comparación con otros profiles
+
+| Concepto | retail (Binance) | bitunix (copy) |
+|---|---|---|
+| Origen señal | Tu propio análisis | Comunidad punkchainer's |
+| Universo | Solo BTCUSDT.P | Lo que ellos señalen |
+| Filosofía | Generar edge | Filtrar el ruido |
+| Risk per trade | 2% | 2% |
+| Max trades/día | 5 | 3 |
+| Leverage | 10x | 10x (override de 20x) |
+| Métrica clave | WR + PnL | hit_rate_filtered vs hit_rate_all |

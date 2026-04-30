@@ -19,9 +19,9 @@ Guía operativa para sesiones de trading con Claude. Lee esto al inicio de cada 
   - Cierre anticipado permitido si: ya acumuló ganancia buena del día **O** tiene un pendiente personal
 - **Estilo:** scalping intraday, no day-trading de múltiples días
 
-## Profile System (5 profiles)
+## Profile System (7 profiles)
 
-El sistema soporta **5 profiles aislados**. Se switchean con `/profile` o con env var `WALLY_PROFILE` (multi-terminal).
+El sistema soporta **7 profiles aislados**. Se switchean con `/profile` o con env var `WALLY_PROFILE` (multi-terminal).
 
 ### Profile `retail` — Binance main (default)
 - Capital **$18.09** real en Binance Futures `BTCUSDT.P`
@@ -86,15 +86,50 @@ no reemplaza el profile FTMO/retail real.
 
 **Plan declarado:** usar payouts FundingPips para fondear retail (Binance) y eventualmente comprar otra cuenta FTMO $100k.
 
+### Profile `bitunix` (copy trading punkchainer's community)
+- **Capital $50 USD** inicial (default — ajustable)
+- **Provider:** [Bitunix](https://bitunix.com), código referido `punkchainer`
+- **Filosofía:** NO es análisis propio — es validar señales externas con `/signal` antes de copiar
+- **Universo:** dinámico (lo que la comunidad punkchainer's señale en Discord — BTC, ETH, MSTRUSDT, altcoins)
+- **Validación:** 4 filtros + multifactor>±50 + ML>55 + chainlink delta <1%. Score >=60% → APPROVE
+- **Override leverage:** señales pueden decir 20x → tu sistema cap a **10x**
+- **Risk per signal:** 2% capital ($1 sobre $50). Max 3 signals/día. Auto-blacklist asset con 2 SLs
+- **Ventana:** 24/7 cripto, prefiere London/NY overlap (CR 06:00-15:00)
+- **Tracking:** `signals_received.md` documenta cada señal (PASS/FLAG/REJECT) + outcome para mejorar filtros
+- Ver `.claude/profiles/bitunix/config.md`, `strategy.md`, `rules.md`
+
+**⚠️ Filosofía Bitunix:** "el edge no es seguir gurús — es entender por qué su señal funciona (o no) y filtrar las malas con tu propia lógica."
+
+### Profile `quantfury` (BTC-denominated trading)
+- **Capital 0.01 BTC** inicial (≈$750 a $75k/BTC — ajustable)
+- **Provider:** [Quantfury](https://quantfury.com) — broker app crypto-native con custodia
+- **Unit of account:** **BTC (no USD)** — todo PnL/Sharpe/métricas en BTC absoluto
+- **Asset único:** BTCUSD long/short (estrategia Mean Reversion 15m igual que retail, pero medida en BTC)
+- **Métrica clave:** **outperformance vs HODL** — si BTC sube 10% USD y tú haces +5% USD, perdiste BTC stack
+- **Risk per trade:** 2% del BTC capital (0.0002 BTC en 0.01)
+- **Leverage cap:** 5x effective
+- **Régimen-aware:**
+  - TRENDING UP: prefer HODL > longs (replica spot)
+  - TRENDING DOWN: SHORTS direccionales (fase oro para stack BTC)
+  - RANGE: Mean Reversion ambos lados
+  - VOLATILE: NO operar
+- **Reglas duras:** -2% daily BLOCK, -10% total DD BLOCK, outperformance <-2% → PAUSAR profile 30d
+- **Helper único:** `bash .claude/scripts/btc_outperform.py --period 30d` calcula vs HODL benchmark
+- Ver `.claude/profiles/quantfury/config.md`, `strategy.md`, `rules.md`, `memory/hodl_benchmark.md`
+
+**⚠️ Filosofía Quantfury:** "Bitcoin is the unit. USD is the noise. Si HODL hubiera dado más BTC stack, tu trading no tiene edge."
+
 ### Reglas de operación multi-profile
-1. **No operar el mismo setup en `retail` y `retail-bingx` simultáneamente** (doble exposición direccional al mismo BTC). Uno u otro por sesión/día.
-2. **No mezclar profiles distintos (retail / ftmo / fotmarkets / fundingpips) el mismo día.** Switch al inicio de sesión.
-3. **Nunca cruzar memorias** — trade FTMO no se escribe al log retail/fotmarkets/fundingpips y viceversa.
+1. **No operar el mismo setup BTC simultáneamente en múltiples profiles.** retail + retail-bingx + ftmo + fundingpips + bitunix + quantfury todos pueden tradear BTC. **Doble/triple/quadruple exposición direccional = riesgo correlacionado.** Uno por día.
+2. **No mezclar profiles distintos el mismo día** (general). Switch al inicio de sesión.
+3. **Nunca cruzar memorias** — cada profile tiene su trading_log y memorias aisladas.
 4. **Guardian** (`.claude/scripts/guardian.py`) obligatorio en FTMO antes de cada entry.
 5. **Lite Guardian** (`.claude/scripts/fotmarkets_guard.sh`) obligatorio en fotmarkets antes de cada entry.
 6. **FundingPips Guardian** (`.claude/scripts/fundingpips_guard.sh`) obligatorio en fundingpips antes de cada entry.
-7. **CRÍTICO en fundingpips:** NO operar BTC/ETH simultáneo en fundingpips + ftmo + retail. Doble/triple exposición direccional al mismo asset = riesgo correlacionado.
-8. **Statusline** muestra `[PROFILE]` en todo momento para prevenir confusión.
+7. **Bitunix copy validation:** cada señal externa debe pasar `/signal` con score ≥60% antes de ejecutar. Override leverage de 20x → 10x cap.
+8. **Quantfury BTC-aware:** medir todo en BTC, no USD. Si outperformance vs HODL <-2% mensual → PAUSAR profile 30 días.
+9. **Cross-asset BTC exclusion (CRÍTICO):** NO BTC simultáneo en retail + ftmo + fundingpips + bitunix + quantfury. Default: usar 1 profile por día.
+10. **Statusline** muestra `[PROFILE]` en todo momento para prevenir confusión.
 
 ### Comandos específicos multi-profile
 - `/profile` — ver/cambiar profile activo
