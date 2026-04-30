@@ -2,9 +2,12 @@
   "mcp": {
     "servers": {
       "tradingview": {
-        "type": "local",
-        "command": ["node", "C:/Users/Francisco/Documents/wally-trader/tradingview-mcp/src/server.js"],
-        "environment": {},
+        "type": "stdio",
+        "command": "node",
+        "args": [
+          "./tradingview-mcp/src/server.js"
+        ],
+        "env": {},
         "enabled": true
       }
     }
