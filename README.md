@@ -931,82 +931,193 @@ Recalibra el modelo con data reciente para adaptarse al régimen. Verifica AUC e
 - **Claude Code** (Anthropic CLI) — primario, mejor soporte (statusline, hooks, watcher)
 - **TradingView Desktop** (plan Basic mínimo) + MCP conectado vía `--remote-debugging-port=9222`
 - **Python 3.9+** con PyYAML (`pip3 install pyyaml` o `pip install pyyaml` en Windows)
-- **Homebrew** (macOS) para `libomp` (XGBoost), `fswatch` (opcional dev), `jq` (opcional)
 - **Zona horaria:** sistema corre en CR (UTC-6, sin DST). Trabaja también para MX/CDMX (mismo offset).
 
-### 🪟 Windows 11 setup (con OpenCode u otro CLI)
+## 🌐 Cross-platform support (macOS / Linux / Windows × Claude Code / OpenCode)
 
-> **Nota**: el sistema fue diseñado en macOS pero soporta Windows 11 con caveats. Lee esta sección antes de usar OpenCode/Hermes en Windows.
+> **Sistema 100% cross-platform desde 2026-04-30**. Scripts canónicos en Python (`.claude/scripts/*.py`), bash wrappers (macOS/Linux), `.cmd`/`.ps1` wrappers (Windows). Todos delegan al mismo Python.
 
-**Prereqs Windows:**
-1. **Python 3.9+** desde [python.org](https://python.org) o Microsoft Store. **CRÍTICO**: marcar "Add Python to PATH" durante install.
-2. **Git for Windows** (incluye **Git Bash** + utilidades POSIX: bash, awk, sed, cut, curl, jq via choco)
-   - Descarga: [git-scm.com](https://git-scm.com/download/win)
-   - Esencial: muchos slash commands invocan `bash .claude/scripts/profile.sh ...`
-3. **OpenCode** (recomendado para Windows): `npm install -g opencode-ai` o sigue [opencode.ai/docs](https://opencode.ai/docs)
-4. **TradingView Desktop** Windows + MCP — funciona idéntico a macOS
+### Setup unificado (1 comando)
 
-**Setup steps:**
-```powershell
-# 1. Clone
+```bash
+# macOS / Linux / Windows-Git-Bash:
+bash setup.sh                # interactive
+bash setup.sh --check        # solo verifica, no instala
+bash setup.sh --quick        # skip optional deps (plyer, vader)
+
+# Windows nativo (cmd.exe / PowerShell):
+.claude\scripts\win\setup.cmd
+.claude\scripts\win\setup.cmd --check
+
+# O directo con Python (works everywhere):
+python setup.py
+python setup.py --check
+```
+
+`setup.py` autodetecta OS y:
+1. Verifica Python 3.9+
+2. Verifica deps de sistema (git, opcionales según OS)
+3. Instala Python deps via pip (pyyaml, pandas, numpy, yfinance, xgboost, requests, plyer)
+4. Genera adapters (OpenCode + Hermes)
+5. Smoke test scripts canónicos
+6. Reporta next steps específicos del OS
+
+### Matriz de compatibilidad
+
+| Feature | macOS | Linux | Windows + Git Bash | Windows nativo |
+|---|---|---|---|---|
+| **Slash commands core** (`/profile`, `/risk`, `/regime`...) | ✅ | ✅ | ✅ | ⚠️ Git Bash needed |
+| **profile, fotmarkets_phase, fx_rate, chainlink, notify** | ✅ Python canónico | ✅ idem | ✅ idem | ✅ vía `.cmd`/`.ps1` |
+| **Notificaciones desktop** | ✅ osascript | ✅ notify-send | ✅ via Git Bash | ✅ plyer/PowerShell |
+| **TradingView MCP** | ✅ | ✅ | ✅ | ✅ |
+| **Claude Code CLI** | ✅ recomendado | ✅ | ✅ | ✅ |
+| **OpenCode CLI** | ✅ | ✅ | ✅ recomendado | ✅ recomendado |
+| **Hermes Agent CLI** | ✅ | ✅ | ✅ via Git Bash | ⚠️ |
+| **MT5 EA bridge** (FTMO/FundingPips/fotmarkets) | ✅ MT5 for Mac | ⚠️ Wine MT5 | ✅ nativo Windows MT5 | ✅ nativo |
+| **Watcher daemon** | ✅ launchd `.app` | ⚠️ systemd manual | ⚠️ Task Scheduler manual | ⚠️ Task Scheduler manual |
+| **Hooks** (SessionStart/Stop/PrePrompt) | ✅ Claude Code | ✅ Claude Code | ✅ Claude Code | ⚠️ OpenCode hook config |
+| **Statusline** | ✅ macOS optimal | ✅ | ⚠️ formato puede variar | ⚠️ usar OpenCode UI |
+
+### Arquitectura cross-platform (single source of truth)
+
+```
+.claude/scripts/
+├── profile.py              ← Canonical Python (works everywhere)
+├── profile.sh              ← bash wrapper → delegates to profile.py
+├── fotmarkets_phase.py     ← Canonical
+├── fotmarkets_phase.sh     ← bash wrapper
+├── fx_rate.py              ← Canonical (USD↔CRC)
+├── fx_rate.sh              ← bash wrapper
+├── chainlink_price.py      ← Canonical (4 RPC fallbacks)
+├── chainlink_price.sh      ← bash wrapper
+├── notify.py               ← Canonical (macOS/Linux/Windows backends)
+├── notify.sh               ← bash wrapper
+└── win/                    ← Native Windows wrappers
+    ├── _run_python.cmd     ← Helper: finds Python and execs
+    ├── profile.cmd         ← Direct Windows usage
+    ├── profile.ps1         ← PowerShell version
+    ├── fotmarkets_phase.cmd
+    ├── fx_rate.cmd
+    ├── chainlink_price.cmd
+    ├── notify.cmd
+    └── setup.cmd           ← Setup launcher
+```
+
+**Single source of truth**: solo `*.py` tiene lógica. Wrappers son thin shims que:
+1. Buscan Python (`python3` en macOS/Linux, `python` en Windows, fallback)
+2. Ejecutan el `.py` con args forwarded
+3. Propagan exit code
+
+Esto significa: **fix un bug en `profile.py` y se arregla en macOS/Linux/Windows simultáneo**.
+
+### Por OS — instalación específica
+
+#### macOS
+
+```bash
+# 1. Python (si no instalado)
+brew install python3
+
+# 2. Setup
 git clone https://github.com/sasasamaes/wally-trader.git
 cd wally-trader
+bash setup.sh
 
-# 2. Install Python deps
-pip install pyyaml pandas numpy yfinance xgboost requests python-dotenv
+# 3. Lanzar
+claude    # Claude Code (recomendado)
+# o
+opencode  # OpenCode
+```
 
-# 3. (Opcional) sync OpenCode adapters
-python adapters\opencode\transform.py
+#### Linux (Ubuntu/Debian)
 
-# 4. Test que profile.py funciona (canónico cross-platform)
-python .claude\scripts\profile.py get
-# → debería imprimir profile activo o "no profile set"
+```bash
+# 1. Python + libs sistema
+sudo apt update && sudo apt install -y python3 python3-pip git libnotify-bin
 
-# 5. Test el wrapper Windows
-.claude\scripts\win\profile.cmd get
-# o desde PowerShell:
-.\.claude\scripts\win\profile.ps1 get
+# 2. Setup
+git clone https://github.com/sasasamaes/wally-trader.git
+cd wally-trader
+bash setup.sh
 
-# 6. Test el wrapper bash (si tienes Git Bash)
-bash .claude/scripts/profile.sh get
-
-# 7. Lanza OpenCode
+# 3. Lanzar
+claude
+# o
 opencode
 ```
 
-**Cross-platform abstraction**:
-- ✅ `profile.py` canónico (Python) — funciona en macOS/Linux/Windows
-- ✅ `profile.sh` (bash wrapper) — delega a `profile.py` con `python3` o `python`
-- ✅ `profile.cmd` y `profile.ps1` (Windows nativo) — delegan a `profile.py`
-- Los slash commands referencian `bash .claude/scripts/profile.sh`. En Windows + Git Bash, esto **funciona transparente**.
+Notificaciones desktop usan `notify-send` (paquete `libnotify-bin`). Si falta, las
+notificaciones cae a stderr (no bloquea funcionalidad).
 
-**Limitaciones conocidas en Windows 11:**
+#### Windows 11
 
-| Feature | Estado Windows | Workaround |
-|---|---|---|
-| Statusline | ⚠️ Parcial — formato puede romperse en cmd.exe | Usar OpenCode UI o Windows Terminal con UTF-8 |
-| Watcher daemon (.app + launchd) | ❌ macOS-only | Manual: corre `/watch` cuando necesites OR Windows Task Scheduler |
-| macOS notifications (`osascript`) | ❌ no funciona | Notificaciones desactivadas o usar `plyer` Python (TODO future) |
-| Cron daily 5:30 AM | ⚠️ Manual | Setup vía Windows Task Scheduler (`taskschd.msc`) |
-| `.env` shell loader | ✅ Funciona en Git Bash | — |
-| Hooks (SessionStart/Stop/PrePrompt) | ✅ Funcionan en OpenCode | — |
-| Slash commands con `bash` | ✅ Git Bash | Necesario instalar Git for Windows |
-| MT5 EA bridge (FTMO/FundingPips) | ✅ Nativo | MT5 Windows > MT5 Mac (mejor soporte oficial) |
-| TradingView MCP | ✅ Funciona | TradingView Desktop Windows + Chrome remote-debugging |
-| Pine Editor (TV chart) | ✅ — | — |
+**Prereqs (orden de instalación):**
 
-**Profiles probados en Windows:**
-- ✅ retail / retail-bingx (BTC trading) — funciona con Git Bash
-- ✅ ftmo / fundingpips (MT5) — Windows ES más nativo que Mac para MT5
-- ✅ fotmarkets (MT5) — idem
-- ⚠️ bitunix (community signals) — funciona pero notifs desactivadas
-- ⚠️ quantfury — funciona, statusline BTC-denominated necesita test
+1. **Python 3.9+** desde [python.org](https://python.org) o Microsoft Store
+   - ⚠️ **CRÍTICO**: marcar "Add Python to PATH" durante install
+2. **Git for Windows** desde [git-scm.com/download/win](https://git-scm.com/download/win)
+   - Incluye **Git Bash** + utilidades POSIX (bash, awk, sed, cut, curl, jq)
+   - Esencial para slash commands con `bash .claude/scripts/...`
+3. **OpenCode** (recomendado en Windows): `npm install -g opencode-ai`
+4. **TradingView Desktop** Windows + MCP
 
-**Si algo no funciona en Windows:**
-1. Verifica que tienes Git Bash en PATH: abrir terminal, escribir `bash --version`
-2. Verifica Python en PATH: `python --version` o `python3 --version`
-3. Para issues con paths: prefiere usar forward slashes (`/`) o raw strings en Python (`r"C:\..."`)
-4. Reportar issue en GitHub con: SO version, terminal usado, error completo
+**Setup:**
+
+```powershell
+# Clone
+git clone https://github.com/sasasamaes/wally-trader.git
+cd wally-trader
+
+# Setup (cualquiera de estos funciona)
+python setup.py                              # directo
+.claude\scripts\win\setup.cmd                # cmd wrapper
+bash setup.sh                                # Git Bash
+
+# Smoke tests
+python .claude\scripts\profile.py get
+.claude\scripts\win\fx_rate.cmd
+.claude\scripts\win\notify.cmd "Wally" "Hola Windows"
+
+# Lanzar
+opencode    # recomendado en Windows
+# o
+claude      # Claude Code (si tienes acceso)
+```
+
+**Si bash falla en Windows**: usa los `.cmd` directamente.
+- En vez de `bash .claude/scripts/profile.sh get` → `.claude\scripts\win\profile.cmd get`
+- Los slash commands en OpenCode pueden invocar el comando `python .claude/scripts/profile.py get` directamente (cross-platform).
+
+### Notificaciones cross-platform
+
+```python
+# notify.py funciona idéntico en los 3 OS:
+python .claude/scripts/notify.py "Title" "Message"
+
+# Backend automático:
+#   macOS:   osascript (built-in)
+#   Linux:   notify-send (libnotify, fallback stderr si falta)
+#   Windows: plyer (pip) → BurntToast PS → System.Windows.Forms ballontip → fallback stderr
+```
+
+Para instalar plyer en Windows: `pip install plyer` (incluido en `setup.py` opcional).
+
+### Limitaciones por OS
+
+| Limitación | macOS | Linux | Windows |
+|---|---|---|---|
+| Watcher daemon (`.app` bundle) | ✅ launchd | ❌ manual cron/systemd | ❌ Task Scheduler manual |
+| Daily cron 5:30 AM | ✅ launchd | ⚠️ cron manual | ⚠️ Task Scheduler manual |
+| MT5 native | ⚠️ macOS app sub-óptima | ❌ Wine | ✅ **nativo (recomendado)** |
+| Claude Code statusline | ✅ optimal | ✅ | ⚠️ usar Windows Terminal con UTF-8 |
+| Brew-only deps (`libomp` para XGBoost) | ✅ | N/A apt | ⚠️ pip directo |
+
+**TL;DR profiles vs OS:**
+- Si tu profile principal es **retail/quantfury (BTC trading)**: cualquier OS funciona ✅
+- Si tu profile es **FTMO/FundingPips/fotmarkets (MT5)**: **Windows recomendado** (MT5 nativo)
+- Si tu profile es **bitunix (copy-trading)**: cualquier OS, Windows un poco mejor por MT5
+
+---
 
 **Retail profile (Binance — main, default):**
 - **Binance Futures** con BTCUSDT.P activado

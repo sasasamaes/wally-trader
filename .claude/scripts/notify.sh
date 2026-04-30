@@ -1,14 +1,12 @@
-#!/bin/bash
-# Script de notificaciones macOS para alertas de trading
-# Uso: ./notify.sh "título" "mensaje" [sonido]
+#!/usr/bin/env bash
+# notify.sh — bash wrapper for notify.py (canonical Python, cross-platform).
+# Funciona en macOS (osascript), Linux (notify-send), Windows (plyer/PowerShell).
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PY_SCRIPT="$SCRIPT_DIR/notify.py"
 
-TITULO="${1:-Trading Alert}"
-MENSAJE="${2:-Revisa el chart}"
-SONIDO="${3:-Glass}"
+if command -v python3 >/dev/null 2>&1; then PY=python3
+elif command -v python >/dev/null 2>&1; then PY=python
+else echo "[NOTIFY] $1: $2" >&2; exit 1  # plain stderr fallback
+fi
 
-# Notificación nativa macOS con sonido
-osascript -e "display notification \"${MENSAJE}\" with title \"${TITULO}\" sound name \"${SONIDO}\""
-
-# Log para historial
-FECHA=$(TZ='America/Costa_Rica' date +'%Y-%m-%d %H:%M:%S')
-echo "[${FECHA}] ${TITULO}: ${MENSAJE}" >> ~/Documents/wally-trader/.claude/scripts/notifications.log
+exec "$PY" "$PY_SCRIPT" "$@"
