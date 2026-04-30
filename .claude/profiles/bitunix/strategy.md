@@ -72,6 +72,35 @@ REJECT (<50% confidence) → SKIP, anotar razón
 # → Sistema dice: "OK con override leverage 10x. Size 0.2914 MSTRUSDT, margin $4.85"
 ```
 
+## 🛡 DUREX — regla obligatoria comunidad punkchainer's
+
+> *"Sin globitos no hay fiesta. La prioridad número uno no es ganar dinero, es no perderlo."*
+
+**Acción obligatoria post-entry:**
+
+Después de ejecutar el trade copiado, mueve el SL al punto de entrada (Break Even) en el momento EXACTO que ocurra lo primero:
+- **20% del recorrido a favor** hacia TP1, O
+- **TP1 hit**
+
+```
+Ejemplo:
+  Entry SHORT MSTRUSDT @ 166.57
+  TP1 @ 160.00 (distance: 6.57 puntos)
+  20% del recorrido = 6.57 × 0.20 = 1.31 puntos
+  → Precio "DUREX trigger" = 166.57 - 1.31 = 165.26
+  
+  Cuando precio toca 165.26 (o TP1 si llega antes):
+    → MOVER SL a 166.57 (entry)
+    → Trade asegurado: máximo cierra en BE
+```
+
+**Por qué obligatorio en bitunix:**
+- Es la regla #1 de la comunidad punkchainer's
+- Protege capital cuando copy-trading (donde tu validación es secundaria a la del autor original)
+- Si la señal falla, máximo pierdes spread + fee, no el risk completo
+
+Ver skill `@punkchainer-glossary` para definición oficial completa.
+
 ## Override de leverage (regla dura)
 
 Aunque la señal diga 20x, **siempre opera 10x max**. Por qué:
