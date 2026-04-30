@@ -49,11 +49,37 @@ Si delta >1% → **REJECT** (señal con feed stale o exchange-specific).
 - `/regime` debe ser compatible con dirección (no SHORT en TRENDING UP fuerte)
 - `/sentiment` extremo contrarian → flag pero NO bloqueo
 
-### Paso 6: Veredicto final
+### Paso 6: 4-Pilar Neptune SMC checklist (visual manual)
+
+Sobre el chart con Neptune SMC cargado, verifica los 4 pilares de la comunidad
+(ver skill `@punkchainer-playbook` para definición completa):
+
+**LONG:** Bullish OB/FVG + SSL Touched/Bullish Raid + Bullish CHoCH + Bullish SFP
+**SHORT:** Bearish OB/FVG + BSL Touched/Bearish Sweep + Bearish CHoCH + Bearish SFP
+
 ```
-PASS_ALL_GATES (≥60% confidence) → EJECUTAR con tu sizing (override leverage 20→10)
-FLAG (50-60% confidence) → ejecutar con HALF size (1% en vez de 2%)
-REJECT (<50% confidence) → SKIP, anotar razón
+4/4 pilares  → APPROVE max conviction (size 2%)
+3/4 pilares  → APPROVE half size (1%)
+<3/4 pilares → REJECT (regla "Baja Probabilidad")
+```
+
+⚠️ **Filtro Adjusted:** un CHoCH marcado solo por mecha sin cuerpo de cierre **NO es válido**.
+
+### Paso 7: Saturday Precision Protocol (sábado/domingo)
+
+Si fecha == sábado/domingo, gates más estrictos (ver `@punkchainer-playbook`):
+- Pillars **4/4 obligatorio** (no 3/4)
+- Leverage en alts **5x cap** (no 10x)
+- DUREX trigger acelerado: **1R** (no 20% recorrido)
+- Solo entries Limit "sniper" (no market)
+- BTC dump → 🚫 0 longs en alts low-cap
+- Macro news → STAND-ASIDE total
+
+### Paso 8: Veredicto final
+```
+PASS_ALL_GATES (≥60% confidence + 4-pilar OK) → EJECUTAR con tu sizing (override leverage 20→10)
+FLAG (50-60% confidence O 3/4 pilares) → ejecutar con HALF size (1% en vez de 2%)
+REJECT (<50% confidence O <3/4 pilares O Saturday rule violation) → SKIP, anotar razón
 ```
 
 ## Sizing canónico
@@ -98,6 +124,11 @@ Ejemplo:
 - Es la regla #1 de la comunidad punkchainer's
 - Protege capital cuando copy-trading (donde tu validación es secundaria a la del autor original)
 - Si la señal falla, máximo pierdes spread + fee, no el risk completo
+
+**Variante weekend (sábado/domingo):**
+DUREX trigger se acelera de "20% recorrido O TP1" → **"1R (1:1) O TP1"** porque los wicks
+sabatinos retornan a entry mucho más frecuente. Ver Saturday Precision Protocol en
+skill `@punkchainer-playbook` (paso 7 del pipeline).
 
 Ver skill `@punkchainer-glossary` para definición oficial completa.
 

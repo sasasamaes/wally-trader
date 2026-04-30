@@ -187,6 +187,32 @@ Bullish Alert Message: usar JSON con placeholders (ver skill neptune-alert-place
 Bearish Alert Message: usar JSON con placeholders
 ```
 
+### 3.1. Anomalies Signals (toggle especial Oscillator)
+
+> "Los puntos celestes pequeños del oscilador detectan divergencias entre precio y volumen/momentum vía presión del volumen (LSMA cruzando línea 0). Excelentes avisos de toma de liquidez o CHoCH inminente formándose."
+
+**Qué son:** Anomalies Signals es un toggle dentro del Neptune Oscillator que dispara puntos celestes pequeños cuando el LSMA (Least Squares Moving Average) cruza la línea 0 del oscilador. Esto identifica momentos donde el flujo de volumen y la regresión lineal **NO coinciden** con el movimiento típico del precio → divergencia oculta.
+
+**Por qué importa:**
+- Detecta acumulación/distribución silenciosa antes del move
+- Suele anticipar **CHoCH inminente** o **toma de liquidez** formándose
+- En setups SMC: confluencia con OB/FVG + Anomaly Signal = entry de alta convicción
+
+**Cómo activar:**
+```yaml
+# En Neptune Oscillator settings
+Anomalies Signals: ON  # default OFF — activar para divergencias volumétricas
+Color: cyan/celeste (default)
+Size: small
+```
+
+**Cómo leerlas en flow operativo:**
+1. Punto celeste aparece en oscilador → el volumen NO valida el movimiento del precio
+2. Si en el chart 15m hay barrida de liquidez reciente en la misma dirección → **probable reversión**
+3. Esperar confirmación (CHoCH en SMC) antes de entrar — el punto solo es "alerta", no señal de entrada
+
+**Combinación recomendada:** Anomalies Signals + 4-pilar checklist Neptune SMC (ver skill `punkchainer-playbook`) = confluencia máxima.
+
 ## 4. Neptune SMC — Smart Money Concepts
 
 ```yaml
