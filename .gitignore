@@ -54,6 +54,7 @@ venv/
 
 # Node
 node_modules/
+!tradingview-mcp/node_modules/
 
 # OS
 Thumbs.db
@@ -66,7 +67,6 @@ Thumbs.db
 
 # Nested git repos (tracked separately upstream)
 claude-tradingview-mcp-trading/
-tradingview-mcp/
 
 # ML System — cache de data histórica Binance y modelos entrenados
 scripts/ml_system/data/
