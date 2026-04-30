@@ -223,7 +223,7 @@ trading/
 
 ## 🌅 Uso diario
 
-El sistema opera en **4 profiles aislados**. Al iniciar el día eliges cuál operar — no mezclar profiles distintos el mismo día.
+El sistema opera en **5 profiles aislados**. Al iniciar el día eliges cuál operar — no mezclar profiles distintos el mismo día.
 
 ### Profile switching (inicio de día)
 
@@ -233,17 +233,29 @@ claude
 
 # Dentro de Claude Code:
 /profile               # ver profile activo + timestamp
-/profile retail        # switch a retail (Binance $18.09 — main)
+/profile retail        # switch a retail (Binance $18.09 — main, capital propio)
 /profile retail-bingx  # switch a retail-bingx (BingX $0.93 — residual)
-/profile ftmo          # switch a FTMO ($10k demo)
-/profile fotmarkets    # switch a fotmarkets (bonus $30 MT5)
-/profile status        # resumen de los 4 profiles
+/profile ftmo          # switch a FTMO ($10k demo, challenge 1-step)
+/profile fotmarkets    # switch a fotmarkets (bonus $30 MT5, sin depósito)
+/profile fundingpips   # switch a fundingpips ($10k funded directo, dinero real)
+/profile status        # resumen de los 5 profiles
 ```
 
 Statusline refleja el profile activo + equivalente en colones:
 - `[RETAIL] 💰 $18.09 ≈₡8,241 (+$8.09) │ 📊 0/3 │ 🟢 VENT │ 🕐 CR 06:00 │ BTC.P`
 - `[FTMO $10k] Equity: $10,000 ≈₡4.6M • Daily: $+0 (0.0%) • EA ✓ 3s • Pos: 0`
 - `[FOTMARKETS] $33.84 ≈₡15,415 | Fase 1 (→$100) | 🟢 VENT CR 07:30 | 0/1 trades`
+- `[FUNDINGPIPS $10k] $10000.00 ≈₡4.5M | DD 🟢+0.00% | Daily 0.00% | 🟢 VENT CR 09:57 | 0/2 trades`
+
+### Comparación rápida de profiles
+
+| Profile | Capital | Tipo | Risk/trade | Max DD | Max trades/día | Plataforma |
+|---|---|---|---|---|---|---|
+| `retail` | $18.09 | Real propio | 2% | sin cap externo | 5 | Binance Futures |
+| `retail-bingx` | $0.93 | Real residual | 2% (cosmético) | — | 3 | BingX |
+| `ftmo` | $10k | Demo challenge | **0.5%** | 10% trailing | 3 | MT5 (FTMO-Demo) |
+| `fotmarkets` | $30→$100→$300+ | Bonus no-deposit | 10%/5%/2% (phase) | 12% | 1-3 (phase) | MT5 (Fotmarkets) |
+| `fundingpips` | $10k | **Real funded** ($99) | **0.3%** | **5% from initial** | **2** | MT5 (FundingPips-Live) |
 
 ### Comandos cuantitativos disponibles (33 total)
 
@@ -836,6 +848,14 @@ Recalibra el modelo con data reciente para adaptarse al régimen. Verifica AUC e
 - Sin requerir depósito propio
 - Multi-asset desbloqueado por fase (8 assets: forex/oro/indices/cripto)
 
+**FundingPips profile (Zero $10k — direct funded, opcional):**
+- Cuenta fondeada **real** desde día 1 ($99 una vez con código `HELLO -20%` = $79.20)
+- **NO es challenge** — compras y operas directo
+- MT5 con server `FundingPips-Live` (reusa EA bridge del FTMO)
+- Multi-asset 20+ universe (forex/indices/crypto/oro)
+- Reglas: 5% max DD, 3% daily, 15% consistency, 7 días min, leverage 1:50
+- Payout bi-weekly 95% al trader
+
 **Multi-CLI (opcional, hedge):**
 - **OpenCode** — `curl -fsSL https://opencode.ai/install | bash` (free, soporte total v2)
 - **Hermes Agent** (NousResearch) — `curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash` (free, soporte total v1, requiere cuenta API LLM como OpenRouter)
@@ -974,7 +994,7 @@ bash .claude/scripts/chainlink_price.sh BTC        # precio Chainlink BTC
 # 6. Abrir Claude Code y test inicial
 claude
 # → /status   (debe mostrar profile retail + capital + hora CR)
-# → /profile  (debe listar 4 profiles)
+# → /profile  (debe listar 5 profiles: retail/retail-bingx/ftmo/fotmarkets/fundingpips)
 
 # 7. Instalar TradingView MCP (ver sección "Instalar TradingView MCP" abajo)
 #    Luego abrir TV Desktop con --remote-debugging-port=9222
@@ -1061,6 +1081,108 @@ cat .claude/profiles/fotmarkets/memory/phase_progress.md
 ```
 
 Filosofía: capital es bonus ("casa de juego"), NO depositar dinero propio. Ver `.claude/profiles/fotmarkets/config.md`.
+
+### Setup FundingPips profile (opcional, cuenta funded $10k)
+
+> **⚠️ DINERO REAL desde día 1.** $99 perdido si rompes 5% DD. Estrategia ULTRA-conservadora obligatoria.
+
+```bash
+# 1. Comprar cuenta Zero $10k en https://fundingpips.com
+#    Usa código HELLO → -20% → costo final $79.20 USD
+#    (Add-on Swap Free opcional +$10 si harás hold overnight crypto)
+
+# 2. Recibir credenciales MT5 por email (~minutos a horas)
+#    Login + password + read-only password + server (FundingPips-Live)
+
+# 3. Login MT5 con esas credenciales una vez
+open -a "MetaTrader 5"
+# Login → confirma conexión → cerrar
+
+# 4. Llenar credenciales en .claude/.env
+cp .claude/.env.example .claude/.env  # si no existe
+# Editar .claude/.env y agregar:
+#   FUNDINGPIPS_LOGIN=<tu login>
+#   FUNDINGPIPS_PASSWORD=<tu password>
+#   FUNDINGPIPS_READONLY_PASSWORD=<tu ro password>
+#   FUNDINGPIPS_SERVER=FundingPips-Live
+
+# 5. Adaptar EA ClaudeBridge.mq5 para usar magic 88888 (FTMO usa 77777)
+#    Edit .claude/profiles/fundingpips/mt5_ea/config para usar magic distinto
+#    O crear un segundo binary del EA con esa diferencia
+#    NOTA: este paso es opcional si solo vas a operar manual sin watcher auto-fills
+
+# 6. Switch profile y validar guardian
+/profile fundingpips
+# → guardian valida automáticamente al primer comando
+
+bash .claude/scripts/fundingpips_guard.sh check --verbose
+# → debe decir "✅ OK — todos los gates pasaron"
+
+# 7. Verificar statusline
+bash .claude/scripts/statusline.sh
+# → [FUNDINGPIPS $10k] $10000.00 ≈₡4.5M | DD 🟢+0.00% | ...
+
+# 8. Primer test con 0.01 lots BTCUSD o EURUSD
+/profile fundingpips
+/morning                       # análisis multi-asset
+# Si hay setup A-grade → ejecutar manual en MT5
+
+# 9. Después del primer trade, verificar tracking
+/journal                       # debe mostrar el trade + metrics
+
+# 10. Día 7 → primer payout disponible (si hay profit)
+#     Bi-weekly cycle empieza desde compra de cuenta
+```
+
+**Workflow día 1 a día 7 (mínimo para payout):**
+
+```
+Cada día 06:00 CR:
+  /profile fundingpips
+  /morning                              # 17 fases multi-asset
+  # Sistema scanea 20+ assets, pick 1 A-grade
+  /multifactor                          # validación score >50
+  /chainlink BTC                        # cross-check si crypto
+  /risk-var --target-var-pct 0.5        # sizing 0.3% (cap $30 risk)
+
+Si setup OK:
+  Ejecutar 1 trade manual en MT5 (max 2/día)
+  /equity <nuevo_valor>                 # tracking equity
+  /journal                              # log + metrics
+
+Si NO setup:
+  Skip día (pero CONTAR como día operado SOLO si ejecutaste 1 trade)
+  Tip: aunque no haya setup A-grade, ejecutar 1 micro-trade 0.01 lots
+       BTCUSD para "calentar" el contador de días operados (cuesta ~$0.05
+       de spread)
+```
+
+**Diferencias críticas vs FTMO:**
+
+| Concepto | FTMO ($10k demo) | FundingPips Zero ($10k real) |
+|---|---|---|
+| Costo entry | $93.43 (challenge) | $99 / $79.20 con HELLO |
+| Modelo | Pasa challenge → demo funded | Compras → funded directo |
+| Max DD total | 10% trailing equity high | **5% del balance inicial fijo** ← más estricto |
+| Consistency rule | 50% best-day cap | **15% biggest day vs total** ← formula distinta |
+| Risk per trade | 0.5% | **0.3%** (más conservador) |
+| Max trades/día | 3 | **2** |
+| TP3 trailing | Sí (EMA20) | **NO** (incompatible con consistency) |
+| Target diario | 1.5% | **0.5-0.7%** |
+| Leverage | 1:100 | 1:50 |
+| Payout | Variable post-eval | Bi-weekly 95% |
+
+**Plan declarado del usuario:**
+1. Comprar cuenta FundingPips Zero $10k → operar conservador 7 días min
+2. Bi-weekly payout (95% del profit) → transferir a Binance para fondear retail real
+3. Eventualmente: comprar otra cuenta FTMO $100k usando profits acumulados
+
+**Recordatorios duros:**
+- ⚠️ NO operar BTC/ETH simultáneo en `fundingpips` + `ftmo` + `retail` — doble exposición direccional
+- ⚠️ "El edge no es ganar — es no perder." Mejor 0 trades que un trade mediocre
+- ⚠️ Cualquier violación de regla → cuenta cerrada, $99 perdido
+
+Detalles completos: `.claude/profiles/fundingpips/config.md`, `strategy.md`, `rules.md`.
 
 ### Setup OpenCode (opcional, hedge multi-CLI)
 
