@@ -6,3 +6,7 @@
 # forex/indices se beneficia.
 
 yfinance>=0.2.40
+
+# Polymarket macro sentiment integration (spec 2026-05-02)
+httpx>=0.27
+pytest-mock>=3.12
