@@ -95,3 +95,19 @@ def test_run_discovery_writes_empty_on_first_run_zero(tmp_path, monkeypatch, moc
     assert n == 0
     data = json.loads(target.read_text())
     assert data["markets"] == []
+
+
+def test_filter_drops_malformed_end_date():
+    """Markets with unparseable end_date must be dropped (fail-closed)."""
+    bad_market = Market(
+        id="id-bad",
+        slug="bad-date",
+        question="bad date",
+        prob_yes=0.5,
+        volume_24h=600_000,
+        end_date="not-an-iso-date",
+        tags=("fed",),
+    )
+    good_market = _mk_market("good", 0.5, 600_000)
+    out = discovery.filter_markets([bad_market, good_market])
+    assert {m.slug for m in out} == {"good"}

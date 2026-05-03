@@ -17,12 +17,15 @@ log = logging.getLogger(__name__)
 
 
 def _parse_iso(s: str) -> datetime:
-    # Tolerant ISO parser; treat naive as UTC.
+    """Tolerant ISO parser; treat naive as UTC. On parse failure, return
+    datetime.min so malformed dates fail the min-days-to-resolution filter
+    rather than silently passing it.
+    """
     s = s.replace("Z", "+00:00") if s.endswith("Z") else s
     try:
         dt = datetime.fromisoformat(s)
     except ValueError:
-        return datetime.max.replace(tzinfo=timezone.utc)
+        return datetime.min.replace(tzinfo=timezone.utc)
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
     return dt
