@@ -85,3 +85,21 @@ def get_market(market_id: str) -> Market:
     if not isinstance(payload, dict):
         raise PolymarketError(f"Expected dict, got {type(payload).__name__}")
     return _parse_market(payload)
+
+
+def get_market_with_fallback(market_id: str) -> Market:
+    """Try Gamma first, fall back to CLOB on failure."""
+    try:
+        with httpx.Client(base_url=config.GAMMA_BASE_URL) as c:
+            payload = _request_with_retries(c, f"/markets/{market_id}")
+        if isinstance(payload, dict):
+            return _parse_market(payload)
+    except PolymarketError:
+        pass
+
+    # CLOB fallback. CLOB market detail uses condition_id as path segment.
+    with httpx.Client(base_url=config.CLOB_BASE_URL) as c:
+        payload = _request_with_retries(c, f"/markets/{market_id}")
+    if not isinstance(payload, dict):
+        raise PolymarketError(f"CLOB returned non-dict for {market_id}")
+    return _parse_market(payload)

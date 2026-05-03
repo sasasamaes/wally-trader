@@ -86,3 +86,30 @@ def test_list_markets_raises_after_exhausting_retries(mocker):
 
     with pytest.raises(client.PolymarketError):
         client.list_markets()
+
+
+def test_get_market_with_fallback_uses_clob_when_gamma_fails(mocker, market_detail_payload):
+    # Patch the helper that does retry-aware GET to fail then succeed
+    calls = {"n": 0}
+
+    def fake_request(client_obj, url, params=None):
+        calls["n"] += 1
+        if "gamma-api" in str(client_obj.base_url):
+            raise client.PolymarketError("gamma down")
+        return market_detail_payload
+
+    mocker.patch.object(client, "_request_with_retries", side_effect=fake_request)
+
+    m = client.get_market_with_fallback("0xaaa")
+    assert m.slug == "fed-cut-rates-in-may-2026"
+    assert calls["n"] == 2  # gamma fail + clob success
+
+
+def test_get_market_with_fallback_raises_if_both_fail(mocker):
+    def always_fail(client_obj, url, params=None):
+        raise client.PolymarketError("both down")
+
+    mocker.patch.object(client, "_request_with_retries", side_effect=always_fail)
+
+    with pytest.raises(client.PolymarketError):
+        client.get_market_with_fallback("0xaaa")
