@@ -10,12 +10,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 from polymarket import config
+
+log = logging.getLogger(__name__)
 
 # Required keys every snapshot row must carry.
 _REQUIRED_KEYS = {"ts", "id", "slug", "prob", "vol_24h", "last_trade"}
@@ -45,7 +48,8 @@ def _parse_ts(s: str) -> datetime:
 def load_snapshots(path: Path | str | None = None) -> list[dict]:
     """Load JSONL snapshots from *path* (defaults to config.SNAPSHOTS_PATH).
 
-    Silently skips:
+    Reads JSONL, skipping malformed lines with a warn-level log.
+    Skips:
     - Lines that are not valid JSON
     - JSON objects missing any of the required keys
     """
@@ -58,17 +62,20 @@ def load_snapshots(path: Path | str | None = None) -> list[dict]:
         return rows
 
     with path.open("r", encoding="utf-8") as fh:
-        for raw in fh:
+        for i, raw in enumerate(fh, 1):
             raw = raw.strip()
             if not raw:
                 continue
             try:
                 obj = json.loads(raw)
             except json.JSONDecodeError:
+                log.warning("Skipping malformed snapshot line %d (invalid JSON)", i)
                 continue
             if not isinstance(obj, dict):
+                log.warning("Skipping malformed snapshot line %d (not a dict)", i)
                 continue
             if not _REQUIRED_KEYS.issubset(obj.keys()):
+                log.warning("Skipping malformed snapshot line %d (missing required keys)", i)
                 continue
             rows.append(obj)
 
@@ -115,7 +122,7 @@ def compute_deltas(
         target = now - delta
         best: dict | None = None
         best_diff: float = float("inf")
-        for snap in snaps:
+        for snap in snaps[:-1]:
             ts = _parse_ts(snap["ts"])
             diff = abs((ts - target).total_seconds())
             if diff <= tolerance.total_seconds() and diff < best_diff:

@@ -163,3 +163,5 @@ def test_status_fresh_when_recent(tmp_snapshots):
     """report() returns FRESH when the latest snapshot is within STALE_AFTER_SECONDS."""
     result = analyzer.report(snapshots_path=tmp_snapshots, now=NOW_REF)
     assert result["status"] == "FRESH"
+    assert result["composite"] is not None
+    assert any(m["slug"] == "fed-cut-rates-in-may-2026" for m in result["markets"])
