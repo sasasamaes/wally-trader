@@ -45,7 +45,7 @@ Producir un análisis completo en 5-8 minutos que termine con un **VEREDICTO CLA
 - **ESPERAR SETUP** → qué observar
 - **NO OPERAR HOY** → razón concreta
 
-## FASE 0 — Macro events del día (informativo)
+## Pre-flight: Macro events del día (informativo)
 
 Al inicio del análisis, ejecutar:
 

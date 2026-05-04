@@ -41,7 +41,7 @@ fi
 
 Si profile == `fotmarkets`, aplica las adaptaciones de la sección **FOTMARKETS-AWARE** al final (cambian TF, símbolos TV, risk, y agregan fases de dibujo/bias/watchlist).
 
-## FASE 0 — Macro events del día (informativo)
+## Pre-flight: Macro events del día (informativo)
 
 Al inicio del análisis, ejecutar:
 
