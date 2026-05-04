@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any
 
 import httpx
+from bs4 import BeautifulSoup
 
 DEFAULT_CACHE = Path(__file__).parent.parent / "cache" / "macro_events.json"
 ERROR_LOG = Path(__file__).parent.parent / "cache" / "macro_calendar_errors.log"
@@ -31,6 +32,11 @@ TE_PARAMS = {
 }
 TIMEOUT_SECONDS = 10
 CR_OFFSET = timezone(timedelta(hours=-6))
+FF_URL = "https://www.forexfactory.com/calendar"
+FF_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                  "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
+}
 
 # Whitelist patterns (case-insensitive substring match)
 WHITELIST = [
@@ -88,9 +94,128 @@ def fetch_te() -> list[dict[str, Any]]:
         raise FetcherError(f"TE fetch failed: {e}") from e
 
 
+def _parse_ff_date(s: str) -> str:
+    """FF dates look like 'MonMay4' or 'Mon May 4'. Normalize to YYYY-MM-DD.
+
+    Includes year explicitly in strptime to avoid Python 3.15 DeprecationWarning
+    about ambiguous year-less parsing.
+    """
+    s = s.replace("\n", " ").strip()
+    year = datetime.now(CR_OFFSET).year
+    # Prepend year so the format includes it, avoiding ambiguity warning
+    for fmt in ("%Y %a %b %d", "%Y %a%b%d", "%Y %b %d"):
+        try:
+            dt = datetime.strptime(f"{year} {s}", fmt)
+            return dt.strftime("%Y-%m-%d")
+        except ValueError:
+            continue
+    raise ValueError(f"unparseable FF date: {s!r}")
+
+
+def _convert_ff_time_to_cr(time_text: str) -> str | None:
+    """FF time like '8:30am' (EST/EDT). Convert to CR HH:MM. Return None if unparseable.
+
+    Assumes EDT (UTC-4) for safety; CR is UTC-6 → CR = EDT - 2h.
+    """
+    if not time_text or time_text.lower() in ("all day", "tentative", ""):
+        return None
+    try:
+        dt = datetime.strptime(time_text.lower(), "%I:%M%p")
+    except ValueError:
+        return None
+    cr_hour = (dt.hour - 2) % 24
+    return f"{cr_hour:02d}:{dt.minute:02d}"
+
+
+def _ff_currency_to_country(curr: str) -> str:
+    return {
+        "USD": "United States",
+        "EUR": "Euro Area",
+        "GBP": "United Kingdom",
+        "JPY": "Japan",
+    }.get(curr.upper(), curr)
+
+
+def parse_ff_response(html: str) -> list[dict[str, Any]]:
+    """Parse Forex Factory calendar HTML.
+
+    Selectors are based on FF DOM captured 2026-05-04. Key findings vs spec:
+    - High impact marker is ``icon--ff-impact-red`` CSS class (no title attribute in live DOM)
+    - Date cell text is compact like 'FriMay 8' (no spaces between day-of-week and month)
+    - Rows without a .calendar__date cell inherit the date from the prior dated row
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    rows = soup.select("tr.calendar__row")
+    events: list[dict[str, Any]] = []
+    current_date_iso: str | None = None
+
+    for row in rows:
+        # Update current date if this row carries a date cell
+        date_cell = row.select_one(".calendar__date")
+        if date_cell:
+            text = date_cell.get_text(strip=True)
+            if text:
+                try:
+                    current_date_iso = _parse_ff_date(text)
+                except ValueError:
+                    pass
+
+        impact_cell = row.select_one(".calendar__impact")
+        if not impact_cell:
+            continue
+
+        # Real FF DOM uses icon--ff-impact-red class; spec fallback selectors kept as extras
+        impact_marker = (
+            impact_cell.select_one(".icon--ff-impact-red")
+            or impact_cell.select_one("[title*='High Impact']")
+            or impact_cell.select_one(".impact--high")
+        )
+        if not impact_marker:
+            continue
+
+        time_cell = row.select_one(".calendar__time")
+        time_text = time_cell.get_text(strip=True) if time_cell else ""
+        currency_cell = row.select_one(".calendar__currency")
+        currency = currency_cell.get_text(strip=True) if currency_cell else ""
+
+        event_name_cell = (
+            row.select_one(".calendar__event-title")
+            or row.select_one(".calendar__event")
+        )
+        if not event_name_cell:
+            continue
+        name = event_name_cell.get_text(strip=True)
+
+        if not matches_whitelist(name):
+            continue
+        if not current_date_iso:
+            continue
+
+        time_cr = _convert_ff_time_to_cr(time_text)
+        if not time_cr:
+            continue
+
+        events.append({
+            "date": current_date_iso,
+            "time_cr": time_cr,
+            "country": _ff_currency_to_country(currency),
+            "name": name,
+            "impact": "high",
+        })
+    return events
+
+
 def fetch_ff() -> list[dict[str, Any]]:
-    """Forex Factory HTML scraper. Implemented in Task 1.4."""
-    raise FetcherError("Forex Factory fallback not yet implemented")
+    """Forex Factory HTML scraper. Falls back when TradingEconomics is unavailable."""
+    try:
+        resp = httpx.get(FF_URL, headers=FF_HEADERS, timeout=TIMEOUT_SECONDS)
+        resp.raise_for_status()
+        events = parse_ff_response(resp.text)
+        if not events:
+            raise FetcherError("FF parse returned 0 events — DOM may have changed")
+        return events
+    except (httpx.HTTPError, ValueError) as e:
+        raise FetcherError(f"FF fetch failed: {e}") from e
 
 
 def write_cache_atomic(path: Path, payload: dict[str, Any]) -> None:

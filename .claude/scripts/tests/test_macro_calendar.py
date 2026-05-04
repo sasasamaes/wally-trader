@@ -133,3 +133,24 @@ def test_fetch_te_malformed_date_raises():
         mock_get.return_value = resp
         with pytest.raises(FetcherError):
             fetch_te()
+
+
+def test_parse_ff_response_extracts_high_impact():
+    from macro_calendar import parse_ff_response
+    html = (FIXTURES / "ff_response.html").read_text()
+    events = parse_ff_response(html)
+    # Should find at least 1 high-impact event matching whitelist
+    assert len(events) >= 1
+    for e in events:
+        assert e["impact"] == "high"
+        assert e["date"]  # YYYY-MM-DD
+        assert e["time_cr"]  # HH:MM
+
+
+def test_parse_ff_response_filters_whitelist():
+    from macro_calendar import parse_ff_response, matches_whitelist
+    html = (FIXTURES / "ff_response.html").read_text()
+    events = parse_ff_response(html)
+    # Whatever events come out, all must match whitelist
+    for e in events:
+        assert matches_whitelist(e["name"]), f"{e['name']} not in whitelist"
