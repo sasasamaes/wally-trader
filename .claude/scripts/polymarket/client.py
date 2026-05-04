@@ -4,6 +4,7 @@ Pure HTTP. No business logic. Returns typed Market dataclasses.
 """
 from __future__ import annotations
 
+import json
 import time
 from dataclasses import dataclass, field
 from typing import Any
@@ -34,10 +35,25 @@ def _sleep(seconds: float) -> None:
     time.sleep(seconds)
 
 
+def _coerce_list(value: Any, default: list) -> list:
+    """Polymarket Gamma sometimes returns lists as JSON-encoded strings."""
+    if value is None:
+        return default
+    if isinstance(value, list):
+        return value
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+            return parsed if isinstance(parsed, list) else default
+        except json.JSONDecodeError:
+            return default
+    return default
+
+
 def _parse_market(raw: dict[str, Any]) -> Market:
-    prices = raw.get("outcomePrices") or ["0", "0"]
-    prob_yes = float(prices[0])
-    tags_raw = raw.get("tags") or []
+    prices = _coerce_list(raw.get("outcomePrices"), ["0", "0"])
+    prob_yes = float(prices[0]) if prices else 0.0
+    tags_raw = _coerce_list(raw.get("tags"), [])
     tags = tuple(t.get("slug") if isinstance(t, dict) else str(t) for t in tags_raw)
     last_trade_raw = raw.get("lastTradePrice")
     last_trade = float(last_trade_raw) if last_trade_raw is not None else None

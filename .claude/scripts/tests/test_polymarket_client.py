@@ -113,3 +113,35 @@ def test_get_market_with_fallback_raises_if_both_fail(mocker):
 
     with pytest.raises(client.PolymarketError):
         client.get_market_with_fallback("0xaaa")
+
+
+def test_parse_market_handles_json_string_outcome_prices():
+    """Real Gamma API returns outcomePrices as a JSON-encoded string."""
+    raw = {
+        "id": "0xreal",
+        "slug": "real-market",
+        "question": "Will X happen?",
+        "outcomes": '["Yes", "No"]',  # JSON string, not list
+        "outcomePrices": '["0.62", "0.38"]',  # JSON string, not list
+        "volume24hr": 1500000,
+        "endDate": "2026-12-31T00:00:00Z",
+        "tags": None,  # also seen in real responses
+        "active": True,
+        "closed": False,
+    }
+    m = client._parse_market(raw)
+    assert m.prob_yes == 0.62
+    assert m.tags == ()
+
+
+def test_parse_market_handles_list_outcome_prices_back_compat():
+    """Old fixtures pass lists — must continue to work."""
+    raw = {
+        "id": "0xold",
+        "slug": "old-fixture",
+        "outcomes": ["Yes", "No"],
+        "outcomePrices": ["0.55", "0.45"],
+        "volume24hr": 500_000,
+    }
+    m = client._parse_market(raw)
+    assert m.prob_yes == 0.55
