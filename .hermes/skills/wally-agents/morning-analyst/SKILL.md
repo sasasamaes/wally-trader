@@ -92,6 +92,7 @@ WebFetch simultáneo:
 - `mempool.space/api/mempool`
 - `bitinfocharts.com/bitcoin/`
 - `api.blockchain.info/charts/n-transactions?timespan=7days&format=json`
+- **PM Macro (Polymarket):** invocar skill `polymarket-macro` para añadir composite −100..+100 al análisis. Si STALE, ignorar. Es 5° filtro — nunca convierte NO-GO en GO. Reducir size 25% si `|composite| > 40` contradice los 4 filtros técnicos.
 
 ### FASE 3: Correlaciones
 - ETH 24h direction (esperado +0.85)
