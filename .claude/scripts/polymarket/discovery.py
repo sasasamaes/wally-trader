@@ -32,7 +32,16 @@ def _parse_iso(s: str) -> datetime:
 
 
 def filter_markets(markets: list[Market]) -> list[Market]:
-    """Apply volume, tag, and end-date filters."""
+    """Apply volume, tag (or slug-weight fallback), and end-date filters.
+
+    Polymarket's /markets endpoint returns tags=None for most markets in
+    practice; the rich tag metadata lives on /events. To keep V1 working
+    against the real API we accept either:
+      - a market whose tags overlap TAGS_WHITELIST, OR
+      - a market whose slug matches an entry in WEIGHT_MAPPING (i.e. a
+        market we already know how to interpret).
+    Markets matching neither path are dropped.
+    """
     now = datetime.now(timezone.utc)
     out: list[Market] = []
     for m in markets:
@@ -40,7 +49,9 @@ def filter_markets(markets: list[Market]) -> list[Market]:
             continue
         if m.volume_24h < config.VOLUME_THRESHOLD_USD:
             continue
-        if not any(t.lower() in config.TAGS_WHITELIST for t in m.tags):
+        tag_match = bool(m.tags) and any(t.lower() in config.TAGS_WHITELIST for t in m.tags)
+        slug_match = config.match_weight(m.slug) is not None
+        if not (tag_match or slug_match):
             continue
         end = _parse_iso(m.end_date)
         days_out = (end - now).days

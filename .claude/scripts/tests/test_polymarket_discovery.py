@@ -111,3 +111,33 @@ def test_filter_drops_malformed_end_date():
     good_market = _mk_market("good", 0.5, 600_000)
     out = discovery.filter_markets([bad_market, good_market])
     assert {m.slug for m in out} == {"good"}
+
+
+def test_filter_accepts_markets_with_no_tags_when_slug_matches_weight():
+    """Real Gamma API returns tags=None; slug-weight fallback must accept these."""
+    m = Market(
+        id="id-fed",
+        slug="will-the-fed-cut-rates-in-may-2026",
+        question="Fed cut May?",
+        prob_yes=0.5,
+        volume_24h=600_000,
+        end_date=(datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),
+        tags=(),  # empty — like real API response with tags=None coerced
+    )
+    out = discovery.filter_markets([m])
+    assert {x.slug for x in out} == {"will-the-fed-cut-rates-in-may-2026"}
+
+
+def test_filter_drops_markets_with_no_tags_and_no_weight_match():
+    """Without tags AND without slug-weight match → dropped."""
+    m = Market(
+        id="id-noise",
+        slug="completely-random-market",
+        question="?",
+        prob_yes=0.5,
+        volume_24h=600_000,
+        end_date=(datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),
+        tags=(),
+    )
+    out = discovery.filter_markets([m])
+    assert out == []
