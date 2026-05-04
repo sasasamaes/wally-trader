@@ -31,7 +31,7 @@ def test_parse_te_response_converts_to_cr_time():
     assert cpi["date"] == "2026-05-04"
 
 
-def test_fetch_te_success(tmp_path):
+def test_fetch_te_success():
     """When TE returns 200, parse and write cache."""
     from macro_calendar import fetch_te
     raw = (FIXTURES / "te_response.json").read_text()
@@ -45,7 +45,7 @@ def test_fetch_te_success(tmp_path):
     assert all(e["impact"] == "high" for e in events)
 
 
-def test_fetch_te_429_raises(tmp_path):
+def test_fetch_te_429_raises():
     from macro_calendar import fetch_te, FetcherError
     with patch("httpx.get") as mock_get:
         resp = MagicMock(status_code=429)
@@ -98,9 +98,38 @@ def test_main_keeps_existing_cache_on_double_failure(tmp_path):
         "events": []
     }))
     with patch("macro_calendar.fetch_te", side_effect=FetcherError("ratelimit")), \
-         patch("macro_calendar.fetch_ff", side_effect=FetcherError("dom changed")):
+         patch("macro_calendar.fetch_ff", side_effect=FetcherError("dom changed")), \
+         patch("macro_calendar.log_error") as mock_log:
         rc = run(cache_path)
-    assert rc == 1  # signals failure
-    # Old cache untouched
+    assert rc == 1
     cached = json.loads(cache_path.read_text())
     assert cached["fetched_at"] == "2026-05-03T04:00:00-06:00"
+    # Should have logged twice: once for TE fail, once for FF fail
+    assert mock_log.call_count == 2
+
+
+def test_fetch_te_json_decode_error_raises():
+    """If TE returns 200 with non-JSON body (HTML error page), raise FetcherError."""
+    from macro_calendar import fetch_te, FetcherError
+    with patch("httpx.get") as mock_get:
+        resp = MagicMock(status_code=200, text="<html>Rate limited</html>")
+        resp.raise_for_status.return_value = None
+        resp.json.side_effect = json.JSONDecodeError("bad json", "<html>", 0)
+        mock_get.return_value = resp
+        with pytest.raises(FetcherError):
+            fetch_te()
+
+
+def test_fetch_te_malformed_date_raises():
+    """If TE returns event with Date='TBD' or None, raise FetcherError instead of crashing."""
+    from macro_calendar import fetch_te, FetcherError
+    bad_response = [
+        {"Date": "TBD", "Country": "United States", "Event": "FOMC", "Importance": 3}
+    ]
+    with patch("httpx.get") as mock_get:
+        resp = MagicMock(status_code=200)
+        resp.raise_for_status.return_value = None
+        resp.json.return_value = bad_response
+        mock_get.return_value = resp
+        with pytest.raises(FetcherError):
+            fetch_te()

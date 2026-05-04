@@ -64,7 +64,9 @@ def parse_te_response(raw: list[dict[str, Any]]) -> list[dict[str, Any]]:
         if not matches_whitelist(name):
             continue
         # TE Date is naive UTC ISO; convert to CR
-        utc = datetime.fromisoformat(row["Date"]).replace(tzinfo=timezone.utc)
+        # rstrip("Z") handles Python 3.9 where fromisoformat() doesn't accept Z suffix
+        date_str = row["Date"].rstrip("Z")
+        utc = datetime.fromisoformat(date_str).replace(tzinfo=timezone.utc)
         cr = utc.astimezone(CR_OFFSET)
         events.append({
             "date": cr.strftime("%Y-%m-%d"),
@@ -82,7 +84,7 @@ def fetch_te() -> list[dict[str, Any]]:
         resp = httpx.get(TE_URL, params=TE_PARAMS, timeout=TIMEOUT_SECONDS)
         resp.raise_for_status()
         return parse_te_response(resp.json())
-    except (httpx.HTTPError, json.JSONDecodeError, KeyError) as e:
+    except (httpx.HTTPError, json.JSONDecodeError, KeyError, ValueError, TypeError) as e:
         raise FetcherError(f"TE fetch failed: {e}") from e
 
 
@@ -102,9 +104,12 @@ def write_cache_atomic(path: Path, payload: dict[str, Any]) -> None:
 
 
 def log_error(msg: str) -> None:
-    ERROR_LOG.parent.mkdir(parents=True, exist_ok=True)
-    with ERROR_LOG.open("a") as f:
-        f.write(f"{datetime.now(CR_OFFSET).isoformat()} {msg}\n")
+    try:
+        ERROR_LOG.parent.mkdir(parents=True, exist_ok=True)
+        with ERROR_LOG.open("a") as f:
+            f.write(f"{datetime.now(CR_OFFSET).isoformat()} {msg}\n")
+    except OSError as e:
+        print(f"macro_calendar: could not write error log: {e}", file=sys.stderr)
 
 
 def run(cache_path: Path) -> int:
