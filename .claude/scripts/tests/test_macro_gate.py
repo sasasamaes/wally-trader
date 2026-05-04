@@ -101,3 +101,52 @@ def test_only_high_impact_blocks_check_now(tmp_path):
     r = run_gate(["--check-now"], cache, fake_now="2026-05-07T06:18:00-06:00")
     payload = json.loads(r.stdout)
     assert payload["blocked"] is False
+
+
+def test_check_day_with_stale_cache(tmp_path):
+    """check_day should report stale=True when cache is >24h old."""
+    cache = tmp_path / "cache.json"
+    data = json.loads((FIXTURES / "cache_today_event.json").read_text())
+    data["fetched_at"] = "2026-05-03T03:00:00-06:00"  # 25h before our fake_now
+    cache.write_text(json.dumps(data))
+    r = run_gate(["--check-day", "2026-05-04"], cache,
+                 fake_now="2026-05-04T08:00:00-06:00")
+    assert r.returncode == 0
+    payload = json.loads(r.stdout)
+    assert payload["stale"] is True
+
+
+def test_load_cache_rejects_non_dict_root(tmp_path):
+    """A cache file containing a JSON array (corrupted) should not crash consumers."""
+    cache = tmp_path / "cache.json"
+    cache.write_text('["not", "a", "dict"]')
+    r = run_gate(["--check-now"], cache, fake_now="2026-05-04T08:00:00-06:00")
+    assert r.returncode == 0
+    payload = json.loads(r.stdout)
+    assert payload["blocked"] is False
+    # Treated as no_cache (defensive)
+    assert payload["reason"] == "no_cache"
+
+
+def test_check_now_with_tz_naive_now_argument(tmp_path):
+    """--now without a timezone offset should be interpreted as CR time, not crash."""
+    cache = tmp_path / "cache.json"
+    cache.write_text((FIXTURES / "cache_today_event.json").read_text())
+    # No offset on --now → should default to CR
+    r = run_gate(["--check-now"], cache, fake_now="2026-05-04T06:18:00")
+    assert r.returncode == 0, r.stderr
+    payload = json.loads(r.stdout)
+    # Expected to be blocked (12 min before CPI 06:30 CR)
+    assert payload["blocked"] is True
+
+
+def test_check_now_not_blocked_response_includes_reason_key(tmp_path):
+    """Schema consistency: not-blocked response should include 'reason' key (None)."""
+    cache = tmp_path / "cache.json"
+    cache.write_text((FIXTURES / "cache_today_event.json").read_text())
+    # 05:00 → far from any event → not blocked
+    r = run_gate(["--check-now"], cache, fake_now="2026-05-04T05:00:00-06:00")
+    payload = json.loads(r.stdout)
+    assert payload["blocked"] is False
+    assert "reason" in payload
+    assert payload["reason"] is None

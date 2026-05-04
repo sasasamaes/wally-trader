@@ -27,15 +27,23 @@ def load_cache(path: Path) -> dict[str, Any] | None:
     if not path.exists():
         return None
     try:
-        return json.loads(path.read_text())
+        data = json.loads(path.read_text())
     except json.JSONDecodeError as e:
         print(f"macro_gate: malformed cache: {e}", file=sys.stderr)
         return None
+    if not isinstance(data, dict):
+        print(f"macro_gate: cache root is {type(data).__name__}, expected dict",
+              file=sys.stderr)
+        return None
+    return data
 
 
 def parse_now(arg: str | None) -> datetime:
     if arg:
-        return datetime.fromisoformat(arg)
+        dt = datetime.fromisoformat(arg)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=CR_OFFSET)
+        return dt
     return datetime.now(CR_OFFSET)
 
 
@@ -45,6 +53,8 @@ def event_datetime(ev: dict[str, Any]) -> datetime:
 
 def is_stale(cache: dict[str, Any], now: datetime) -> bool:
     fetched = datetime.fromisoformat(cache["fetched_at"])
+    if fetched.tzinfo is None:
+        fetched = fetched.replace(tzinfo=CR_OFFSET)
     return (now - fetched) > timedelta(hours=STALE_HOURS)
 
 
@@ -63,14 +73,15 @@ def check_now(cache: dict[str, Any] | None, now: datetime) -> dict[str, Any]:
                 "delta_minutes": int(delta_min),
                 "stale": is_stale(cache, now),
             }
-    return {"blocked": False, "stale": is_stale(cache, now)}
+    return {"blocked": False, "reason": None, "stale": is_stale(cache, now)}
 
 
-def check_day(cache: dict[str, Any] | None, day: str) -> dict[str, Any]:
+def check_day(cache: dict[str, Any] | None, day: str, now: datetime | None = None) -> dict[str, Any]:
     if cache is None:
         return {"events": [], "stale": True, "reason": "no_cache"}
     events = [e for e in cache["events"] if e["date"] == day]
-    return {"events": events, "stale": False}
+    now = now or datetime.now(CR_OFFSET)
+    return {"events": events, "stale": is_stale(cache, now)}
 
 
 def next_events(cache: dict[str, Any] | None, now: datetime, days: int) -> dict[str, Any]:
@@ -105,7 +116,7 @@ def main() -> int:
     if args.check_now:
         result = check_now(cache, now)
     elif args.check_day:
-        result = check_day(cache, args.check_day)
+        result = check_day(cache, args.check_day, now)
     else:  # --next-events
         result = next_events(cache, now, args.days)
 
