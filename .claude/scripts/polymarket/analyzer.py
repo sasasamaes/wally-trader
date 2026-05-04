@@ -221,21 +221,45 @@ def report(
         by_id.setdefault(snap["id"], []).append(snap)
 
     per_market: dict[str, dict] = {}
+    latest_by_id: dict[str, dict] = {}
     for market_id, snaps in by_id.items():
         per_market[market_id] = compute_deltas(snaps, now=now)
+        # Keep the most-recent snapshot for this market (for vol_24h).
+        latest_by_id[market_id] = max(snaps, key=lambda s: _parse_ts(s["ts"]))
 
     comp = composite(per_market)
-    bucket = config.bucket_for(comp) if comp is not None else None
 
-    markets_list = [
-        {"id": mid, **data} for mid, data in per_market.items()
-    ]
+    # Upgrade status to NO_MARKETS when data is fresh but no market is mapped.
+    if status == "FRESH" and comp is None:
+        status = "NO_MARKETS"
+
+    bucket = config.bucket_for(comp) if comp is not None else "NEUTRAL"
+
+    markets_list = []
+    for mid, data in per_market.items():
+        slug = data.get("slug")
+        prob_now = data.get("prob_now")
+        weight = config.match_weight(slug) if slug else None
+        if weight is not None and prob_now is not None:
+            contribution = (float(prob_now) - 0.5) * weight
+        else:
+            contribution = None
+        latest_snap = latest_by_id.get(mid, {})
+        vol_24h = latest_snap.get("vol_24h")
+        markets_list.append({
+            "id": mid,
+            **data,
+            "vol_24h": vol_24h,
+            "weight": weight,
+            "contribution": contribution,
+        })
 
     return {
         "status": status,
         "composite": comp,
         "bucket": bucket,
         "as_of": now.isoformat(),
+        "last_snapshot_age_seconds": int(age_seconds),
         "markets": markets_list,
     }
 

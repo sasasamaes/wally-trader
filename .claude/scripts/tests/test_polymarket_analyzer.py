@@ -165,3 +165,42 @@ def test_status_fresh_when_recent(tmp_snapshots):
     assert result["status"] == "FRESH"
     assert result["composite"] is not None
     assert any(m["slug"] == "fed-cut-rates-in-may-2026" for m in result["markets"])
+    # New fields: weight and contribution must be present on the market entry.
+    market = next(m for m in result["markets"] if m["slug"] == "fed-cut-rates-in-may-2026")
+    assert "weight" in market
+    assert "contribution" in market
+
+
+def test_report_includes_weight_and_contribution_per_market(tmp_snapshots):
+    """report() output includes vol_24h, weight, and contribution on each market entry."""
+    result = analyzer.report(snapshots_path=tmp_snapshots, now=NOW_REF)
+    assert result["status"] == "FRESH"
+    assert "last_snapshot_age_seconds" in result
+    assert isinstance(result["last_snapshot_age_seconds"], int)
+
+    market = next(m for m in result["markets"] if m["slug"] == "fed-cut-rates-in-may-2026")
+    # vol_24h taken from the latest snapshot fixture value.
+    assert market["vol_24h"] == 1_000_000
+    # weight = 0.30 (matches "fed-cut" pattern in config).
+    assert market["weight"] == pytest.approx(0.30, abs=0.001)
+    # contribution = (0.60 - 0.5) * 0.30 = 0.03
+    assert market["contribution"] == pytest.approx(0.03, abs=0.001)
+
+
+def test_status_no_markets_when_composite_undefined(tmp_path):
+    """report() returns NO_MARKETS when snapshots are fresh but no slug is mapped."""
+    p = tmp_path / "unmapped.jsonl"
+    row = {
+        "ts": NOW_REF.isoformat(),
+        "id": "0xzzz",
+        "slug": "random-unmapped-market",
+        "prob": 0.55,
+        "vol_24h": 300_000,
+        "last_trade": 0.55,
+    }
+    p.write_text(json.dumps(row) + "\n")
+
+    result = analyzer.report(snapshots_path=p, now=NOW_REF)
+    assert result["status"] == "NO_MARKETS"
+    assert result["composite"] is None
+    assert result["bucket"] == "NEUTRAL"

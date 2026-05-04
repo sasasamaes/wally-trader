@@ -51,6 +51,11 @@ def _coerce_list(value: Any, default: list) -> list:
 
 
 def _parse_market(raw: dict[str, Any]) -> Market:
+    if raw.get("outcomePrices") is None and raw.get("tokens") is None:
+        raise PolymarketError(
+            f"Cannot parse market {raw.get('id', '?')}: "
+            "neither outcomePrices nor tokens field present"
+        )
     prices = _coerce_list(raw.get("outcomePrices"), ["0", "0"])
     prob_yes = float(prices[0]) if prices else 0.0
     tags_raw = _coerce_list(raw.get("tags"), [])

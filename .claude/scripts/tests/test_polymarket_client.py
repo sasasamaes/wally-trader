@@ -145,3 +145,16 @@ def test_parse_market_handles_list_outcome_prices_back_compat():
     }
     m = client._parse_market(raw)
     assert m.prob_yes == 0.55
+
+
+def test_parse_market_raises_when_neither_prices_nor_tokens_field():
+    """_parse_market raises PolymarketError when both outcomePrices and tokens are absent."""
+    raw = {
+        "id": "0xclob",
+        "slug": "clob-style-market",
+        "question": "Will X happen?",
+        "volume24hr": 500_000,
+        # Neither outcomePrices nor tokens — CLOB-shaped response
+    }
+    with pytest.raises(client.PolymarketError, match="neither outcomePrices nor tokens"):
+        client._parse_market(raw)
