@@ -14,12 +14,13 @@ import json
 import os
 import sys
 import tempfile
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 import httpx
 from bs4 import BeautifulSoup
+from zoneinfo import ZoneInfo
 
 DEFAULT_CACHE = Path(__file__).parent.parent / "cache" / "macro_events.json"
 ERROR_LOG = Path(__file__).parent.parent / "cache" / "macro_calendar_errors.log"
@@ -32,6 +33,7 @@ TE_PARAMS = {
 }
 TIMEOUT_SECONDS = 10
 CR_OFFSET = timezone(timedelta(hours=-6))
+ET = ZoneInfo("America/New_York")
 FF_URL = "https://www.forexfactory.com/calendar"
 FF_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -43,6 +45,9 @@ WHITELIST = [
     "fomc", "fed interest rate", "fed funds", "powell",
     "inflation rate", "cpi", "core cpi",
     "non farm payrolls", "non-farm payrolls", "nfp",
+    "employment change",          # NEW: FF naming for NFP
+    "unemployment rate",          # NEW: co-released with NFP
+    "average hourly earnings",    # NEW: co-released with NFP
     "pce price index", "core pce",
     "ppi", "producer price",
     "gdp",
@@ -97,34 +102,45 @@ def fetch_te() -> list[dict[str, Any]]:
 def _parse_ff_date(s: str) -> str:
     """FF dates look like 'MonMay4' or 'Mon May 4'. Normalize to YYYY-MM-DD.
 
-    Includes year explicitly in strptime to avoid Python 3.15 DeprecationWarning
-    about ambiguous year-less parsing.
+    For year-boundary correctness, picks current year or next year — whichever
+    produces a date within ~14 days of now.
     """
     s = s.replace("\n", " ").strip()
-    year = datetime.now(CR_OFFSET).year
-    # Prepend year so the format includes it, avoiding ambiguity warning
+    today = datetime.now(CR_OFFSET).date()
+    candidates: list[date] = []
     for fmt in ("%Y %a %b %d", "%Y %a%b%d", "%Y %b %d"):
-        try:
-            dt = datetime.strptime(f"{year} {s}", fmt)
-            return dt.strftime("%Y-%m-%d")
-        except ValueError:
-            continue
-    raise ValueError(f"unparseable FF date: {s!r}")
+        for year in (today.year, today.year + 1, today.year - 1):
+            try:
+                dt = datetime.strptime(f"{year} {s}", fmt).date()
+                candidates.append(dt)
+            except ValueError:
+                continue
+    if not candidates:
+        raise ValueError(f"unparseable FF date: {s!r}")
+    # Prefer dates near today (FF shows current week + a bit ahead)
+    candidates.sort(key=lambda d: abs((d - today).days))
+    return candidates[0].strftime("%Y-%m-%d")
 
 
-def _convert_ff_time_to_cr(time_text: str) -> str | None:
-    """FF time like '8:30am' (EST/EDT). Convert to CR HH:MM. Return None if unparseable.
-
-    Assumes EDT (UTC-4) for safety; CR is UTC-6 → CR = EDT - 2h.
-    """
+def _convert_ff_time_to_cr(time_text: str, date_iso: str | None = None) -> str | None:
+    """FF time like '8:30am' (ET, DST-aware). Convert to CR HH:MM. Return None if unparseable."""
     if not time_text or time_text.lower() in ("all day", "tentative", ""):
         return None
     try:
-        dt = datetime.strptime(time_text.lower(), "%I:%M%p")
+        time_only = datetime.strptime(time_text.lower(), "%I:%M%p").time()
     except ValueError:
         return None
-    cr_hour = (dt.hour - 2) % 24
-    return f"{cr_hour:02d}:{dt.minute:02d}"
+    # Without a date, fall back to today (best-effort, may be 1h off near DST transitions)
+    if date_iso:
+        try:
+            d = datetime.strptime(date_iso, "%Y-%m-%d").date()
+        except ValueError:
+            d = datetime.now(CR_OFFSET).date()
+    else:
+        d = datetime.now(CR_OFFSET).date()
+    et_dt = datetime.combine(d, time_only).replace(tzinfo=ET)
+    cr_dt = et_dt.astimezone(CR_OFFSET)
+    return cr_dt.strftime("%H:%M")
 
 
 def _ff_currency_to_country(curr: str) -> str:
@@ -191,7 +207,7 @@ def parse_ff_response(html: str) -> list[dict[str, Any]]:
         if not current_date_iso:
             continue
 
-        time_cr = _convert_ff_time_to_cr(time_text)
+        time_cr = _convert_ff_time_to_cr(time_text, current_date_iso)
         if not time_cr:
             continue
 
@@ -214,7 +230,7 @@ def fetch_ff() -> list[dict[str, Any]]:
         if not events:
             raise FetcherError("FF parse returned 0 events — DOM may have changed")
         return events
-    except (httpx.HTTPError, ValueError) as e:
+    except (httpx.HTTPError, ValueError, AttributeError, TypeError, KeyError) as e:
         raise FetcherError(f"FF fetch failed: {e}") from e
 
 

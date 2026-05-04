@@ -147,10 +147,31 @@ def test_parse_ff_response_extracts_high_impact():
         assert e["time_cr"]  # HH:MM
 
 
-def test_parse_ff_response_filters_whitelist():
-    from macro_calendar import parse_ff_response, matches_whitelist
+def test_parse_ff_response_finds_expected_high_impact_events():
+    """Test that parser finds the expected NFP-class and FOMC events from real fixture.
+
+    Without this, a WHITELIST gap silently drops critical events (e.g., FF's
+    'Non-Farm Employment Change' was missed before the whitelist included
+    'employment change').
+    """
+    from macro_calendar import parse_ff_response
     html = (FIXTURES / "ff_response.html").read_text()
     events = parse_ff_response(html)
-    # Whatever events come out, all must match whitelist
-    for e in events:
-        assert matches_whitelist(e["name"]), f"{e['name']} not in whitelist"
+    names = [e["name"].lower() for e in events]
+    # The fixture contains real high-impact USD events from one week
+    # We expect at minimum FOMC + NFP-class events to be parsed
+    assert any("fomc" in n for n in names), f"FOMC missing from {names}"
+    assert any("employment change" in n or "non-farm" in n.lower() or "nfp" in n for n in names), \
+        f"NFP-class event missing from {names}"
+
+
+def test_convert_ff_time_to_cr_dst_aware():
+    """Verify EST (winter) and EDT (summer) both convert correctly to CR."""
+    from macro_calendar import _convert_ff_time_to_cr
+    # January is EST: 1pm ET → 12:00 CR (offset 1h)
+    assert _convert_ff_time_to_cr("1:00pm", "2026-01-15") == "12:00"
+    # July is EDT: 1pm ET → 11:00 CR (offset 2h)
+    assert _convert_ff_time_to_cr("1:00pm", "2026-07-15") == "11:00"
+    # Empty/tentative still returns None
+    assert _convert_ff_time_to_cr("All Day", "2026-01-15") is None
+    assert _convert_ff_time_to_cr("", "2026-01-15") is None
