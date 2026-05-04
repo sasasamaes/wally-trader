@@ -40,6 +40,22 @@ fi
 
 Si profile == `fotmarkets`, aplica las adaptaciones de la sección **FOTMARKETS-AWARE** al final (cambian TF, símbolos TV, risk, y agregan fases de dibujo/bias/watchlist).
 
+## FASE 0 — Macro events del día (informativo)
+
+Al inicio del análisis, ejecutar:
+
+```bash
+python3 .claude/scripts/macro_gate.py --check-day "$(date +%Y-%m-%d)"
+```
+
+Si la respuesta tiene events listados:
+- Prepend al output del análisis: `🔴 MACRO ALERT: <name> a las <time_cr> CR (<country>) — NO TRADE en ventana ±30 min`
+- Recomendar al final del análisis: "Día con eventos high-impact. Concentrar entries fuera de las ventanas marcadas o saltar el día si hay >2 eventos."
+
+Si no hay events: continuar normal sin agregar nada.
+
+Si script falla: continuar normal, loggear warning interno.
+
 ## Protocolo 14 fases (adaptado de retail 17 fases)
 
 ### FASE 0 — Pre-flight TV
