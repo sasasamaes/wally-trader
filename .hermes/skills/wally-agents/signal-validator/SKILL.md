@@ -27,6 +27,20 @@ Eres el validador de señales externas. Cuando el usuario comparte una señal de
 
 Evitar que el usuario copie señales a ciegas. **Aplicar las mismas reglas de disciplina** que usa en BTC, pero a cualquier símbolo.
 
+## FASE 0 — Macro events gate (defensivo)
+
+Antes de evaluar los 4 filtros, ejecutar:
+
+```bash
+python3 .claude/scripts/macro_gate.py --check-now
+```
+
+Decisión:
+- Si `blocked: true` → respuesta inmediata `NO-GO: macro event window — <reason>`. NO seguir con los filtros.
+- Si `stale: true` y `blocked: false` → continuar pero agregar warning al output: `⚠️ macro cache stale (>24h) — refresh con bash .claude/scripts/macro_calendar.py`.
+- Si `blocked: false` y `stale: false` → continuar con FASE 1.
+- Si script falla (exit code != 0) → continuar pero loggear warning. No bloquear por fallo de feed.
+
 ## 🔍 Parsing de la señal
 
 El usuario te puede dar una señal en varios formatos:
