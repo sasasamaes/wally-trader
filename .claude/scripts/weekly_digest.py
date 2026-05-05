@@ -153,10 +153,43 @@ def render_cross_profile_table(rows: list[dict]) -> str:
 
 
 # ---------- Macro lookahead (Task 3.2) ----------
-# stub for now; implemented in 3.2
 
-def render_macro_lookahead(root: Path, week_start: date) -> str:
-    return "_(macro cache unavailable — refresh: bash .claude/scripts/macro_calendar.py)_\n"
+def render_macro_lookahead(root: Path, week_start_next: date) -> str:
+    """Read macro cache directly and render upcoming-events table."""
+    cache_path = root / MACRO_CACHE_REL
+    if not cache_path.exists():
+        return "_(macro cache unavailable — refresh: bash .claude/scripts/macro_calendar.py)_\n"
+    try:
+        cache = json.loads(cache_path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return "_(macro cache malformed)_\n"
+    horizon = week_start_next + timedelta(days=7)
+    upcoming = []
+    for ev in cache.get("events", []):
+        try:
+            ev_d = date.fromisoformat(ev["date"])
+        except (KeyError, ValueError):
+            continue
+        if week_start_next <= ev_d <= horizon and ev.get("impact") == "high":
+            upcoming.append(ev)
+    if not upcoming:
+        return "_(sin eventos high-impact próxima semana)_\n"
+    upcoming.sort(key=lambda e: (e["date"], e["time_cr"]))
+    lines = ["| Día | Hora CR | Evento | Impact |", "|---|---|---|---|"]
+    blocked_windows = []
+    spanish_days = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
+    for ev in upcoming:
+        d = date.fromisoformat(ev["date"])
+        day_name = spanish_days[d.weekday()]
+        lines.append(f"| {day_name} {d.strftime('%d')} | {ev['time_cr']} | "
+                     f"{ev['name']} | HIGH 🔴 |")
+        h, m = map(int, ev["time_cr"].split(":"))
+        start = (h * 60 + m - 30) % (24 * 60)
+        end = (h * 60 + m + 30) % (24 * 60)
+        blocked_windows.append(
+            f"{day_name} {start//60:02d}:{start%60:02d}-{end//60:02d}:{end%60:02d}"
+        )
+    return "\n".join(lines) + "\n\n🔴 NO TRADE: " + "; ".join(blocked_windows) + "\n"
 
 
 # ---------- Disciplina + suggestions (Task 3.3) ----------

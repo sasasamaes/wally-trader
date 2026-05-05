@@ -90,3 +90,25 @@ def test_digest_no_notif_flag_suppresses_osascript(tmp_path):
     setup_repo_with_fixtures(tmp_path)
     r = run_digest(["--week", "2026-W18"], cwd=tmp_path)
     assert r.returncode == 0
+
+
+def test_digest_macro_lookahead_with_cache(tmp_path):
+    setup_repo_with_fixtures(tmp_path)
+    cache = tmp_path / ".claude/cache/macro_events.json"
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    cache.write_text(json.dumps({
+        "fetched_at": "2026-05-04T04:00:00-06:00",
+        "source": "tradingeconomics",
+        "events": [
+            {"date": "2026-05-06", "time_cr": "13:00",
+             "country": "United States", "name": "FOMC Statement", "impact": "high"},
+            {"date": "2026-05-08", "time_cr": "06:30",
+             "country": "United States", "name": "CPI", "impact": "high"},
+        ],
+    }))
+    r = run_digest(["--week", "2026-W18"], cwd=tmp_path)
+    assert r.returncode == 0
+    content = (tmp_path / "memory/weekly_digests/2026-W18.md").read_text()
+    assert "FOMC" in content
+    assert "CPI" in content
+    assert "NO TRADE" in content.upper() or "🔴" in content
