@@ -39,3 +39,32 @@ Ejemplos:
 ## Señal a validar
 
 $ARGUMENTS
+
+## Auto-log para profile `bitunix`
+
+Si `$WALLY_PROFILE` es `bitunix`, después de generar el reporte completo de validación, pipear el reporte al log automático.
+
+El reporte debe estar en formato markdown estructurado con campos:
+- `**Symbol:** <SYMBOL>`
+- `**Side:** LONG|SHORT`
+- `**Entry:** <num>`, `**SL:** <num>`, `**TP:** <num>`
+- `**Leverage signal:** <num>x`
+- `**Day-of-week:** <Mon|Tue|...>`
+- `**4 filtros técnicos:** N/4`, `**Multi-Factor:** ±N`, `**ML:** N`
+- `**Chainlink delta:** N%`
+- `**Régimen:** RANGE|TRENDING|VOLATILE`
+- `**4-Pilar Neptune SMC:** N/4`
+- `**Saturday Protocol:** ...`
+- `**Veredicto:** APPROVE_FULL|APPROVE_HALF|REJECT`
+- `**Validation Score:** N/100`
+- `**Decisión:** <texto>`
+
+Pipear así:
+```bash
+echo "<reporte completo en markdown>" | WALLY_PROFILE=bitunix python3 .claude/scripts/bitunix_log.py append-signal --stdin
+```
+
+Comportamiento:
+- Si stdout muestra `bitunix_log: appended ...` → log OK
+- Si stderr muestra `WARNING: bitunix_log parse failed` → reportar al usuario `⚠️ Parse del log falló — revisa .claude/cache/bitunix_log_errors.log`. El report al usuario sigue siendo válido.
+- Si profile no es bitunix → no hacer nada extra (el script será no-op).
