@@ -22,17 +22,21 @@ Mapping ganador (auto-loaded):
 
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
+from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-# Reuso funciones del backtest matrix
 from backtest_regime_matrix import (
     fetch, calc_atr, calc_rsi, calc_ema, calc_macd, calc_bb, calc_adx, calc_vwap,
     classify_regime, strat_a_vwap, strat_b_trending_pullback,
 )
+import punk_smart_state as state
+import punk_smart_vetos as vetos
+import regime_confidence as rc
 
+CR_OFFSET = state.CR_OFFSET
 ASSETS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "MSTRUSDT", "AVAXUSDT",
           "INJUSDT", "DOGEUSDT", "WIFUSDT", "XLMUSDT"]
 
@@ -44,64 +48,73 @@ STRATEGY_FNS = {
 MAPPING_FILE = Path(__file__).parent / "regime_mapping.json"
 
 
-def load_mapping():
+def load_mapping() -> dict:
     if not MAPPING_FILE.exists():
         print(f"❌ Mapping not found: {MAPPING_FILE}", file=sys.stderr)
-        print(f"   Run: python3 .claude/scripts/backtest_regime_matrix.py", file=sys.stderr)
         sys.exit(1)
     return json.loads(MAPPING_FILE.read_text())
 
 
-def evaluate_asset(symbol, mapping):
-    """Evalúa un asset: detecta regime + ejecuta estrategia ganadora."""
+def lookup_regime_info(mapping: dict, asset: str, regime: str) -> Optional[dict]:
+    """Schema v2 lookup: per-asset → global → None."""
+    # Schema v1 fallback
+    if mapping.get("version") != 2:
+        info = mapping.get(regime)
+        if info and info.get("pnl", 0) > 0:
+            return {**info, "tier": "global"}
+        return None
+    per_asset = mapping.get("per_asset", {}).get(asset, {})
+    if regime in per_asset:
+        cell = per_asset[regime]
+        if cell.get("n_trades", 0) >= 10 and cell.get("pnl_per_trade", 0) > 0:
+            return {**cell, "tier": "per_asset"}
+        return {"_stand_aside": True,
+                "reason": f"per-asset cell for {asset} {regime} pnl_per_trade ≤ 0"}
+    g = mapping.get("global", {}).get(regime)
+    if g and g.get("pnl_per_trade", 0) > 0:
+        return {**g, "tier": "global"}
+    return None
+
+
+def evaluate_asset(symbol: str, mapping: dict, now: datetime) -> dict:
     bars_15m = fetch(symbol, "15m", 100)
     bars_1h = fetch(symbol, "1h", 80)
-
     if len(bars_15m) < 70 or len(bars_1h) < 50:
         return {"asset": symbol, "status": "INSUFFICIENT_DATA"}
-
-    # Clasificar regime en bar más reciente
     i = len(bars_15m) - 1
     regime = classify_regime(bars_15m, bars_1h, i)
-    regime_info = mapping.get(regime)
-
     base = {"asset": symbol, "regime": regime, "now_price": bars_15m[-1]["c"]}
 
-    if regime_info is None:
-        return {**base, "status": "STAND_ASIDE", "reason": f"regime {regime} insuficiente backtest data"}
+    info = lookup_regime_info(mapping, symbol, regime)
+    if info is None:
+        return {**base, "status": "STAND_ASIDE",
+                "reason": f"regime {regime} not tradeable in mapping"}
+    if info.get("_stand_aside"):
+        return {**base, "status": "STAND_ASIDE",
+                "reason": info["reason"], "tier": "per_asset"}
 
-    if regime_info["pnl"] <= 0:
-        return {
-            **base,
-            "status": "STAND_ASIDE",
-            "reason": f"regime {regime} backtest PnL ${regime_info['pnl']:+.2f} (todas estrategias pierden)",
-            "backtest_strategy_attempted": regime_info["strategy"],
-        }
-
-    strategy_name = regime_info["strategy"]
+    strategy_name = info["strategy"]
     strat_fn = STRATEGY_FNS.get(strategy_name)
     if strat_fn is None:
-        return {**base, "status": "STRATEGY_UNAVAILABLE", "strategy": strategy_name}
-
+        return {**base, "status": "STRATEGY_UNAVAILABLE",
+                "strategy": strategy_name}
     setup = strat_fn(bars_15m, bars_1h, i)
     if setup is None:
         return {
-            **base,
-            "status": "NO_SETUP",
-            "strategy": strategy_name,
+            **base, "status": "NO_SETUP", "strategy": strategy_name,
             "reason": f"strategy {strategy_name} no triggea en este momento",
-            "backtest_wr": round(regime_info["wr"], 1),
-            "backtest_pnl_per_trade": round(regime_info["pnl_per_trade"], 2),
+            "backtest_wr": round(info["wr"], 1),
+            "backtest_pnl_per_trade": round(info["pnl_per_trade"], 2),
+            "tier": info["tier"],
         }
 
-    # Calcular R:R
+    # Tentative — vetos applied later in main()
     rr_tp1 = abs(setup["tp1"] - setup["entry"]) / abs(setup["sl"] - setup["entry"])
     rr_tp2 = abs(setup["tp2"] - setup["entry"]) / abs(setup["sl"] - setup["entry"])
-
     return {
-        **base,
-        "status": "SETUP_FOUND",
+        **base, "status": "TENTATIVE",
         "strategy": strategy_name,
+        "tier": info["tier"],
         "side": setup["side"],
         "entry": round(setup["entry"], 4),
         "sl": round(setup["sl"], 4),
@@ -112,8 +125,9 @@ def evaluate_asset(symbol, mapping):
         "sl_distance_pct": round(abs(setup["sl"] - setup["entry"]) / setup["entry"] * 100, 3),
         "tp1_distance_pct": round(abs(setup["tp1"] - setup["entry"]) / setup["entry"] * 100, 3),
         "tp2_distance_pct": round(abs(setup["tp2"] - setup["entry"]) / setup["entry"] * 100, 3),
-        "backtest_wr": round(regime_info["wr"], 1),
-        "backtest_pnl_per_trade": round(regime_info["pnl_per_trade"], 2),
+        "backtest_wr": round(info["wr"], 1),
+        "backtest_pnl_per_trade": round(info["pnl_per_trade"], 2),
+        "_atr_15m": calc_atr(bars_15m),
     }
 
 
@@ -126,8 +140,22 @@ def main():
     args = p.parse_args()
 
     mapping = load_mapping()
+
+    # STAGE 0: kill-switch
+    now = datetime.now(CR_OFFSET)
+    active, reason = state.is_kill_switch_active(now)
+    if active:
+        print(f"🚫 PUNK-SMART PAUSED — {reason}", file=sys.stderr)
+        if args.json:
+            print(json.dumps({"status": "PAUSED", "reason": reason}))
+        else:
+            print(f"\n🚫 PAUSED — {reason}\n")
+            print("Override (conscious decision): "
+                  "python3 .claude/scripts/punk_smart_state.py --reset-killswitch")
+        return
+
     targets = [args.asset] if args.asset else ASSETS
-    results = [evaluate_asset(s, mapping) for s in targets]
+    results = [evaluate_asset(s, mapping, now) for s in targets]
 
     setups = [r for r in results if r.get("status") == "SETUP_FOUND"]
     no_setup = [r for r in results if r.get("status") == "NO_SETUP"]
