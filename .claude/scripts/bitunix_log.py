@@ -29,7 +29,23 @@ CSV_FIELDS = [
     "day_of_week", "filters_4", "multifactor", "ml_score", "chainlink_delta",
     "regime", "pillars_4_count", "saturday", "verdict", "decision", "size_pct",
     "executed", "exit_price", "exit_reason", "pnl_usd", "duration_h",
-    "hypothetical_outcome", "learning",
+    "hypothetical_outcome", "learning", "tier",
+]
+
+# Legacy schemas auto-migrated on detection (header → backfill values).
+# Each entry: (old_header_tuple, default_values_for_new_columns_dict).
+LEGACY_SCHEMAS: list[tuple[tuple[str, ...], dict[str, str]]] = [
+    (
+        # Pre-tier-0 schema (added 2026-05-05)
+        (
+            "date", "time", "symbol", "side", "entry", "sl", "tp", "leverage_signal",
+            "day_of_week", "filters_4", "multifactor", "ml_score", "chainlink_delta",
+            "regime", "pillars_4_count", "saturday", "verdict", "decision", "size_pct",
+            "executed", "exit_price", "exit_reason", "pnl_usd", "duration_h",
+            "hypothetical_outcome", "learning",
+        ),
+        {"tier": "standard"},
+    ),
 ]
 
 
@@ -89,6 +105,7 @@ def parse_signal_report(text: str) -> dict[str, str]:
         "verdict": grab(r"Veredicto:\*\*\s*(APPROVE_FULL|APPROVE_HALF|REJECT)"),
         "decision": grab(r"Decisi[oó]n:\*\*\s*([^\n]+)"),
         "validation_score": grab(r"Validation Score:\*\*\s*(\d+)/100"),
+        "tier": grab(r"\*\*Tier:\*\*\s*(\w+)") or "standard",
     }
 
     # Saturday Protocol: "N" if N/A or absent, "Y" if explicitly active
@@ -132,12 +149,14 @@ def parse_signal_report(text: str) -> dict[str, str]:
 
 def render_md_entry(fields: dict[str, str]) -> str:
     """Render a markdown block for the signals_received.md file."""
+    tier = fields.get("tier", "standard") or "standard"
     return (
         f"\n## {fields['date']} {fields['time']} — "
         f"{fields['symbol']} {fields['side']} {fields['leverage_signal']}x\n\n"
         f"**Señal recibida:** entry {fields['entry']}, SL {fields['sl']}, "
         f"TP {fields['tp']}, leverage {fields['leverage_signal']}x\n"
         f"**Source:** punkchainer Discord\n"
+        f"**Tier:** {tier}\n"
         f"**Day-of-week:** {fields['day_of_week']}\n\n"
         f"**Pipeline validación (8 steps):**\n"
         f"  1. Parse OK\n"
@@ -168,18 +187,55 @@ def append_md(md_path: Path, entry: str) -> None:
         f.write(entry)
 
 
+def migrate_legacy_csv(csv_path: Path) -> bool:
+    """Detect and auto-migrate a legacy CSV schema in-place.
+
+    Returns True if migration was performed, False if file is already current
+    (or empty/missing). Raises ValueError if schema is unrecognized.
+    """
+    if not csv_path.exists() or csv_path.stat().st_size == 0:
+        return False
+
+    with csv_path.open(newline="") as f:
+        reader = csv.reader(f)
+        try:
+            header = tuple(next(reader))
+        except StopIteration:
+            return False
+
+    if header == tuple(CSV_FIELDS):
+        return False  # already current
+
+    # Search for matching legacy schema
+    for legacy_header, defaults in LEGACY_SCHEMAS:
+        if header == legacy_header:
+            # Backfill missing columns and rewrite
+            with csv_path.open(newline="") as f:
+                reader = csv.DictReader(f)
+                rows = list(reader)
+            for row in rows:
+                for k, v in defaults.items():
+                    row.setdefault(k, v)
+            tmp_path = csv_path.with_suffix(csv_path.suffix + ".migrating")
+            with tmp_path.open("w", newline="") as f:
+                w = csv.DictWriter(f, fieldnames=CSV_FIELDS)
+                w.writeheader()
+                for row in rows:
+                    w.writerow({k: row.get(k, "") for k in CSV_FIELDS})
+            tmp_path.replace(csv_path)
+            return True
+
+    raise ValueError(
+        f"CSV schema mismatch in {csv_path.name}. "
+        f"Expected: {','.join(CSV_FIELDS)[:80]}... "
+        f"Got: {','.join(header)[:80]}..."
+    )
+
+
 def append_csv(csv_path: Path, fields: dict[str, str]) -> None:
     csv_path.parent.mkdir(parents=True, exist_ok=True)
+    migrate_legacy_csv(csv_path)
     if csv_path.exists() and csv_path.stat().st_size > 0:
-        with csv_path.open() as f:
-            existing_header = f.readline().strip()
-        expected_header = ",".join(CSV_FIELDS)
-        if existing_header != expected_header:
-            raise ValueError(
-                f"CSV schema mismatch in {csv_path.name}. "
-                f"Expected: {expected_header[:80]}... "
-                f"Got: {existing_header[:80]}..."
-            )
         write_header = False
     else:
         write_header = True

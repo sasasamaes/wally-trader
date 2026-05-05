@@ -152,6 +152,39 @@ Si la señal apareció hace >4h, es "fuera de timing":
 - Liquidez puede haber cambiado
 - **REJECT** — esperar próxima señal o pasar al día siguiente
 
+## 11. MUGRE TIER-0 — reglas estrictas (NUEVA 2026-05-05)
+
+Aplica solo cuando `/punk-hunt --tier-0` propone una entry sobre el subset MUGRE
+(meme/low-cap del canal `mugre-signals` punkchainer's: BIO, PENDLE, RAVE, BSB, BASED,
+OPG, BROCCOLI, BANANA, POWR — ver `config.md` tabla TIER 0 MUGRE).
+
+**No aplica a `/signal` Discord:** señales externas mantienen reglas standard. El usuario
+decide manualmente si baja leverage al ver el símbolo en la señal.
+
+| Regla | Standard (24 assets) | **TIER 0 MUGRE** |
+|---|---|---|
+| Min score | 60% | **80%** |
+| Max leverage | 10x | **3x** (override hard) |
+| Max margin | 30% capital ($60) | **15% capital ($30)** |
+| Risk per trade | 2% ($4) | **1% ($2)** |
+| DUREX trigger | 20% recorrido TP1 | **1R** (mismo umbral que Saturday Protocol) |
+| Concurrent slots | 2/2 totales | comparte el mismo counter |
+| Daily cap | 10 trades | comparte el mismo counter |
+| CSV `tier` field | `standard` | **`mugre`** |
+
+**Razón:** liquidez frágil + slippage estructural alto destruye el edge a sizing normal.
+A 3x con SL 2% = -$0.60 si liquida (vs -$2 a 10x). Risk asimétrico OK porque memes
+pueden hacer +10-20% rápido cuando van — pequeñas pérdidas con upside intacto.
+
+**Re-validar listings** (mensual o cuando `/punk-hunt --tier-0` reporta errores de símbolo):
+```bash
+python3 .claude/scripts/bitunix_pairs_check.py --tier 0
+```
+
+**Auto-blacklist (regla #7) aplica con criterio más estricto:** si un asset MUGRE da
+**1 SL** (no 2) → blacklist 7d en el subset. Razón: volatilidad extrema implica que un
+SL puede ser señal del régimen, no random. Asset standard sigue con threshold 2 SLs.
+
 ## Order de checks pre-execución
 
 ```

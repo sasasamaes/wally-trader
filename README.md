@@ -333,10 +333,18 @@ Statusline refleja el profile activo + equivalente en colones:
 /punk-morning      ⭐ ritual pre-sesión: scan exhaustivo 32 assets + Neptune setup TV
 /punk-hunt         ⭐ caza autónoma cada ~1h: scoring 4 confluencias Elite Crypto +
                      Hyper Wave numérico + TPs adaptativos al contexto + time gate <60min
+/punk-hunt --tier-0 🆕 caza solo subset MUGRE (9 meme/low-cap del canal mugre-signals)
+                     con reglas estrictas: score≥80, leverage 3x, margin 15%, risk 1%, DUREX 1R
 /punk-watch        ⭐ vigilancia adaptativa trade activo: recalcula context cada 30 min,
                      forecast catalysts próximas 4-12h, time-out 90 min, matriz combinada
                      elapsed×context para decidir CERRAR/AGUANTAR/AJUSTAR
 /log-outcome       cierra outcome de signal bitunix (TP1/TP2/TP3/SL/manual)
+```
+
+**Helpers Bitunix:**
+```bash
+python3 .claude/scripts/bitunix_pairs_check.py --tier 0          # validar listings TIER 0
+python3 .claude/scripts/bitunix_pairs_check.py --symbols DOGE,WIF # validar custom
 ```
 
 **Misc:**
@@ -529,6 +537,28 @@ Save Layout como "Bitunix Punk Setup".
 - Score 70-79 → margin $60 (30% capital, 1.26% risk)
 - Score <70 → NO ABRIR
 - Hard cap 35% capital por trade (permite 2 concurrentes)
+
+#### 2.5. Caza meme/low-cap con `/punk-hunt --tier-0` (NUEVO 2026-05-05)
+
+Modo opt-in para escanear el subset MUGRE — 9 tokens del canal `mugre-signals` de la comunidad punkchainer's (BIO, PENDLE, RAVE, BSB, BASED, OPG, BROCCOLI, BANANA, POWR). Volatilidad extrema + liquidez frágil → reglas más estrictas:
+
+| Regla | Standard | **TIER 0 MUGRE** |
+|---|---|---|
+| Min score | 70 | **80** |
+| Max leverage | 10x | **3x** |
+| Max margin | 30% capital ($60) | **15% capital ($30)** |
+| Risk per trade | 2% ($4) | **1% ($2)** |
+| DUREX trigger | 20% recorrido TP1 | **1R** |
+| CSV `tier` field | `standard` | **`mugre`** |
+
+```bash
+/punk-hunt --tier-0                                # caza autónoma del subset
+python3 .claude/scripts/bitunix_pairs_check.py --tier 0    # re-validar listings (mensual)
+```
+
+**No afecta `/signal` Discord** — señales externas siguen reglas standard. Si la comunidad envía señal de un símbolo MUGRE, decidís manualmente bajar leverage al verlo.
+
+**Tracking diferenciado:** la columna `tier` en `signals_received.csv` permite calcular WR mugre vs standard por separado. Si MUGRE WR <40% en 20 trades → desactivar el flag.
 
 #### 3. Vigilancia adaptativa con `/punk-watch` cada 30 min
 ```

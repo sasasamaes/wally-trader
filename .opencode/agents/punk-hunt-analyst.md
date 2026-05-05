@@ -58,6 +58,31 @@ de `/punk-hunt` sin argumentos hacen scan completo. Para versión rápida usar:
 - Si un asset no es tradeable en Bitunix, **se incluye en el scan para contexto** pero el
   agente NUNCA lo recomendará como entry/auto-loggeará — el usuario no puede ejecutarlo.
 
+## TIER 0 MUGRE mode (`--tier-0`)
+
+**Activación:** `$ARGUMENTS` contiene la string `--tier-0`.
+
+Cuando el modo está activo, el agente sustituye los siguientes parámetros:
+
+| Parámetro | Standard | TIER 0 MUGRE |
+|---|---|---|
+| `WATCHLIST` | 32 assets (24 trad. + 8 contexto) | `MUGRE_WATCHLIST` (9 assets) |
+| `SCORE_THRESHOLD` | 70 | **80** |
+| `MAX_LEVERAGE` | 10x | **3x** (override de la safety cap general) |
+| `MAX_MARGIN_PCT` | 0.30 (30% capital, $60) | **0.15** (15% capital, $30) |
+| `RISK_PCT` | 0.02 (2%, $4) | **0.01** (1%, $2) |
+| DUREX trigger | 20% recorrido TP1 | **1R** (más estricto, mismo umbral que Saturday Protocol) |
+| Daily cap & concurrent slots | comparte el counter standard | comparte el mismo counter |
+| `tier` field en output/log | `standard` | **`mugre`** |
+
+**Razón de las reglas estrictas:** liquidez frágil + slippage 0.5%+ destruye el edge a sizing/leverage normales. A 3x con SL 2% = -$0.60 si liquida (vs -$2 a 10x). Risk asimétrico OK porque memes pueden hacer +10-20% rápido cuando van; pequeñas pérdidas + grandes upside intactas.
+
+**Override `--min-score N`:** si el usuario pasa explícitamente `--min-score N` junto con `--tier-0`, se respeta `N` pero solo si `N ≥ 80` (no relajar el threshold debajo de 80 en este modo).
+
+**Auto-log:** el output debe incluir literalmente `**Tier:** mugre` para que `bitunix_log.py` lo capture en el campo `tier` del CSV. El default sin esta línea es `standard`.
+
+**`/signal` no se ve afectado:** las señales externas Discord siguen usando reglas standard (cap 10x, score ≥60). Si la comunidad envía un setup de DASH/BIO/RAVE/etc., el usuario decide manualmente si rebajar leverage al ver el símbolo. `--tier-0` es solo para auto-caza.
+
 ## Protocolo (8 fases secuenciales)
 
 ### FASE 0 — Pre-checks bloqueantes
@@ -140,10 +165,29 @@ WATCHLIST = [
     ("BANANAS31USDT.P", "Binance:BANANAS31USDT.P", False),
 ]
 
+# TIER 0 MUGRE (opt-in vía /punk-hunt --tier-0)
+# Subset meme/low-cap del canal mugre-signals de la comunidad punkchainer's.
+# Reglas estrictas: score≥80, leverage cap 3x, margin cap 15%, risk 1%, DUREX 1R.
+# Re-validar listings con: python3 .claude/scripts/bitunix_pairs_check.py --tier 0
+# Excluidos por vol 24h = 0: DASH, AI, B3 (listed pero no operables).
+MUGRE_WATCHLIST = [
+    ("BIOUSDT.P",      "Bitunix:BIOUSDT.P",      True),  # HEALTHY $5.86M/24h — Narrative AI/Bio
+    ("PENDLEUSDT.P",   "Bitunix:PENDLEUSDT.P",   True),  # HEALTHY $5.03M/24h — DeFi yields
+    ("RAVEUSDT.P",     "Bitunix:RAVEUSDT.P",     True),  # HEALTHY $12.79M/24h — Memecap
+    ("BSBUSDT.P",      "Bitunix:BSBUSDT.P",      True),  # HEALTHY $22.38M/24h — Memecap
+    ("BASEDUSDT.P",    "Bitunix:BASEDUSDT.P",    True),  # HEALTHY $2.16M/24h — Memecap (Base)
+    ("OPGUSDT.P",      "Bitunix:OPGUSDT.P",      True),  # THIN    $0.58M/24h — Memecap
+    ("BROCCOLIUSDT.P", "Bitunix:BROCCOLIUSDT.P", True),  # THIN    $0.49M/24h — Memecap
+    ("BANANAUSDT.P",   "Bitunix:BANANAUSDT.P",   True),  # THIN    $0.49M/24h — Memecap
+    ("POWRUSDT.P",     "Bitunix:POWRUSDT.P",     True),  # THIN    $0.10M/24h — Energy/RWA
+]
+
 # Modos:
-# - $ARGUMENTS == "quick" → filtrar a top-5 líquidos: BTC, ETH, SOL, DOGE, XLM
-# - $ARGUMENTS contiene "--asset SYMBOL" → scan único asset
-# - sin args → scan completo 32 assets (3-5 min)
+# - $ARGUMENTS == "quick"               → filtrar a top-5 líquidos: BTC, ETH, SOL, DOGE, XLM
+# - $ARGUMENTS contiene "--asset SYMBOL"→ scan único asset
+# - $ARGUMENTS contiene "--tier-0"      → usar MUGRE_WATCHLIST + reglas estrictas
+#                                         (ver sección "TIER 0 MUGRE mode" abajo)
+# - sin args                            → scan completo 32 assets (3-5 min)
 
 for (asset, tv_symbol, tradeable) in WATCHLIST:
     chart_set_symbol(tv_symbol)

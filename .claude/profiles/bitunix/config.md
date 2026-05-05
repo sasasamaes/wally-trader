@@ -98,12 +98,33 @@ Este profile es perfecto para:
 | 31 | XMRUSDT.P | `Bybit:XMRUSDT.P` | Privacy (Monero) |
 | 32 | BANANAS31USDT.P | `Binance:BANANAS31USDT.P` | Memecap |
 
-**⚠️ Nota de performance:** scanear los 32 assets cada `/punk-hunt` toma ~3-5 min de MCP calls. Si querés invocaciones más rápidas, usá `/punk-hunt --asset SYMBOL` para forzar scan único, o `/punk-hunt quick` para sólo los 5 más líquidos (BTC/ETH/SOL/DOGE/XLM).
+**TIER 0 MUGRE (meme/low-cap, score≥80 obligatorio) — 9 assets operables:**
+
+Subset opt-in para `/punk-hunt --tier-0`. Tokens del canal `mugre-signals` de la comunidad punkchainer's con perfil de **volatilidad extrema + liquidez frágil**. Reglas estrictas (ver `rules.md` #11): score ≥80, leverage cap 3x, margin cap 15% capital ($30), risk 1% ($2), DUREX a 1R.
+
+| # | Symbol | TV Symbol | Vol 24h | Categoría | Listed (2026-05-05) |
+|---|---|---|---|---|---|
+| 33 | BIOUSDT.P | `Bitunix:BIOUSDT.P` | $5.86M | Narrative AI/Bio | ✅ HEALTHY |
+| 34 | PENDLEUSDT.P | `Bitunix:PENDLEUSDT.P` | $5.03M | DeFi yields | ✅ HEALTHY |
+| 35 | RAVEUSDT.P | `Bitunix:RAVEUSDT.P` | $12.79M | Memecap | ✅ HEALTHY |
+| 36 | BSBUSDT.P | `Bitunix:BSBUSDT.P` | $22.38M | Memecap | ✅ HEALTHY |
+| 37 | BASEDUSDT.P | `Bitunix:BASEDUSDT.P` | $2.16M | Memecap (Base) | ✅ HEALTHY |
+| 38 | OPGUSDT.P | `Bitunix:OPGUSDT.P` | $0.58M | Memecap | ⚠️ THIN |
+| 39 | BROCCOLIUSDT.P | `Bitunix:BROCCOLIUSDT.P` | $0.49M | Memecap | ⚠️ THIN |
+| 40 | BANANAUSDT.P | `Bitunix:BANANAUSDT.P` | $0.49M | Memecap | ⚠️ THIN |
+| 41 | POWRUSDT.P | `Bitunix:POWRUSDT.P` | $0.10M | Energy/RWA | ⚠️ THIN |
+
+**Excluidos del watchlist (listed pero vol 24h = 0 → no operables):** DASH, AI, B3.
+
+**Re-validar listings:** `python3 .claude/scripts/bitunix_pairs_check.py --tier 0` (cualquier momento, hits API pública sin auth).
+
+**⚠️ Nota de performance:** scanear los 32 assets cada `/punk-hunt` toma ~3-5 min de MCP calls. Si querés invocaciones más rápidas, usá `/punk-hunt --asset SYMBOL` para forzar scan único, `/punk-hunt quick` para sólo los 5 más líquidos (BTC/ETH/SOL/DOGE/XLM), o `/punk-hunt --tier-0` para escanear solo el subset MUGRE (9 assets, ~1 min).
 
 **Reglas importantes:**
 - ⚠️ **Solo perpetuals tradeables** — los assets en la 2da tabla aparecen en scan pero el agente NUNCA los recomendará como entry tradeable en Bitunix (no podés ejecutar). Sirven para contexto/correlación.
 - Si la comunidad señala asset NO en watchlist, `/signal` lo valida igual.
 - Si Bitunix delistea o agrega assets, actualizar esta tabla manualmente.
+- **TIER 0 MUGRE:** opt-in solamente. `/punk-hunt` standard NO escanea estos assets — solo `/punk-hunt --tier-0` los considera. Re-chequear listings/volumen mensualmente con `bitunix_pairs_check.py`.
 
 ## Reglas duras (ver `rules.md`)
 
