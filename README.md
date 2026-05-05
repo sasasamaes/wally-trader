@@ -10,8 +10,8 @@ Sistema de trading algorítmico-asistido **triple-profile**: retail BingX BTCUSD
 
 **Autor:** [Francisco Campos Diaz (@sasasamaes)](https://github.com/sasasamaes) · **License:** [MIT](LICENSE) · **Contribuciones:** ver [CONTRIBUTING.md](CONTRIBUTING.md)
 
-**Status actual:** Retail validado con 3 wins (+36.3% / $10 → $13.63). FTMO profile + MT5 bridge implementados, pendientes de paper trading.
-**Objetivo:** Escalar retail $10 → $100 y en paralelo pasar challenge FTMO $10k fundeado.
+**Status actual:** Retail validado con 3 wins (+36.3% / $10 → $13.63). FTMO profile + MT5 bridge implementados. **Bitunix profile activo $200 con suite adaptativa completa** (`/punk-morning`, `/punk-hunt`, `/punk-watch` + scoring 4 confluencias Elite Crypto + TPs/SL adaptativos al contexto).
+**Objetivo:** Escalar retail $10 → $100, pasar challenge FTMO $10k fundeado, y ejecutar 1 trade/hora rotativo en bitunix capturando $20-100/día con WR ~70%.
 
 ---
 
@@ -328,6 +328,17 @@ Statusline refleja el profile activo + equivalente en colones:
 /trades            dashboard MT5 fotmarkets
 ```
 
+**Bitunix copy-validated + autónomo (NUEVO 2026-05-04):**
+```
+/punk-morning      ⭐ ritual pre-sesión: scan exhaustivo 32 assets + Neptune setup TV
+/punk-hunt         ⭐ caza autónoma cada ~1h: scoring 4 confluencias Elite Crypto +
+                     Hyper Wave numérico + TPs adaptativos al contexto + time gate <60min
+/punk-watch        ⭐ vigilancia adaptativa trade activo: recalcula context cada 30 min,
+                     forecast catalysts próximas 4-12h, time-out 90 min, matriz combinada
+                     elapsed×context para decidir CERRAR/AGUANTAR/AJUSTAR
+/log-outcome       cierra outcome de signal bitunix (TP1/TP2/TP3/SL/manual)
+```
+
 **Misc:**
 ```
 /profile           switch profile
@@ -336,7 +347,7 @@ Statusline refleja el profile activo + equivalente en colones:
 /neptune           leer outputs de indicadores Neptune
 ```
 
-⭐ = nuevos en esta versión (Chainlink + QuantMuse-inspired features).
+⭐ = nuevos en esta versión (Chainlink + QuantMuse + Bitunix adaptive trading suite).
 
 ---
 
@@ -472,17 +483,74 @@ Detalles en `docs/superpowers/plans/2026-04-22-ftmo-profile-IMPLEMENTATION-LOG.m
 
 ---
 
-### 🪙 Workflow BITUNIX (copy-trading punkchainer's $50)
+### 🪙 Workflow BITUNIX (copy-validated + autónomo $200) — actualizado 2026-05-04
 
-> Filosofía: el edge NO es generar señales, es **filtrar las malas**. Validas señales de Discord con tu sistema antes de copiarlas.
+> **Filosofía CORE: ROTACIÓN ALTA — 1 trade/hora.** Capital $200, target 1 trade ejecutado cada ~1h durante ventana operativa CR 06:00-23:00 (~17h). El edge tiene 2 fuentes:
+> - **Copy-validated** señales Discord punkchainer's vía `/signal` (filtrar las malas)
+> - **Self-generated** vía `/punk-hunt` con scoring 4 confluencias Elite Crypto + Hyper Wave numérico
 
-#### 1. Inicio de día Bitunix
+#### 0. Setup TV inicial (1 vez, requiere TV Premium 5 indicadores)
+Cargar manualmente desde "Indicadores → Requiere invitación":
+1. `Neptune® - Signals™` (Range Filter + Reversal Bands + Smooth Trail + Trade Builder)
+2. `Neptune® - Smart Money Concepts™` (Áreas de Interés + FVG + OB + ICT integrado)
+3. `Neptune® - Oscillator™` (Hyper Wave numérico + Money Flow direction)
+4. `Pivots and Phases™` (fases del MIT + pivots azules)
+5. `Neptune® - Money Flow Profile™` (POC/VAH/VAL volume institucional)
+Save Layout como "Bitunix Punk Setup".
+
+#### 1. Inicio de día Bitunix (CR 06:00)
 ```
 /profile bitunix
-# Statusline: [BITUNIX] $50.00 ≈₡22,750 | 0/3 signals | 🟢 24/7
+# Statusline: [BITUNIX] $200.00 ≈₡102,000 | 0/10 signals | 0/2 slots | 🟢 24/7
+
+/punk-morning
+# Ritual pre-sesión: macro gate + scan exhaustivo 32 assets +
+# verifica Neptune cargado + DUREX/Saturday rules + slots disponibles
 ```
 
-#### 2. Cuando aparece señal en Discord punkchainer's
+#### 2. Caza autónoma cada ~1h
+```
+/punk-hunt
+# o /punk-hunt quick (top-5 líquidos, ~30s)
+# Output: TOP setup ≥70 con TPs adaptativos al contexto + time gate <60min
+```
+
+**TPs adaptativos al contexto** (NUEVO):
+- Contexto débil (Asia + ranging + low vol) → TPs CORTOS, capturar lo que da
+- Contexto fuerte (NY overlap + trending alineado + high vol + smart money alineado) → TPs AMPLIOS
+- Calculado por `.claude/scripts/context_multiplier.py` — combina 5 factores ortogonales
+
+**SL adaptativo por volatilidad**:
+- Low vol (ETH ~0.4% ATR) → SL apretado 1.3×ATR
+- High vol (memecoin ~3% ATR) → SL muy amplio 3×ATR (para no salirse por mecha falsa)
+
+**Sizing adaptativo por score** (NUEVO):
+- Score 80+ → margin $70 (35% capital, 1.47% risk)
+- Score 70-79 → margin $60 (30% capital, 1.26% risk)
+- Score <70 → NO ABRIR
+- Hard cap 35% capital por trade (permite 2 concurrentes)
+
+#### 3. Vigilancia adaptativa con `/punk-watch` cada 30 min
+```
+/loop 30m /punk-watch  # auto-loop opcional
+```
+
+**Recalcula contexto + sugiere ajustes:**
+- Context multiplier ahora vs entry (delta % por factor)
+- TPs recalculados (si delta >15% → sugiere ajuste manual en Bitunix)
+- Forecast catalysts próximas 4-12h (sesiones, funding, macro)
+- Matriz combinada **time elapsed × context delta** → recomendación clara CERRAR/AGUANTAR/AJUSTAR
+
+**Time-out 90 min sin TP1 hit** → cierre forzado o ajuste explícito (regla anti-overstay).
+
+#### 4. Cuando aparece señal en Discord punkchainer's
+Ej: `MSTRUSDT Short 20x entry 166.57 sl=170 tp=160`
+
+```
+/signal MSTRUSDT short 166.57 sl=170 tp=160 leverage=20
+```
+
+El agente `signal-validator` ejecuta el pipeline 8-step:
 Ej: `MSTRUSDT Short 20x entry 166.57 sl=170 tp=160`
 
 ```
@@ -499,23 +567,27 @@ El agente `signal-validator` ejecuta el pipeline 8-step:
 7. 🆕 **Saturday Precision Protocol** (si fecha == sábado/domingo, gates más estrictos)
 8. **Veredicto final** con override leverage 20→10
 
-#### 3. Si APPROVE → ejecutar manual en Bitunix
+#### 5. Si APPROVE → ejecutar manual en Bitunix
 - Login Bitunix (referral `punkchainer`)
-- Open MSTR-PERP, side SHORT, leverage **10x** (override)
-- Size 2% del capital ($1.00 max loss)
-- SL en 170 (con +0.5% buffer si es alt low-cap)
+- Open SYMBOL-PERP, side LONG/SHORT, leverage **10x** (override)
+- Size 2% del capital, **margin max 30-35%** ($60-70 sobre $200)
+- SL adaptativo por volatility (calculado en setup)
 - **DUREX rule:** mover SL a BE en 20% recorrido a TP1 (1R en weekend)
 
-#### 4. Tracking obligatorio
-Cada señal validada (PASS/FLAG/REJECT) → `signals_received.md`:
+#### 6. Tracking obligatorio
+Cada señal validada (PASS/FLAG/REJECT) → `signals_received.md` (auto-log):
 ```markdown
-## 2026-04-30 09:35 — MSTRUSDT Short 20x
-**Decisión:** EJECUTAR override 10x (4/4 pilares)
-**Resultado:** TP1 hit en 165.61 → +$0.45
-**Aprendizaje:** flow MSTR-correlated funcionó como esperado
+## 2026-05-04 22:00 — ETHUSDT.P SHORT 10x (origen: /punk-hunt self-generated)
+**Score:** 73/100 (Hyper Wave 92.47 extremo + cross bajista)
+**Decisión:** EJECUTAR margin $100 (excedió cap recomendado 30-35%)
+**TPs adaptativos:** TP1 $2,375 / TP2 $2,370 / TP3 $2,360
+**Resultado:** DUREX hit 45min, BE+spread (lección: TPs originales 2R/3R/5R demasiado ambiciosos)
+**Aprendizaje:** scoring funcionó pero TPs deberían ser adaptativos al context multiplier 0.30 (BAJO)
 ```
 
-#### 5. Métricas clave (`/journal bitunix`)
+Cierre con `/log-outcome ETHUSDT TP1|TP2|TP3|SL|manual EXIT --pnl USD`.
+
+#### 7. Métricas clave (`/journal bitunix`)
 - `hit_rate_filtered` — WR de señales aprobadas por tu sistema
 - `hit_rate_all` — WR si copiaras blindly (control)
 - Si `filtered > all` → tus filtros agregan valor. Si `<` → over-restricción.

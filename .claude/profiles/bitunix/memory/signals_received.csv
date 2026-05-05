@@ -1,1 +1,2 @@
 date,time,symbol,side,entry,sl,tp,leverage_signal,day_of_week,filters_4,multifactor,ml_score,chainlink_delta,regime,pillars_4_count,saturday,verdict,decision,size_pct,executed,exit_price,exit_reason,pnl_usd,duration_h,hypothetical_outcome,learning
+2026-05-04,22:19,ETHUSDT.P,SHORT,2378.97,2390.23,2362,10,Mon,,,,,TRENDING,,Y,APPROVE_HALF,"HALF size ($50 margin, $2.35 risk = 1.18% capital) — origen: /punk-hunt self-generated, Asia early hour, R:R borderline 1.51 a TP1 / 2.57 a TP2",,,,,,,,

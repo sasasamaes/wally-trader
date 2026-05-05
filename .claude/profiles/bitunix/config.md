@@ -1,13 +1,38 @@
 # Profile: BITUNIX (copy trading punkchainer's community)
 
-**Capital:** $50.00 USD inicial (default — ajustable)
+**Capital:** $200.00 USD inicial (recalibrado 2026-05-04 — capital real punkchainer's copy-validated)
 **Plataforma:** [Bitunix](https://bitunix.com) — exchange crypto perpetual futures
 **Referral code:** `punkchainer` (descuento en fees, igual que la comunidad)
 **Modelo:** **NO ES ANÁLISIS PROPIO.** Es validación + copia de señales de la comunidad punkchainer's.
+**Objetivo PnL diario:** $20-100 (5+ wins / 7 attempts con WR ~70% y R:R 2:1 → 5:1)
 
-## Filosofía operativa
+## Filosofía operativa (actualizada 2026-05-04)
 
 > El edge aquí NO es generar señales. Es **filtrar las malas**.
+
+### 🎯 Filosofía CORE: ROTACIÓN ALTA — 1 trade/hora
+
+**Target:** 1 trade ejecutado cada ~1 hora durante ventana operativa (CR 06:00-23:00 = ~17h × 1/h posible). Capturar lo que el mercado da en ventanas cortas, NO esperar movimientos largos.
+
+**Implicaciones operativas:**
+
+1. **TPs adaptativos al contexto + tiempo** (ver `system/agents/punk-hunt-analyst.md` Phase 6 + helper `.claude/scripts/context_multiplier.py`):
+   - TP1 debe ser alcanzable en <60 min con probabilidad alta
+   - TP2 en <2h, TP3 runner extendido
+   - Si setup requiere >2h para TP1 → SCORE penalty o REJECT
+
+2. **Time-out forzado a 90 min** (ver `rules.md`):
+   - Si trade lleva >90 min sin TP1 hit → cerrar manual o ajustar TPs vía `/punk-watch`
+   - Excepción: `/punk-watch` recomienda explícitamente "AGUANTAR" por catalyst próximo
+
+3. **Salida disciplinada > esperar el "trade del día"**:
+   - +$0.50 capturado en 30 min × 8 trades/día = $4 (2% capital)
+   - $5 esperando un TP3 que no llega = mucho riesgo y oportunidad perdida
+
+4. **`/punk-watch` cada 30 min mientras hay trade activo**:
+   - Recalcula contexto, sugiere ajuste TPs/SL si cambió >15%
+   - Forecast catalyst próximas 4-12h
+   - Decide CERRAR/AGUANTAR/AJUSTAR basado en data
 
 La comunidad punkchainer's en Discord publica señales de trading (BTC, ETH, MSTRUSDT, otros perpetual). El bot `PunkAlgo` postea dirección/leverage/entry. Tu sistema valida CADA señal con tus filtros propios antes de copiar:
 
@@ -29,44 +54,115 @@ Este profile es perfecto para:
 
 **Dinámico** — depende de lo que la comunidad señale en cualquier momento.
 
-Histórico observado en señales punkchainer's:
-- BTCUSDT.P, ETHUSDT.P (mayoría)
-- Altcoins memecaps (MSTRUSDT, FARTCOIN, PEPE, WIF, etc.)
-- Ocasionalmente: SOL, AVAX, INJ, otros L1/L2 perpetuals
+**Watchlist exhaustivo (32 assets)** que `/punk-morning` y `/punk-hunt` pre-scanean cada sesión:
+
+**Tradeables en Bitunix (chart Bitunix:.P) — 24 assets:**
+
+| # | Symbol | TV Symbol | Categoría |
+|---|---|---|---|
+| 1 | BTCUSDT.P | `Bitunix:BTCUSDT.P` | Major |
+| 2 | ETHUSDT.P | `Bitunix:ETHUSDT.P` | Major |
+| 3 | SOLUSDT.P | `Bitunix:SOLUSDT.P` | L1 |
+| 4 | MSTRUSDT.P | `Bitunix:MSTRUSDT.P` | BTC-proxy |
+| 5 | AVAXUSDT.P | `Bitunix:AVAXUSDT.P` | L1 |
+| 6 | INJUSDT.P | `Bitunix:INJUSDT.P` | L1 |
+| 7 | DOGEUSDT.P | `Bitunix:DOGEUSDT.P` | Memecap |
+| 8 | WIFUSDT.P | `Bitunix:WIFUSDT.P` | Memecap |
+| 9 | FARTCOINUSDT.P | `Bitunix:FARTCOINUSDT.P` | Memecap |
+| 10 | XLMUSDT.P | `Bitunix:XLMUSDT.P` | L1 payments |
+| 11 | TONUSDT.P | `Bitunix:TONUSDT.P` | L1 (Telegram) |
+| 12 | ADAUSDT.P | `Bitunix:ADAUSDT.P` | L1 (Cardano) |
+| 13 | LINKUSDT.P | `Bitunix:LINKUSDT.P` | Oracle infra |
+| 14 | SUIUSDT.P | `Bitunix:SUIUSDT.P` | L1 (Sui) |
+| 15 | TRXUSDT.P | `Bitunix:TRXUSDT.P` | L1 (Tron) |
+| 16 | RUNEUSDT.P | `Bitunix:RUNEUSDT.P` | DeFi (THORChain) |
+| 17 | ENJUSDT.P | `Bitunix:ENJUSDT.P` | Gaming/NFT |
+| 18 | CHZUSDT.P | `Bitunix:CHZUSDT.P` | Sport tokens |
+| 19 | AXSUSDT.P | `Bitunix:AXSUSDT.P` | Gaming (Axie) |
+| 20 | SEIUSDT.P | `Bitunix:SEIUSDT.P` | L1 (Sei) |
+| 21 | POLUSDT.P | `Bitunix:POLUSDT.P` | L2 (Polygon, ex-MATIC) |
+| 22 | HBARUSDT.P | `Bitunix:HBARUSDT.P` | L1 (Hedera) |
+| 23 | TIAUSDT.P | `Bitunix:TIAUSDT.P` | DA layer (Celestia) |
+| 24 | ROSEUSDT.P | `Bitunix:ROSEUSDT.P` | Privacy L1 (Oasis) |
+
+**NO tradeables en Bitunix (sólo vigilancia/contexto vía chart fallback) — 8 assets:**
+
+| # | Symbol | TV Symbol Fallback | Categoría |
+|---|---|---|---|
+| 25 | PEPEUSDT.P | `OKX:PEPEUSDT.P` | Memecap |
+| 26 | PIPPINUSDT.P | `Binance:PIPPINUSDT.P` | Memecap AI |
+| 27 | BCHUSDT (spot) | `Binance:BCHUSDT` | Major BTC fork (sin .P) |
+| 28 | MONUSDT.P | `Bybit:MONUSDT.P` | L1 (Monad) |
+| 29 | XAUTUSDT (spot) | `Bitunix:XAUTUSDT` | Tether Gold (sin .P) |
+| 30 | STRKUSDT.P | `Bybit:STRKUSDT.P` | L2 ZK (Starknet) |
+| 31 | XMRUSDT.P | `Bybit:XMRUSDT.P` | Privacy (Monero) |
+| 32 | BANANAS31USDT.P | `Binance:BANANAS31USDT.P` | Memecap |
+
+**⚠️ Nota de performance:** scanear los 32 assets cada `/punk-hunt` toma ~3-5 min de MCP calls. Si querés invocaciones más rápidas, usá `/punk-hunt --asset SYMBOL` para forzar scan único, o `/punk-hunt quick` para sólo los 5 más líquidos (BTC/ETH/SOL/DOGE/XLM).
+
+**Reglas importantes:**
+- ⚠️ **Solo perpetuals tradeables** — los assets en la 2da tabla aparecen en scan pero el agente NUNCA los recomendará como entry tradeable en Bitunix (no podés ejecutar). Sirven para contexto/correlación.
+- Si la comunidad señala asset NO en watchlist, `/signal` lo valida igual.
+- Si Bitunix delistea o agrega assets, actualizar esta tabla manualmente.
 
 ## Reglas duras (ver `rules.md`)
 
 | Regla | Valor | Tipo |
 |---|---|---|
-| Risk per copied signal | 2% capital | hard cap |
-| Max copied signals / día | **3** | BLOCK |
-| Min validation score | 60% (4/4 filtros + multifactor>50) | gate |
+| Risk per signal | 2% capital ($4 sobre $200) | hard cap |
+| **Max margin per trade** | **30-35% del capital** ($60-70 max) | hard cap (NO 50%+) |
+| Max copied signals / día | **10** (rotación 1/h × ventana 10-17h) | BLOCK |
+| Max concurrent open positions | **2** simultáneas | BLOCK nuevas |
+| **Time-out por trade** | **90 min sin TP hit → cerrar manual** | regla anti-overstay |
+| Min validation score | 60% (4 confluencias Elite Crypto) | gate |
 | Max leverage | **10x** (NO usar 20x aunque la señal lo diga) | safety override |
-| Daily loss BLOCK | -6% (3 SLs consecutivos) | STOP día |
-| Max DD del capital | -30% | STOP profile + review |
+| Daily loss BLOCK | -6% capital ($12 sobre $200, ~3 SLs) | STOP día |
+| Max DD del capital | -30% ($60 sobre $200) | STOP profile + review |
 | Auto-blacklist asset | Después de 2 SLs consecutivos en mismo asset | filter |
-| Ventana | 24/7 (cripto) — pero mejor London/NY overlap | INFO |
+| Ventana operativa | CR 06:00-23:00 (~17h) — mejor London/NY overlap | INFO |
+| **TP gate** | TP1 debe ser alcanzable en <60 min con context actual | filter |
 
 ## Setup TradingView (indicadores Neptune comunidad)
 
-La comunidad punkchainer's usa **4 indicadores Neptune** (Bangchan10, requieren invitación):
-1. Neptune® - Oscillator™
-2. Neptune® - Signals™
-3. Neptune® - SMC™
-4. Neptune® - ICT™
+La comunidad punkchainer's / Elite Crypto usa **7 indicadores Neptune** (Bangchan10, requieren invitación). Lista verificada con screenshot del usuario 2026-05-04:
+1. `Neptune® - Money Flow Profile™` (29 boosts)
+2. `Neptune® - Oscillator™` (72 boosts)
+3. `Neptune® - Signals™` (50 boosts) — versión 2.0 integra oscilador interno
+4. `Neptune® - Smart Money Concepts™` (74 boosts) — **incluye ICT** (SMC = ICT, mismo indicador)
+5. `Pivots and Phases™` (19 boosts)
+6. `Pivots and Phases™` (17 boosts) — versión alternativa
+7. `SMC Oscillator™` (27 boosts)
 
-**Configuraciones exactas:** ver skill `@neptune-community-config` (configs validadas por la comunidad para 15M-4H).
+**Configuraciones exactas:** ver skill `@neptune-community-config` (configs validadas para 15M-4H + nuevo Signals 2.0).
 
 **Placeholders/webhooks:** ver skill `@neptune-alert-placeholders` (templates JSON listos para 3Commas/Cornix/webhooks).
 
-**Reglas críticas:**
-- Neptune Signals: Sensitivity **MANUAL** (NO Auto — confirma comunidad).
-- Money Flow: "**Smart Money**" en Oscillator (no "Neptune").
-- Confluences Lines + Square + Volume Analysis ON.
-- Modern UI ON en SMC.
-- Plan TV Basic = max 2 indicadores → combo: **Signals + Oscillator** (default day-to-day).
+**Videos referencia oficial:** 4 videos de Ponk (Elite Crypto) documentados en `@neptune-community-config` sección "Referencias". Cualquier ambigüedad de la metodología se resuelve con esos videos.
+
+**Reglas críticas (Neptune Signals 2.0):**
+- **Range Filter ON** (NUNCA deshabilitar — detecta lateral)
+- **Reversal Bands ON** (herramienta favorita Ponk — "el precio siempre busca la banda")
+- **Smooth Trail ON** (S/R dinámica — combo poderoso con Reversal Bands)
+- **2 tipos señales:** triángulos (largos) + +/- (cortos), ambos con alertas separadas
+- **X Signals ON** (reversal/take profit)
+- Plan TV **Premium pagado** (confirmado 2026-05-04) = max **5 indicadores** → combo recomendado:
+  1. `Neptune® - Signals™` (Range Filter, Reversal Bands, Smooth Trail, Trade Builder)
+  2. `Neptune® - Smart Money Concepts™` (Áreas de Interés, FVG, OB, ICT)
+  3. `Neptune® - Oscillator™` (Hyper Wave, Money Flow direction)
+  4. `Pivots and Phases™` (fases del MIT + pivots azules)
+  5. `Neptune® - Money Flow Profile™` (POC/VAH/VAL volume institucional)
 
 **Setup específico bitunix:** `memory/neptune_setup.md` documenta el workflow de validación visual + cuantitativa para cada señal.
+
+**Indicator swap dinámico (TV Basic constraint):** `/punk-morning` deja preparado un helper para que `/signal` pueda swappear el slot de Signals temporalmente para validar con Money Flow Profile o Pivots and Phases, manteniendo siempre el slot de SMC cargado. Nombres EXACTOS para `chart_manage_indicator`:
+- `Neptune® - Signals™` (recomendado siempre cargado)
+- `Neptune® - Smart Money Concepts™` (recomendado siempre cargado, **incluye ICT**)
+- `Neptune® - Oscillator™` (alternativa al Signals 2.0 si querés oscilador en pane separado)
+- `Neptune® - Money Flow Profile™` (swap temporal para volume profile)
+- `Pivots and Phases™` (swap temporal para fases del mercado)
+- `SMC Oscillator™` (alternativa SMC en formato oscilador)
+
+⚠️ **NO existe `Neptune® - ICT Concepts™` como indicador separado** — está integrado en `Neptune® - Smart Money Concepts™`.
 
 ## Cómo funciona el flow
 
@@ -114,7 +210,7 @@ La comunidad punkchainer's usa **4 indicadores Neptune** (Bangchan10, requieren 
 # 1. Registro en Bitunix con código de referido
 #    https://bitunix.com — usa código `punkchainer`
 
-# 2. Depósito inicial $50 (vía USDT en BSC/Polygon, low fee)
+# 2. Depósito inicial $200 (vía USDT en BSC/Polygon, low fee)
 
 # 3. Llenar credenciales en .env (NO necesarias para read-only):
 #    BITUNIX_API_KEY=<...>           # solo si quieres tracking automático
@@ -124,9 +220,16 @@ La comunidad punkchainer's usa **4 indicadores Neptune** (Bangchan10, requieren 
 # 4. Switch profile
 /profile bitunix
 
-# 5. Test con primera señal
-# Cuando aparezca señal en Discord:
+# 5. Pre-sesión (NUEVO comando — antes de esperar señales Discord):
+/punk-morning
+# Ejecuta scan exhaustivo de 10+ assets, prepara Neptune en TV,
+# valida macro events, lista DUREX/Saturday rules, muestra slots libres (X/2)
+
+# 6. Cuando llegue señal Discord:
 /signal <SYMBOL> <SIDE> <entry> sl=<sl> tp=<tp> leverage=<lev>
+
+# 7. Cuando cierres posición:
+/log-outcome <SYMBOL> TP1|TP2|TP3|SL <exit_price> [--pnl USD]
 ```
 
 ## Métricas a trackear

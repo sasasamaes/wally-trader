@@ -7,7 +7,7 @@
 1. **Neptune® - Oscillator™** — meta-oscilador con WaveTrend, momentum, divergencias
 2. **Neptune® - Signals™** — señales LONG/SHORT con Neptune Pilot + ML classifier
 3. **Neptune® - SMC™** — Smart Money Concepts (order blocks, FVG, liquidity)
-4. **Neptune® - ICT™** — ICT-specific (displacement, structure filter)
+4. **Neptune® - ICT™** — ⚠️ NO existe como indicador separado. ICT está INTEGRADO en `Neptune® - Smart Money Concepts™` (mismo script). Usar siempre el nombre técnico exacto: `Neptune® - Smart Money Concepts™` para `chart_manage_indicator`.
 
 ⚠️ **Plan TradingView Basic** = max 2 indicadores por chart. Combo recomendado para validar señales bitunix:
 

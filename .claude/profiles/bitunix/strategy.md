@@ -6,11 +6,16 @@
 
 | Parámetro | Valor | Razón |
 |---|---|---|
-| Risk per signal | **2%** ($1.00 sobre $50) | Mismo que retail |
+| **Filosofía operativa** | **1 trade/hora rotativo** | Capturar lo que da el mercado en ventanas cortas, no esperar el "trade del día" |
+| Risk per signal | **2%** ($4.00 sobre $200) | Mismo que retail |
+| **Max margin per trade** | **30-35% capital** ($60-70 sobre $200) | Anti-concentración, permite 2 trades concurrentes con margen |
 | Max leverage | **10x** | Override a las señales de 20x para reducir riesgo asimétrico |
-| Max signals/día | **3** | Disciplina anti-FOMO |
-| Min validation score | **60%** (4/4 filtros + multifactor>50) | Gate hard |
-| Daily loss BLOCK | **-6%** (3 SLs) | STOP día |
+| Max signals/día | **10** (era 7, recalibrado) | Soporta filosofía rotación 1/h × 10-17h ventana |
+| Max concurrent open positions | **2** | No diluir atención en >2 setups simultáneos |
+| **Time-out por trade** | **90 min sin TP1 hit → cerrar manual o ajustar TPs** | Anti-overstay (filosofía rotativa) |
+| **TP target alcanzable en** | **<60 min según ATR + context** | Filter en /punk-hunt: si TP1 requiere >60min → REJECT |
+| Min validation score | **70%** (4 confluencias Elite Crypto + Hyper Wave) | Gate hard (más estricto que /signal 60% por ser self-generated) |
+| Daily loss BLOCK | **-6%** ($12 sobre $200, ~3 SLs) | STOP día |
 | Min lookback antes de copiar | 1 hora | Si la señal es muy reciente, espera 1h para validar que no fue hyped |
 
 ## Pipeline de validación (cada señal)
@@ -85,18 +90,32 @@ REJECT (<50% confidence O <3/4 pilares O Saturday rule violation) → SKIP, anot
 ## Sizing canónico
 
 ```bash
-# Asume señal: MSTRUSDT short, entry 166.57, SL 170 (2% adverso)
-# Capital: $50, risk 2% = $1.00 max loss
+# Asume señal: MSTRUSDT short, entry 166.57, SL 170 (2.06% adverso)
+# Capital: $200, risk 2% = $4.00 max loss
 
 # Cálculo:
 # - SL distance: |170 - 166.57| / 166.57 = 2.06% (señal pide SL en 170)
-# - Notional max @ 10x leverage: $1.00 / 0.0206 = $48.54
-# - Margin used: $48.54 / 10 = $4.85 (9.7% del capital)
-# - Qty MSTRUSDT: $48.54 / 166.57 = 0.2914 unidades
+# - Notional max @ 10x leverage: $4.00 / 0.0206 = $194.17
+# - Margin used: $194.17 / 10 = $19.42 (9.7% del capital)
+# - Qty MSTRUSDT: $194.17 / 166.57 = 1.166 unidades
 
 /signal MSTRUSDT short 166.57 sl=170 tp=160 leverage=20
-# → Sistema dice: "OK con override leverage 10x. Size 0.2914 MSTRUSDT, margin $4.85"
+# → Sistema dice: "OK con override leverage 10x. Size 1.166 MSTRUSDT, margin $19.42"
 ```
+
+## Concurrencia (regla NUEVA)
+
+**Max 2 posiciones abiertas simultáneamente.** El sistema cuenta entries en
+`signals_received.csv` con `outcome = _pendiente_`.
+
+| Slots usados | Acción al recibir nueva señal |
+|---|---|
+| 0/2 | OK — ejecutar normal |
+| 1/2 | OK — ejecutar normal, recordar slot único restante |
+| 2/2 | **BLOCK** — esperar a cerrar una con `/log-outcome` antes de abrir nueva |
+
+Razón: con risk 2% × 2 trades = 4% expuesto (peor caso), suficiente para 1 cripto día estándar.
+Más concurrencia = mayor correlación intra-cripto y menor atención por trade.
 
 ## 🛡 DUREX — regla obligatoria comunidad punkchainer's
 
@@ -146,9 +165,10 @@ Aunque la señal diga 20x, **siempre opera 10x max**. Por qué:
 **REJECT automático si:**
 - La señal aparece >4 horas después de la entry price → "fuera de timing"
 - La señal es de un altcoin con liquidez <$5M 24h → riesgo de wick
-- Asset ya operado HOY en bitunix → max 3 trades/día rule
+- Asset ya operado HOY en bitunix → max 7 trades/día rule
+- **Ya tenés 2 posiciones abiertas (slots 2/2 lleno) → SKIP nueva señal hasta cerrar una**
 - Asset operado en retail/ftmo/fundingpips/quantfury HOY → doble exposición
-- Daily PnL ≤ -6% (3 SLs) → STOP día
+- Daily PnL ≤ -6% ($12 sobre $200, ~3 SLs) → STOP día
 - Total DD ≤ -30% del capital → STOP profile + review
 
 **FLAG (size 50%) si:**
@@ -195,6 +215,7 @@ Calculado por `/journal bitunix` automáticamente.
 | Universo | Solo BTCUSDT.P | Lo que ellos señalen |
 | Filosofía | Generar edge | Filtrar el ruido |
 | Risk per trade | 2% | 2% |
-| Max trades/día | 5 | 3 |
+| Max trades/día | 5 | 7 |
+| Concurrent positions | sin cap (1 asset) | max 2 simultáneas |
 | Leverage | 10x | 10x (override de 20x) |
 | Métrica clave | WR + PnL | hit_rate_filtered vs hit_rate_all |

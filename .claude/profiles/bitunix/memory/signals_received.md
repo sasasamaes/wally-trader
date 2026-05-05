@@ -114,3 +114,49 @@ DELTA:                    +/- N pp
 Outperformance del filtrado: SI/NO
 Recalibrar filtros: SI/NO
 ```
+
+## 2026-05-04 22:19 — ETHUSDT.P SHORT 10x
+
+**Señal recibida:** entry 2378.97, SL 2390.23, TP 2362, leverage 10x
+**Source:** punkchainer Discord
+**Day-of-week:** Mon
+
+**Pipeline validación (8 steps):**
+  1. Parse OK
+  2. 4 filtros técnicos: /4
+  3. Multi-Factor:  (SHORT) | ML: 
+  4. Chainlink delta: % (OK)
+  5. Régimen: TRENDING — compatible con SHORT? Y
+  6. **4-Pilar Neptune SMC: /4**
+  7. Saturday Protocol activo? Y
+  8. Veredicto: APPROVE_HALF
+
+**Validation Score:** 73/100
+**Decisión:** HALF size ($50 margin, $2.35 risk = 1.18% capital) — origen: /punk-hunt self-generated, Asia early hour, R:R borderline 1.51 a TP1 / 2.57 a TP2
+
+**Resultado real:**
+  - Outcome: _pendiente_
+  - Exit price: _pendiente_
+  - PnL: _pendiente_
+  - Time to outcome: _pendiente_
+
+**Aprendizaje:** _pendiente_
+
+---
+
+### Update entry real ETHUSDT.P SHORT (lun. 22:00 CR)
+- Entry real: **$2,380.26** (vs propuesto $2,378.97)
+- Margin: **$100** (50% capital, full size — usuario eligió mayor exposición que el HALF recomendado)
+- Notional: $1,000 @ 10x | Qty: 0.420 ETH
+- Risk si SL: $4.19 USD (2.10% capital)
+- DUREX trigger recalculado: $2,376.61
+- Profit potencial full TP3: $11.95 USD (5.97% capital) | R:R efectivo 2.85
+
+### Update DUREX trigger ETHUSDT.P SHORT (lun. 22:45 CR)
+- **DUREX trigger ($2,376.61) HIT a las 22:45:49 CR**
+- Precio bajó a $2,376.56 (-$3.70 desde entry $2,380.26)
+- SL ajustado: $2,390.23 → **$2,380.26 (BE estricto)**
+- Risk reducido: $4.19 → ~$0.02 (solo spread/fees)
+- Estado: trade asegurado, runner activo a TP1 ($2,362) / TP2 ($2,350) / TP3 ($2,335)
+- Watchdog actualizado con nuevo SL=2380.30
+- Análisis data-driven respaldó mantener: Smart Money L/S 0.95 (cruzó <1), histórico 51% del tiempo bajo TP2, Hyper Wave 92.47 extremo. EV +$5.17 vs cerrar BE $0.

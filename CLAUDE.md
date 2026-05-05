@@ -87,15 +87,20 @@ no reemplaza el profile FTMO/retail real.
 **Plan declarado:** usar payouts FundingPips para fondear retail (Binance) y eventualmente comprar otra cuenta FTMO $100k.
 
 ### Profile `bitunix` (copy trading punkchainer's community)
-- **Capital $50 USD** inicial (default — ajustable)
+- **Capital $200 USD** (recalibrado 2026-05-04 — capital real para operativa diaria)
 - **Provider:** [Bitunix](https://bitunix.com), código referido `punkchainer`
 - **Filosofía:** NO es análisis propio — es validar señales externas con `/signal` antes de copiar
 - **Universo:** dinámico (lo que la comunidad punkchainer's señale en Discord — BTC, ETH, MSTRUSDT, altcoins)
+- **Watchlist exhaustivo (32 assets, prefix `Bitunix:.P` capitalizado):** 24 tradeables en Bitunix (BTC, ETH, SOL, MSTR, AVAX, INJ, DOGE, WIF, FARTCOIN, XLM, TON, ADA, LINK, SUI, TRX, RUNE, ENJ, CHZ, AXS, SEI, POL, HBAR, TIA, ROSE) + 8 sólo contexto vía fallback OKX/Binance/Bybit (PEPE, PIPPIN, BCH, MON, XAUT, STRK, XMR, BANANAS31) — pre-scaneado por `/punk-morning` y `/punk-hunt`. Scan completo ~3-5 min; usar `/punk-hunt quick` para top-5 líquidos.
 - **Validación:** 4 filtros + multifactor>±50 + ML>55 + chainlink delta <1%. Score >=60% → APPROVE
 - **Override leverage:** señales pueden decir 20x → tu sistema cap a **10x**
-- **Risk per signal:** 2% capital ($1 sobre $50). Max 3 signals/día. Auto-blacklist asset con 2 SLs
+- **Risk per signal:** 2% capital ($4 sobre $200). **Max 7 signals/día**, **max 2 concurrentes**. Auto-blacklist asset con 2 SLs
+- **Daily loss BLOCK:** -6% ($12 sobre $200, ~3 SLs)
+- **Objetivo PnL diario:** $20-100 (5+ wins / 7 attempts con WR comunidad ~70% y R:R 2:1 → 5:1)
 - **Ventana:** 24/7 cripto, prefiere London/NY overlap (CR 06:00-15:00)
-- **Tracking:** `signals_received.md` documenta cada señal (PASS/FLAG/REJECT) + outcome para mejorar filtros
+- **Pre-sesión:** `/punk-morning` prepara macro gate + scan 10+ assets + Neptune setup en TV (Signals + Oscillator default) + slot counter (X/2)
+- **Caza autónoma:** `/punk-hunt` (modo híbrido) escanea las 10 cripto cada ~1h, scoring 0-100, requiere score≥70 (más estricto que /signal), auto-loggea propuesta self-generated. Loop opcional: `/loop 60m /punk-hunt`
+- **Tracking:** `signals_received.md` documenta TODAS las señales (Discord vía /signal + self-generated vía /punk-hunt) con outcome — comparable hit rate por origen
 - Ver `.claude/profiles/bitunix/config.md`, `strategy.md`, `rules.md`
 
 **⚠️ Filosofía Bitunix:** "el edge no es seguir gurús — es entender por qué su señal funciona (o no) y filtrar las malas con tu propia lógica."
@@ -136,6 +141,10 @@ no reemplaza el profile FTMO/retail real.
 - `/equity <valor>` — actualizar equity FTMO manualmente
 - `/challenge` — dashboard progreso FTMO (solo ftmo)
 - `/status` — estado adaptado al profile activo
+- `/punk-morning` — preparación pre-sesión bitunix con scan exhaustivo 10+ assets + Neptune setup en TV [solo bitunix]
+- `/punk-hunt` — caza autónoma cada ~1h: escanea 10 cripto, elige el mejor setup, score≥70, auto-loggea recomendación [solo bitunix]
+- `/signal SYMBOL SIDE entry sl=X tp=Y leverage=N` — valida señal externa Discord (auto-log si profile=bitunix)
+- `/log-outcome SYMBOL TP1|TP2|TP3|SL EXIT [--id N] [--pnl USD]` — cierra outcome de señal bitunix (cualquier origen)
 - Los demás (`/morning`, `/validate`, `/risk`, `/journal`) son profile-aware
 - `/profile fotmarkets` — switch al 3er profile
 - `/risk` en fotmarkets → calcula sizing phase-aware (10%/5%/2%)

@@ -9,21 +9,27 @@ description: Use cuando necesites las configuraciones EXACTAS recomendadas por l
 
 ## Indicadores Neptune (Bangchan10, requieren invitación)
 
-| Indicador | Boosts | Uso |
-|---|---|---|
-| Neptune® - Oscillator™ | 70 | Oscilador principal con WaveTrend, divergencias, momentum |
-| Neptune® - Signals™ | 49 | Generador de señales con Neptune Pilot + ML classifier |
-| Neptune® - Smart Money Concepts™ | 74 | SMC: order blocks, FVG, liquidity, market structure |
-| Neptune® - ICT Concepts™ | (en grupo Neptune) | ICT-specific: displacement, structure filter, FVG |
-| Neptune® - Money Flow Profile™ | 29 | Volume profile con money flow direction |
-| Pivots and Phases™ | 19+17 | Pivots clásicos + fases de mercado |
-| SMC Oscillator™ | 27 | SMC en formato oscilador |
+**Lista verificada 2026-05-04 (screenshot del usuario):** 7 indicadores disponibles, todos by Bangchan10. Nombres EXACTOS para usar con `chart_manage_indicator action=add indicator="<nombre exacto>"`:
 
-## 1. Neptune ICT — Configuración 15M a 4H (la canónica)
+| Indicador (nombre EXACTO en TV) | Boosts | Uso |
+|---|---|---|
+| `Neptune® - Money Flow Profile™` | 29 | Volume profile con money flow direction |
+| `Neptune® - Oscillator™` | 72 | Oscilador principal con WaveTrend, divergencias, momentum |
+| `Neptune® - Signals™` | 50 | Generador de señales (versión 2.0 — integra oscilador interno) |
+| `Neptune® - Smart Money Concepts™` | 74 | **SMC + ICT en uno** — Áreas de Interés, OB, FVG, liquidity, displacement, market structure |
+| `Pivots and Phases™` | 19 | Pivots clásicos + fases de mercado (1ra versión) |
+| `Pivots and Phases™` | 17 | Pivots y fases (2da versión, alternativa) |
+| `SMC Oscillator™` | 27 | SMC en formato oscilador |
+
+**⚠️ Importante — SMC = ICT (mismo indicador):** Lo que en algunas docs aparece como "Neptune® - ICT Concepts™" **es el mismo `Neptune® - Smart Money Concepts™`**. Bangchan10 unificó ambos en un solo script porque comparten 90% de conceptos (OB, FVG, liquidity, CHoCH/BOS). Usar siempre el nombre EXACTO `Neptune® - Smart Money Concepts™` para `chart_manage_indicator`. Las features ICT-specific (displacement, structure filter, etc) están dentro del panel del SMC.
+
+## 1. Neptune Smart Money Concepts (ex-ICT) — Configuración 15M a 4H (la canónica)
+
+> **Nota terminológica:** los toggles internos del indicador siguen llamándose "ICT Concepts" porque Bangchan10 mantiene la nomenclatura legacy en el panel. El indicador en sí se llama `Neptune® - Smart Money Concepts™` (nombre EXACTO para `chart_manage_indicator`). Tanto las funciones ICT como SMC están dentro de este único indicador.
 
 ```yaml
 # OSCILLATOR / TRADING TOGGLES
-ICT Concepts Signals: ON
+ICT Concepts Signals: ON   # toggle interno conserva nombre "ICT" pero está en SMC
 Show Swings Areas: ON (color claro)
 Trading Overlay: OFF
 Trading Dashboard: OFF (Top Right si lo activas)
@@ -300,14 +306,211 @@ Tu plan Basic permite máximo 2 indicadores por chart. Con la comunidad usando 4
 
 | Combo | Cuándo usar |
 |---|---|
-| Neptune Signals + Neptune Oscillator | Day-to-day, señales + confluencias en oscilador |
-| Neptune SMC + Neptune Oscillator | Análisis SMC con confirmación de momentum |
-| Neptune ICT + Neptune Oscillator | Para ICT-specific setups (displacement, FVG) |
+| **Neptune Signals + Neptune SMC** ⭐ DEFAULT 2026 (FIJO TV Basic) | Day-to-day. Signals 2.0 ya integra oscilador. SMC aporta Áreas de Interés + FVG + OB |
+| Neptune Signals + Neptune Oscillator | Setup viejo (válido si querés ver el oscilador en pane separado vs integrado en Signals) |
+| Neptune SMC + Neptune Oscillator | Análisis SMC con confirmación de momentum independiente |
+| Neptune SMC + SMC Oscillator | Para análisis SMC profundo con su oscilador específico |
+| Neptune Money Flow + Neptune Signals | Para validar direccion institucional del flow vs señales |
 
-Tu setup actual default (`tradingview_setup.md`): Neptune Signals + Neptune Oscillator.
+Tu setup actual default (`tradingview_setup.md`): **Neptune Signals + Neptune SMC** (post-rediseño 2026-05-04).
+
+### ✅ TV Premium activado — combo de 5 indicadores
+
+**Confirmado por user 2026-05-04:** Premium pagado, 5 slots disponibles. Combo recomendado:
+
+| Slot | Indicador (nombre EXACTO) | Función |
+|---|---|---|
+| 1 | `Neptune® - Signals™` | Signal triggers, Range Filter, Reversal Bands, Smooth Trail, Trade Builder, Trendlines auto |
+| 2 | `Neptune® - Smart Money Concepts™` | Áreas de Interés, FVG, OB, CHoCH/BOS, Liquidity, ICT (mismo indicador) |
+| 3 | `Neptune® - Oscillator™` | Hyper Wave numérico, Money Flow direction, divergencias, Anomalies Top, Directional Pressure |
+| 4 | `Pivots and Phases™` | Fases del mercado (alcista/bajista/correctiva), pivots azules de cambio de fase con liquidez |
+| 5 | `Neptune® - Money Flow Profile™` | POC, VAH, VAL — volume profile institucional para validar zonas de absorción |
+
+**⚠️ NO disponible (no cargar):** `SMC Oscillator™` — redundante con Neptune Oscillator. Sólo cargar si futuro test demuestra valor adicional.
+
+**Setup pasos para el user (1 vez):**
+1. Abrir TradingView → ícono `fx` → "Indicadores, métricas y estrategias"
+2. Click "**Requiere invitación**" (panel izquierdo)
+3. Cargar uno por uno los 5 indicadores listados arriba
+4. **Save Layout** (icono guardar arriba a la derecha) con nombre "Bitunix Punk Setup"
+5. Verificar configuración de cada uno según secciones específicas de este SKILL
+
+**Validación con MCP:**
+```bash
+python3 -c "
+# Verifica que TV tiene los 5 cargados
+import subprocess, json
+# Llamar mcp__tradingview__chart_get_state vía claude
+"
+```
+
+O simplemente: ejecutar `mcp__tradingview__chart_get_state` y confirmar que `studies` contiene los 5 nombres exactos arriba (+ Volume built-in opcional).
+
+### Limitación pasada (TV Basic, ya superada)
+
+> **Histórico:** entre el momento de creación del profile bitunix y el 2026-05-04 ~22:00 CR, el user usó TV Basic con solo 2 indicadores cargables (combo Signals + SMC). El componente Oscilador del scoring `/punk-hunt` operaba con proxies (Shapes + Neptune Line distance + Trade Builder labels). Tras upgrade Premium 2026-05-04, scoring Oscilador restaurado a lógica completa con Hyper Wave numérico.
 
 ## Referencias
 
 - Manual completo Neptune SMC: `Neptune_Manual_Usuario_Completo.pdf` (35 pages, lectura obligatoria si vas a usar Neptune SMC en serio)
 - Placeholders para alertas/webhooks: ver skill `neptune-alert-placeholders`
 - Discord punkchainer's: canal `#neptune-indicators`, `#chat-de-bots`, `#material-de-estudio`
+
+### Videos oficiales de referencia (Elite Crypto Academy / Ponk — mismo ecosistema punkchainer's)
+
+Estos 4 videos son la fuente autoritativa de la metodología actual. Cualquier ambigüedad en las skills/agentes se resuelve consultándolos:
+
+| Video | URL | Duración | Tema |
+|---|---|---|---|
+| **1. SMC + Fibonacci + Fases del MIT** | https://www.youtube.com/watch?v=b8XChVarsto | ~40 min | Análisis top-down 1W→1D→4H→15m. Fibo 38.2/50/61.8 como núcleo. Targets matemáticos del MIT (100/161.8/200/300% extensions) |
+| **2. Estrategia $3K/mes con $300 (15m)** | https://www.youtube.com/watch?v=lO9GqGxtGpY | ~25 min | Scalping con 4 confluencias en orden: Oscilador → Zona extrema → Reversal Band → IA. SL 0.30% + target próxima banda. |
+| **3. Áreas de Interés + Gestión de Riesgo** | https://www.youtube.com/watch?v=C2Z0Eyatk-M | ~153 min | Áreas de Interés (auto-FVG+S/R+liquidez), regla de FVG (cierre vela en contra), regla anti-interés-compuesto, división del capital, bot Ramón (5%/mes flotante) |
+| **4. Neptune Signals 2.0 tutorial** | https://www.youtube.com/watch?v=xOmStJE3iRw | ~25 min | Tutorial oficial del nuevo Signals 2.0: Range Filter, 2 tipos señales (triángulos/+/-), X de TP, Smooth Trail + Reversal Bands combo, Trade Builder, Trendlines auto |
+
+**Comando para extraer transcripts** (para agentes que necesiten consultarlos en el futuro):
+```bash
+.claude/scripts/.venv/bin/pip install youtube-transcript-api
+python3 -c "
+from youtube_transcript_api import YouTubeTranscriptApi
+api = YouTubeTranscriptApi()
+for vid in ['b8XChVarsto', 'lO9GqGxtGpY', 'C2Z0Eyatk-M', 'xOmStJE3iRw']:
+    t = api.fetch(vid, languages=['es','es-419','en'])
+    # imprime transcript con timestamps
+"
+```
+
+**Reglas que vienen explícitamente de los videos** (no inventarlas, citarlas):
+
+1. **"El oscilador es lo más importante"** (video 2) → razón del peso 40pts en `/punk-hunt`
+2. **"El precio SIEMPRE busca la banda"** (video 2) → razón del peso 25pts a Reversal Band
+3. **"NO interés compuesto en trading"** (video 3) → razón de la regla "ganancias se retiran a bolsillo"
+4. **"FVG válido hasta cierre de vela en contra (no mecha)"** (video 3) → criterio para validar FVG
+5. **"Range Filter NUNCA deshabilitar"** (video 4) → siempre activo en Signals 2.0
+6. **"Smooth Trail + Reversal Bands combo es brutal"** (video 4) → estrategia favorita Ponk
+7. **Top-down 1W → 1D → 4H → 15m** (video 1) → orden obligatorio de análisis
+8. **Targets de Fibonacci 100/161.8/200/300%** (video 1) → cálculo de TPs largos
+9. **"50% capital libre, 50% trading dividido en 2-3 trades"** (video 3) → gestión de riesgo
+10. **Bot Ramón hace ~5% mensual del flotante** (video 3) → benchmark realista (no prometer más)
+
+---
+
+## 🆕 Neptune Signals 2.0 (versión nueva — videos Ponk 2026)
+
+> **Updated 2026-05-04** desde tutorial oficial de Ponk (Elite Crypto / mismo ecosistema). Esta versión sustituye al antiguo Signals + Oscillator separados — todo integrado en un solo indicador.
+
+### Filosofía del rediseño
+
+- Las señales ahora están **basadas 100% en el oscilador** (mismo algoritmo que las del oscilador antiguo, ahora dentro de Signals)
+- Por eso podés usar **solo 2 indicadores en TV Basic**: Signals 2.0 + Smart Money Concepts 2.0
+- Se elimina la necesidad de cargar el Neptune Oscillator en su propio slot
+
+### Configuración Neptune Signals 2.0
+
+```yaml
+# SIGNALS — el algoritmo nuevo
+Signals: ON  # ⭐ señales triángulos (movimientos largos)
+Range Filter: ON  # ⭐⭐ NUNCA deshabilitar — detecta lateral y muestra "RANGING" en pantalla
+
+# 2 TIPOS DE SEÑALES
+Triangle signals (long/short normal): ON  # movimientos largos
++/- signals (long+/short+): ON  # movimientos cortos (scalping)
+
+# X SIGNALS (reversal / take profit)
+X Signals: ON  # ⭐ X de TP + reversal — cerrar trade o entrar contrario
+Bullish/Bearish color: green/red
+
+# CANDLE COLORS
+Color Candles: ON  # verde positivo, rojo negativo, morado = precio bajo señal long
+
+# OVERLAYS
+Smooth Trail: ON  # ⭐ S/R dinámica — combo poderoso con Reversal Bands
+Cumo (Ichimoku-like): OPTIONAL  # útil para tendencia macro
+Premium/Equilibrium/Discount Zones: OPTIONAL  # útil para spot
+Reversal Bands: ON  # ⭐⭐⭐ HERRAMIENTA FAVORITA — el precio SIEMPRE busca la banda
+  - Banda externa: 1.8 default (recomendado)
+  - Para scalping cerrar a 1.0
+TP Levels: ON  # SL1, TP1, TP2, TP3 niveles intradía
+Trade Builder: ON  # dibuja TP/SL automáticamente al 2%
+Trendlines: ON  # ⭐ líneas de tendencia automáticas — break = signal
+Neptune Line (ex MA Line): ON  # ⭐ la clásica línea de Neptune
+Liquidity (Swing Failure Pattern): ON  # SFP automático
+Zigzag (fases del mercado): ON  # phase tracking del MIT strategy
+Fibonacci Levels: ON  # 38.2 / 50 / 61.8
+Fibonacci Projections: ON  # 100% / 161.8% / 200% / 300% (extensions)
+```
+
+### Setup recomendado por Ponk (combo de su Smooth Trail + Reversal Bands)
+
+> **Mi técnica favorita:** "cuando vengo con una señal de long y rompe el Smooth Trail, es entry confirmado. Hasta que no toque la Reversal Band, no cierro el trade." — Ponk
+
+**Workflow:**
+1. Aparece señal LONG (triángulo verde) en parte baja del oscilador
+2. Esperar a que rompa el **Smooth Trail** (S/R dinámica) hacia arriba
+3. Entry confirmado en breakout del Smooth Trail
+4. Stop loss debajo del Smooth Trail (1-2% precio)
+5. Target: **Reversal Band superior** (lo que sea que esté en 1.8 default)
+6. NO cerrar prematuramente — el precio "siempre busca la banda"
+7. Si aparece **X de TP** antes de la banda → cerrar parcial (40% según Trade Builder)
+
+### Configuración Smart Money Concepts 2.0 (combo recomendado con Signals 2.0)
+
+```yaml
+# AREAS DE INTERES (NUEVA — feature destacada)
+Áreas de Interés: ON  # ⭐⭐ auto-calculated zonas combinando 9+ factores
+  - LONG: meter en áreas BAJAS
+  - SHORT: meter en áreas ALTAS
+  - Se mueven cuando el precio rompe (refresh automático)
+
+# FVG (Fair Value Gaps)
+FVG: ON  # ⭐ regla crítica
+  - Bullish FVG: válido hasta que vela CIERRE por debajo (no cuenta mecha)
+  - Bearish FVG: válido hasta que vela CIERRE por encima
+
+# ORDER BLOCKS (subset)
+Order Blocks: ON
+Max OBs visibles: 3 alcistas + 3 bajistas (más es ruido)
+Mostrar % liquidez: ON  # útil para validar fuerza del OB
+
+# LIQUIDITY
+Liquidity Prints: ON  # importante para SSL/BSL
+
+# UI
+Modern UI: ON
+```
+
+### Alertas disponibles en Neptune Signals 2.0
+
+Toda la versión 2.0 tiene **alertas exhaustivas** (premium TV recomendado para más slots):
+
+- `Long Signal` / `Short Signal` (triángulos largos)
+- `Long+ Signal` / `Short+ Signal` (señales cortas)
+- `Exit Bullish` / `Exit Bearish` (X de TP)
+- `Reversal Band Upper Touch` / `Lower Touch`
+- `Premium Zone Entry` / `Equilibrium` / `Discount`
+- `Smooth Trail Cross Bullish/Bearish`
+- `Cumo Cross Bullish/Bearish` + `Cumo Retest`
+- `Trendline Break Bullish/Bearish`
+- `Neptune Line Cross Bullish/Bearish`
+- `Bullish/Bearish SFP`
+
+Ver skill `neptune-alert-placeholders` para JSON templates de webhooks.
+
+### Range Filter — gate crítico para `/punk-hunt`
+
+**Comportamiento:** cuando el indicador detecta mercado lateral, muestra **"RANGING"** en pantalla. Esto es importante porque:
+- Las señales sí aparecen en rango pero los movimientos serán cortos
+- R:R limitado — no esperar TPs lejanos
+- En `/punk-hunt`: si Range Filter activo → score multiplicado × 0.7 (penalización 30%)
+
+### Cambios vs versión vieja
+
+| Concepto | Versión vieja (1.x) | Versión 2.0 |
+|---|---|---|
+| Indicadores en TV Basic (2 slots) | Signals + Oscillator | Signals 2.0 + SMC 2.0 |
+| Algoritmo señales | Neptune Pilot + ML | 100% basado en oscilador |
+| Range filter | NO existía | ⭐⭐ NUEVA — crítico |
+| 2 tipos señales | NO existía | Triángulos largos + +/- cortos |
+| Reversal Bands | Solo en oscilador | Como overlay en chart principal |
+| Trade Builder | Manual con herramienta TV | Auto al 2% |
+| Trendlines | Manual | Automáticas con break alerts |
+| IA detrás | Parcial | Construida 100% sobre IA |
