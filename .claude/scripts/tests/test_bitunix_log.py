@@ -127,3 +127,43 @@ def test_append_signal_handles_write_failure(tmp_path):
         err_log = tmp_path / ".claude/cache/bitunix_log_errors.log"
         assert err_log.exists()
         assert "write failed" in err_log.read_text().lower() or "permission" in err_log.read_text().lower()
+
+
+def setup_with_open_signal(tmp_path: Path) -> Path:
+    setup_bitunix_profile(tmp_path)
+    base = tmp_path / ".claude/profiles/bitunix/memory"
+    shutil.copy(FIXTURES / "signals_received_with_open.md", base / "signals_received.md")
+    shutil.copy(FIXTURES / "signals_received_with_open.csv", base / "signals_received.csv")
+    return tmp_path
+
+
+def test_append_outcome_closes_open_entry(tmp_path):
+    setup_with_open_signal(tmp_path)
+    r = run_log(["append-outcome", "BTCUSDT", "TP1", "68000", "--pnl", "1.50"],
+                cwd=tmp_path, env={"WALLY_PROFILE": "bitunix"})
+    assert r.returncode == 0, r.stderr
+    md = (tmp_path / ".claude/profiles/bitunix/memory/signals_received.md").read_text()
+    assert "Outcome: TP1" in md
+    assert "Exit price: 68000" in md
+    assert "PnL: 1.50" in md
+    rows = list(csv.DictReader(
+        (tmp_path / ".claude/profiles/bitunix/memory/signals_received.csv").open()))
+    assert rows[0]["exit_price"] == "68000"
+    assert rows[0]["exit_reason"] == "TP1"
+    assert rows[0]["pnl_usd"] == "1.50"
+
+
+def test_append_outcome_no_open_entry(tmp_path):
+    setup_bitunix_profile(tmp_path)  # no open entries
+    r = run_log(["append-outcome", "BTCUSDT", "TP1", "68000"],
+                cwd=tmp_path, env={"WALLY_PROFILE": "bitunix"})
+    assert r.returncode == 1
+    assert "no open signal" in r.stderr.lower()
+
+
+def test_append_outcome_non_bitunix_profile_message(tmp_path):
+    setup_bitunix_profile(tmp_path)
+    r = run_log(["append-outcome", "BTCUSDT", "TP1", "68000"],
+                cwd=tmp_path, env={"WALLY_PROFILE": "retail"})
+    assert r.returncode == 0
+    assert "bitunix" in r.stdout.lower() or "bitunix" in r.stderr.lower()

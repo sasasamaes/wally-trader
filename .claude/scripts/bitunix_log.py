@@ -18,6 +18,12 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 CR_OFFSET = timezone(timedelta(hours=-6))
+
+ENTRY_HEADER_RE = re.compile(
+    r"^## (\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}) — (\S+) (LONG|SHORT)",
+    re.MULTILINE
+)
+
 CSV_FIELDS = [
     "date", "time", "symbol", "side", "entry", "sl", "tp", "leverage_signal",
     "day_of_week", "filters_4", "multifactor", "ml_score", "chainlink_delta",
@@ -214,9 +220,123 @@ def cmd_append_signal(args: argparse.Namespace) -> int:
     return 0
 
 
+def _fmt_price(price: float) -> str:
+    """Format price as integer string if whole number, else float string."""
+    return str(int(price)) if price == int(price) else str(price)
+
+
+def find_open_entries(md_text: str, symbol: str) -> list[tuple[int, int, str]]:
+    """Return list of (start_idx, end_idx, header_line) for open entries of `symbol`.
+
+    An entry is "open" if its `Outcome:` line is `_pendiente_`.
+    """
+    matches = list(ENTRY_HEADER_RE.finditer(md_text))
+    open_entries = []
+    for i, m in enumerate(matches):
+        if m.group(3) != symbol:
+            continue
+        start = m.start()
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(md_text)
+        block = md_text[start:end]
+        if "Outcome: _pendiente_" in block:
+            open_entries.append((start, end, m.group(0)))
+    return open_entries
+
+
+def update_md_outcome(md_path: Path, start: int, end: int,
+                      outcome: str, exit_price: float, pnl: float | None,
+                      duration_h: float, held_pillars: bool) -> None:
+    text = md_path.read_text()
+    block = text[start:end]
+    block = block.replace("Outcome: _pendiente_", f"Outcome: {outcome}")
+    block = block.replace("Exit price: _pendiente_", f"Exit price: {_fmt_price(exit_price)}")
+    pnl_str = f"{pnl:.2f}" if pnl is not None else "_calc_pendiente_"
+    block = block.replace("PnL: _pendiente_", f"PnL: {pnl_str}")
+    block = block.replace("Time to outcome: _pendiente_",
+                          f"Time to outcome: {duration_h:.1f}h")
+    pillars_str = "Y" if held_pillars else "N"
+    if "Held 4-pilar al exit?" not in block:
+        block = block.replace(
+            f"Time to outcome: {duration_h:.1f}h",
+            f"Time to outcome: {duration_h:.1f}h\n  - Held 4-pilar al exit? {pillars_str}"
+        )
+    md_path.write_text(text[:start] + block + text[end:])
+
+
+def update_csv_outcome(csv_path: Path, row_index: int,
+                       outcome: str, exit_price: float, pnl: float | None,
+                       duration_h: float) -> None:
+    rows = list(csv.DictReader(csv_path.open()))
+    rows[row_index]["exit_price"] = _fmt_price(exit_price)
+    rows[row_index]["exit_reason"] = outcome
+    rows[row_index]["pnl_usd"] = f"{pnl:.2f}" if pnl is not None else ""
+    rows[row_index]["duration_h"] = f"{duration_h:.1f}"
+    with csv_path.open("w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=CSV_FIELDS)
+        w.writeheader()
+        w.writerows(rows)
+
+
+def find_open_csv_row(csv_path: Path, symbol: str) -> int | None:
+    """Return index of the most recent open (no exit_price) row for symbol."""
+    rows = list(csv.DictReader(csv_path.open()))
+    for i in range(len(rows) - 1, -1, -1):
+        if rows[i]["symbol"] == symbol and not rows[i].get("exit_price"):
+            return i
+    return None
+
+
+def compute_duration_hours(date_str: str, time_str: str, now: datetime) -> float:
+    entry_dt = datetime.fromisoformat(f"{date_str}T{time_str}:00-06:00")
+    return (now - entry_dt).total_seconds() / 3600.0
+
+
 def cmd_append_outcome(args: argparse.Namespace) -> int:
-    """Implemented in Task 2.2."""
-    raise NotImplementedError("append-outcome implemented in Task 2.2")
+    if not is_bitunix_profile():
+        print("Solo aplica a profile bitunix.")
+        return 0
+    md_path, csv_path = bitunix_paths()
+    if not md_path.exists():
+        print(f"No bitunix log found at {md_path}.", file=sys.stderr)
+        return 1
+
+    md_text = md_path.read_text()
+    open_entries = find_open_entries(md_text, args.symbol)
+    if not open_entries:
+        print(f"No open signal for {args.symbol}. Nothing to close.", file=sys.stderr)
+        return 1
+    if len(open_entries) > 1 and args.entry_id is None:
+        print(f"Multiple open entries for {args.symbol}:", file=sys.stderr)
+        for i, (_, _, header) in enumerate(open_entries):
+            print(f"  --id {i}: {header}", file=sys.stderr)
+        print("Re-run with --id N", file=sys.stderr)
+        return 1
+    idx = args.entry_id if args.entry_id is not None else 0
+    start, end, header = open_entries[idx]
+
+    m = ENTRY_HEADER_RE.search(md_text[start:end])
+    date_str, time_str = m.group(1), m.group(2)
+    duration = compute_duration_hours(date_str, time_str, datetime.now(CR_OFFSET))
+
+    held = True  # default optimistic; skip interactive prompt in non-tty (tests/pipes)
+    if sys.stdin.isatty():
+        ans = input("Held 4-pilar al exit? [Y/n] ").strip().lower()
+        held = ans != "n"
+
+    try:
+        update_md_outcome(md_path, start, end, args.outcome, args.exit_price,
+                          args.pnl, duration, held)
+        csv_idx = find_open_csv_row(csv_path, args.symbol)
+        if csv_idx is not None:
+            update_csv_outcome(csv_path, csv_idx, args.outcome, args.exit_price,
+                               args.pnl, duration)
+    except (OSError, ValueError) as e:
+        log_error(f"append-outcome write failed: {e}")
+        print(f"ERROR: append-outcome failed ({e})", file=sys.stderr)
+        return 1
+
+    print(f"bitunix_log: closed {args.symbol} with {args.outcome} at {_fmt_price(args.exit_price)}")
+    return 0
 
 
 def main() -> int:
