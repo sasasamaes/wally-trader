@@ -66,8 +66,7 @@ def record_sl(asset: str, ts: datetime, pnl_usd: float,
     Behavior on 3rd+ SL: the blacklist_until is updated to the new SL's next
     CR midnight (effectively keeping the asset blacklisted as long as SLs continue).
 
-    The `pnl_usd` argument is accepted for API symmetry but is persisted to
-    sl_window.json (kill-switch tracker), which is wired up in a follow-up task.
+    `pnl_usd` is persisted to sl_window.json for the kill-switch tracker.
     """
     p = _streaks_path(memory_dir)
     data = _load(p, {"version": 1, "as_of_cr_date": None, "assets": {}})
@@ -80,6 +79,7 @@ def record_sl(asset: str, ts: datetime, pnl_usd: float,
     data["assets"][asset] = cell
     data["as_of_cr_date"] = ts.astimezone(CR_OFFSET).date().isoformat()
     _save(p, data)
+    _record_sl_window(asset, ts, pnl_usd, memory_dir)
 
 
 def record_tp(asset: str, ts: datetime, memory_dir: Path | None = None) -> None:
@@ -100,3 +100,54 @@ def is_blacklisted(asset: str, now: datetime,
     if not cell or not cell.get("blacklist_until"):
         return False
     return now < datetime.fromisoformat(cell["blacklist_until"])
+
+
+# ---------------------------------------------------------------------------
+# Kill-switch: 2 SLs within any 4-hour rolling window → pause until CR 00:00
+# ---------------------------------------------------------------------------
+
+def _window_path(memory_dir: Path | None) -> Path:
+    return _memory_dir(memory_dir) / "sl_window.json"
+
+
+def _purge_old_events(events: list, now: datetime, hours: int = 4) -> list:
+    cutoff = now - timedelta(hours=hours)
+    return [ev for ev in events if datetime.fromisoformat(ev["ts"]) >= cutoff]
+
+
+def _record_sl_window(asset: str, ts: datetime, pnl_usd: float,
+                      memory_dir: Path | None = None) -> None:
+    p = _window_path(memory_dir)
+    data = _load(p, {"events": [], "kill_switch_active_until": None})
+    data["events"].append({"ts": ts.isoformat(), "asset": asset, "pnl_usd": pnl_usd})
+    data["events"] = _purge_old_events(data["events"], ts, hours=4)
+    if len(data["events"]) >= 2:
+        data["kill_switch_active_until"] = _next_cr_midnight(ts).isoformat()
+    _save(p, data)
+
+
+def is_kill_switch_active(now: datetime,
+                          memory_dir: Path | None = None) -> tuple:
+    """Return (active: bool, reason: str | None).
+
+    The kill-switch is active when 2+ SLs occurred within a 4-hour rolling
+    window. It persists until CR 00:00 of the day it was triggered.
+    """
+    p = _window_path(memory_dir)
+    data = _load(p, {"events": [], "kill_switch_active_until": None})
+    until = data.get("kill_switch_active_until")
+    if not until:
+        return False, None
+    until_dt = datetime.fromisoformat(until)
+    if now >= until_dt:
+        return False, None
+    return True, f"PAUSED: 2 SL kill-switch active until {until_dt.isoformat()}"
+
+
+def reset_killswitch(memory_dir: Path | None = None) -> None:
+    """Manually clear the kill-switch and purge the SL event window."""
+    p = _window_path(memory_dir)
+    data = _load(p, {"events": [], "kill_switch_active_until": None})
+    data["kill_switch_active_until"] = None
+    data["events"] = []
+    _save(p, data)
