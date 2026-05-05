@@ -1,0 +1,30 @@
+[
+  {
+    "Date": "2026-05-04T12:30:00",
+    "Country": "United States",
+    "Event": "Inflation Rate YoY",
+    "Importance": 3,
+    "Reference": "Apr"
+  },
+  {
+    "Date": "2026-05-06T19:00:00",
+    "Country": "United States",
+    "Event": "Fed Interest Rate Decision",
+    "Importance": 3,
+    "Reference": "May"
+  },
+  {
+    "Date": "2026-05-08T08:30:00",
+    "Country": "Euro Area",
+    "Event": "ECB Interest Rate Decision",
+    "Importance": 3,
+    "Reference": "May"
+  },
+  {
+    "Date": "2026-05-09T15:00:00",
+    "Country": "United States",
+    "Event": "Some Random PMI",
+    "Importance": 3,
+    "Reference": "May"
+  }
+]

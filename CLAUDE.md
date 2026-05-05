@@ -384,6 +384,39 @@ Datos históricos Binance se cachean en `scripts/ml_system/data/`. Modelos entre
 - **Mempool stats:** https://mempool.space/api/
 - **Bookmap (orderflow + heatmap liquidez):** https://web.bookmap.com/ — confirmación visual de entries (walls bids/asks, absorción, spoofing, stop hunts). Solo Binance Futures, uso manual no automatizable. Ver `memory/bookmap.md`.
 
+## Discipline & Observability tooling (Bundle 1, 2026-05-04)
+
+Three new automated systems added in branch `feat/discipline-observability`:
+
+### Macro events gate (#7)
+- Cache: `.claude/cache/macro_events.json`, refrescado diario CR 04:00 vía launchd `com.wally.macro-calendar`
+- CLI: `python3 .claude/scripts/macro_gate.py --check-now | --check-day YYYY-MM-DD | --next-events --days N`
+- Wire-in: agentes `trade-validator`, `signal-validator` chequean **antes** de los 4 filtros (NO-GO inmediato si dentro de ±30 min de evento high-impact). `morning-analyst` y `morning-analyst-ftmo` chequean al inicio (warning, no block).
+- Manual refresh: `.claude/scripts/.venv/bin/python .claude/scripts/macro_calendar.py`
+- Whitelist: USA tier-1 (FOMC/CPI/NFP/PCE/PPI/GDP/Powell/Retail Sales) + ECB/BoE/BoJ rate decisions + employment change/unemployment rate/AHE (FF naming variants)
+- DST-aware: usa `zoneinfo.ZoneInfo("America/New_York")` para conversión EST/EDT → CR correcta año redondo
+- Activar launchd: `cp .claude/launchd/com.wally.macro-calendar.plist ~/Library/LaunchAgents/ && launchctl load ~/Library/LaunchAgents/com.wally.macro-calendar.plist`
+
+### Bitunix signal log capture (#3)
+- Auto-log: cada `/signal` ejecutado con `WALLY_PROFILE=bitunix` appendea su reporte a `signals_received.md` y `.csv`
+- Cierre manual: `/log-outcome SYMBOL TP1|TP2|TP3|SL|manual EXIT_PRICE [--id N] [--pnl USD]`
+- Ej: `/log-outcome BTCUSDT TP1 68000 --pnl 1.50`
+- Multi-entry: si hay 2 señales abiertas mismo símbolo, lista los `--id` y pide elegir
+- Schema validado: si CSV existente tiene esquema distinto, escribe a `bitunix_log_errors.log` y aborta (previene corrupción silenciosa)
+- Goal: acumular 30+ señales con outcome para enable backtest real (ver `docs/backtest_findings_2026-04-30.md` Group E)
+
+### Weekly cross-profile digest (#8)
+- Auto-run: domingo 18:00 CR vía launchd `com.wally.weekly-digest`
+- Manual: `.claude/scripts/.venv/bin/python .claude/scripts/weekly_digest.py --week current` (o `--week 2026-W17` para regenerar pasada)
+- Output: `memory/weekly_digests/YYYY-Wnn.md` + macOS notification
+- Contiene: tabla cross-profile (capital, PnL semana/mes, WR, status), próxima semana macro events (lee del cache de #7), highlights de disciplina, sugerencias
+- Profile parser registry: retail/retail-bingx/ftmo/fundingpips/fotmarkets/bitunix tienen parsers; quantfury intencionalmente "parser pending"
+- Activar launchd: `cp .claude/launchd/com.wally.weekly-digest.plist ~/Library/LaunchAgents/ && launchctl load ~/Library/LaunchAgents/com.wally.weekly-digest.plist`
+
+### Spec & plan
+- Design: `docs/superpowers/specs/2026-05-04-discipline-observability-bundle-design.md`
+- Implementation plan: `docs/superpowers/plans/2026-05-04-discipline-observability-bundle.md`
+
 ## Disclaimer
 
 Nada en este proyecto es consejo financiero. Futuros con leverage pueden liquidar capital en minutos con un wick. Usa capital que puedas perder sin afectar tu vida.

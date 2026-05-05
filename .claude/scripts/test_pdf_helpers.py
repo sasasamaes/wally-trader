@@ -22,6 +22,10 @@ import backtest_split  # noqa: E402
 import macross  # noqa: E402
 import per_asset_backtest  # noqa: E402
 
+import json
+import subprocess
+import tempfile
+
 
 def make_trending_bars(n: int = 60, slope: float = 1.0) -> list[dict]:
     bars = []
@@ -187,6 +191,39 @@ def test_per_asset_renders_table():
     res = per_asset_backtest.run_per_asset({"X": bars_a})
     table = per_asset_backtest.render_table(res)
     assert "X" in table and "WR%" in table
+
+
+# ──────────────────────────────────────────────────────────────────
+# Macro Gate
+# ──────────────────────────────────────────────────────────────────
+
+def test_macro_gate_handles_missing_cache():
+    """macro_gate.py --check-now exits 0 even with empty cache."""
+    with tempfile.TemporaryDirectory() as d:
+        empty = Path(d) / "nope.json"
+        r = subprocess.run(
+            ["python3", str(Path(__file__).parent / "macro_gate.py"),
+             "--cache", str(empty), "--check-now"],
+            capture_output=True, text=True
+        )
+        assert r.returncode == 0, f"Expected returncode 0, got {r.returncode}\nstderr: {r.stderr}"
+        payload = json.loads(r.stdout)
+        assert payload["blocked"] is False
+        assert payload["reason"] == "no_cache"
+
+
+def test_macro_gate_check_day_smoke():
+    """macro_gate.py --check-day with empty cache returns empty events."""
+    with tempfile.TemporaryDirectory() as d:
+        empty = Path(d) / "nope.json"
+        r = subprocess.run(
+            ["python3", str(Path(__file__).parent / "macro_gate.py"),
+             "--cache", str(empty), "--check-day", "2026-05-04"],
+            capture_output=True, text=True
+        )
+        assert r.returncode == 0, f"Expected returncode 0, got {r.returncode}\nstderr: {r.stderr}"
+        payload = json.loads(r.stdout)
+        assert payload["events"] == []
 
 
 # ──────────────────────────────────────────────────────────────────
