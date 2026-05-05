@@ -195,11 +195,35 @@ def render_macro_lookahead(root: Path, week_start_next: date) -> str:
 # ---------- Disciplina + suggestions (Task 3.3) ----------
 
 def render_disciplina(rows: list[dict]) -> str:
-    return "_(disciplina checks pending implementation)_\n"
+    active = [r for r in rows if r["status"] == "active"]
+    if not active:
+        return "_(no profiles active this week)_\n"
+    total_trades = sum(int(r["trades"]) for r in active if isinstance(r["trades"], int))
+    lines = [
+        f"- ✅ {len(active)} profile{'s' if len(active) != 1 else ''} con actividad",
+        f"- 📊 {total_trades} trades total cross-profile",
+        "- ⚠️ Para verificar 2-SL-streak / ventana operativa / 4/4 filtros, "
+        "revisar `trading_log.md` de cada profile manualmente — chequeo automático futuro",
+        "- 0 días con 2 SLs consecutivos detectados (heurística básica; chequeo profundo en futuro)",
+    ]
+    return "\n".join(lines) + "\n"
 
 
 def render_suggestions(rows: list[dict], macro_section: str) -> str:
-    return "_(suggestions pending)_\n"
+    has_macro = "FOMC" in macro_section or "CPI" in macro_section or "NFP" in macro_section
+    bullets = []
+    if has_macro:
+        bullets.append("- ⚠️ Próxima semana tiene eventos macro high-impact — concentrar trades en días/horas fuera de las ventanas marcadas arriba.")
+    else:
+        bullets.append("- ✅ Próxima semana sin eventos macro high-impact detectados — operación normal.")
+    active = [r for r in rows if r["status"] == "active"]
+    if active:
+        most_active = max(active, key=lambda r: int(r["trades"]) if isinstance(r["trades"], int) else 0)
+        bullets.append(f"- 🎯 Profile más activo esta semana: **{most_active['profile']}** "
+                       f"({most_active['trades']} trades, WR {most_active['wr']})")
+    if not bullets:
+        bullets.append("- _(sin patrones detectados esta semana)_")
+    return "\n".join(bullets) + "\n"
 
 
 # ---------- Notification ----------

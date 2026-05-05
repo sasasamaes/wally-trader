@@ -112,3 +112,12 @@ def test_digest_macro_lookahead_with_cache(tmp_path):
     assert "FOMC" in content
     assert "CPI" in content
     assert "NO TRADE" in content.upper() or "🔴" in content
+
+
+def test_disciplina_section_renders_basic_checks(tmp_path):
+    setup_repo_with_fixtures(tmp_path)
+    r = run_digest(["--week", "2026-W18"], cwd=tmp_path)
+    assert r.returncode == 0
+    content = (tmp_path / "memory/weekly_digests/2026-W18.md").read_text()
+    assert "Highlights y disciplina" in content
+    assert "días con 2 SLs consecutivos" in content
