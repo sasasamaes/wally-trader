@@ -90,3 +90,40 @@ def test_append_signal_malformed_input(tmp_path):
     assert "parse failed" in err_log.read_text().lower()
     md = (tmp_path / ".claude/profiles/bitunix/memory/signals_received.md").read_text()
     assert "## 2026" not in md
+
+
+def test_append_csv_rejects_schema_mismatch(tmp_path):
+    """An existing CSV with different headers must be rejected, not corrupted."""
+    setup_bitunix_profile(tmp_path)
+    csv_path = tmp_path / ".claude/profiles/bitunix/memory/signals_received.csv"
+    # Overwrite with a stale-schema CSV
+    csv_path.write_text("date,symbol,side\n2026-05-01,ETHUSDT,LONG\n")
+    canonical = (FIXTURES / "signal_report_canonical.md").read_text()
+    r = run_log(["append-signal", "--stdin"], cwd=tmp_path,
+                env={"WALLY_PROFILE": "bitunix"}, stdin=canonical)
+    assert r.returncode != 0
+    err_log = tmp_path / ".claude/cache/bitunix_log_errors.log"
+    assert err_log.exists()
+    log_text = err_log.read_text().lower()
+    assert "schema mismatch" in log_text or "write failed" in log_text
+
+
+def test_append_signal_handles_write_failure(tmp_path):
+    """If the MD or CSV write fails (e.g. read-only dir), error is logged not silenced."""
+    setup_bitunix_profile(tmp_path)
+    base = tmp_path / ".claude/profiles/bitunix/memory"
+    # Make the directory read-only
+    base.chmod(0o555)
+    canonical = (FIXTURES / "signal_report_canonical.md").read_text()
+    try:
+        r = run_log(["append-signal", "--stdin"], cwd=tmp_path,
+                    env={"WALLY_PROFILE": "bitunix"}, stdin=canonical)
+    finally:
+        # Restore permissions for cleanup
+        base.chmod(0o755)
+    # Either the script wrote and succeeded (if running as root in CI), or it logged.
+    # On macOS/Linux non-root, dir is read-only and write fails → exit 1, error logged.
+    if r.returncode != 0:
+        err_log = tmp_path / ".claude/cache/bitunix_log_errors.log"
+        assert err_log.exists()
+        assert "write failed" in err_log.read_text().lower() or "permission" in err_log.read_text().lower()

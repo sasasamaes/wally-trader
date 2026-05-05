@@ -164,7 +164,19 @@ def append_md(md_path: Path, entry: str) -> None:
 
 def append_csv(csv_path: Path, fields: dict[str, str]) -> None:
     csv_path.parent.mkdir(parents=True, exist_ok=True)
-    write_header = not csv_path.exists() or csv_path.stat().st_size == 0
+    if csv_path.exists() and csv_path.stat().st_size > 0:
+        with csv_path.open() as f:
+            existing_header = f.readline().strip()
+        expected_header = ",".join(CSV_FIELDS)
+        if existing_header != expected_header:
+            raise ValueError(
+                f"CSV schema mismatch in {csv_path.name}. "
+                f"Expected: {expected_header[:80]}... "
+                f"Got: {existing_header[:80]}..."
+            )
+        write_header = False
+    else:
+        write_header = True
     with csv_path.open("a", newline="") as f:
         w = csv.DictWriter(f, fieldnames=CSV_FIELDS)
         if write_header:
@@ -188,8 +200,16 @@ def cmd_append_signal(args: argparse.Namespace) -> int:
         return 1
 
     md_path, csv_path = bitunix_paths()
-    append_md(md_path, render_md_entry(fields))
-    append_csv(csv_path, fields)
+    try:
+        append_md(md_path, render_md_entry(fields))
+        append_csv(csv_path, fields)
+    except (OSError, ValueError) as e:
+        log_error(f"write failed: {e}")
+        print(
+            f"WARNING: bitunix_log write failed ({e}), see cache/bitunix_log_errors.log",
+            file=sys.stderr,
+        )
+        return 1
     print(f"bitunix_log: appended {fields['symbol']} {fields['side']} to {md_path.name}")
     return 0
 
