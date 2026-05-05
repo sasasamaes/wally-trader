@@ -17,6 +17,7 @@ Public API:
 
 from __future__ import annotations
 
+import csv
 import json
 import os
 from datetime import datetime, timedelta, timezone
@@ -151,3 +152,46 @@ def reset_killswitch(memory_dir: Path | None = None) -> None:
     data["kill_switch_active_until"] = None
     data["events"] = []
     _save(p, data)
+
+
+# ---------------------------------------------------------------------------
+# Open positions — derived from signals_received.csv
+# ---------------------------------------------------------------------------
+
+BUCKETS = {
+    "btc_majors":  ["BTCUSDT", "ETHUSDT", "SOLUSDT", "MSTRUSDT"],
+    "l1_alts":     ["AVAXUSDT", "INJUSDT", "ADAUSDT", "TRXUSDT", "LINKUSDT",
+                    "SUIUSDT", "TONUSDT", "HBARUSDT"],
+    "memes":       ["DOGEUSDT", "WIFUSDT", "FARTCOINUSDT", "PEPEUSDT"],
+    "small_caps":  ["XLMUSDT", "ENJUSDT", "CHZUSDT", "AXSUSDT", "SEIUSDT",
+                    "POLUSDT", "TIAUSDT", "ROSEUSDT", "RUNEUSDT"],
+}
+
+
+def bucket_of(asset: str) -> str | None:
+    norm = asset.replace(".P", "").upper()
+    for name, members in BUCKETS.items():
+        if norm in members:
+            return name
+    return None
+
+
+def open_positions(memory_dir: Path | None = None) -> list[dict]:
+    p = _memory_dir(memory_dir) / "signals_received.csv"
+    if not p.exists():
+        return []
+    with p.open() as f:
+        rows = list(csv.DictReader(f))
+    out = []
+    for r in rows:
+        if r.get("exit_price"):
+            continue
+        sym = r.get("symbol", "").replace(".P", "").upper()
+        if not sym:
+            continue
+        out.append({
+            "asset": sym,
+            "side": r.get("side", "").upper(),
+            "bucket": bucket_of(sym),
+        })
+    return out

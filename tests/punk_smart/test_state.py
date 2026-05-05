@@ -89,3 +89,30 @@ class TestKillSwitch:
         active, _ = state.is_kill_switch_active(cr_time(2026, 5, 5, 12, 0),
                                                  memory_dir=tmp_profile_dir)
         assert not active
+
+
+class TestOpenPositions:
+    def test_no_csv_returns_empty(self, tmp_profile_dir):
+        result = state.open_positions(memory_dir=tmp_profile_dir)
+        assert result == []
+
+    def test_reads_open_rows(self, tmp_profile_dir, signals_csv_factory):
+        signals_csv_factory([
+            {"symbol": "BTCUSDT.P", "side": "LONG", "exit_price": ""},
+            {"symbol": "ETHUSDT.P", "side": "SHORT", "exit_price": "2370.00"},  # closed
+            {"symbol": "SOLUSDT.P", "side": "LONG", "exit_price": ""},
+        ])
+        result = state.open_positions(memory_dir=tmp_profile_dir)
+        assert len(result) == 2
+        assert {(r["asset"], r["side"]) for r in result} == \
+               {("BTCUSDT", "LONG"), ("SOLUSDT", "LONG")}
+
+    def test_attaches_bucket(self, tmp_profile_dir, signals_csv_factory):
+        signals_csv_factory([
+            {"symbol": "BTCUSDT.P", "side": "LONG", "exit_price": ""},
+            {"symbol": "DOGEUSDT.P", "side": "SHORT", "exit_price": ""},
+        ])
+        result = state.open_positions(memory_dir=tmp_profile_dir)
+        buckets = {r["asset"]: r["bucket"] for r in result}
+        assert buckets["BTCUSDT"] == "btc_majors"
+        assert buckets["DOGEUSDT"] == "memes"
