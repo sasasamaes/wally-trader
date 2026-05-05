@@ -155,49 +155,117 @@ def main():
         return
 
     targets = [args.asset] if args.asset else ASSETS
-    results = [evaluate_asset(s, mapping, now) for s in targets]
+    raw_results = [evaluate_asset(s, mapping, now) for s in targets]
 
-    setups = [r for r in results if r.get("status") == "SETUP_FOUND"]
-    no_setup = [r for r in results if r.get("status") == "NO_SETUP"]
-    stand_aside = [r for r in results if r.get("status") == "STAND_ASIDE"]
+    enabled = mapping.get("vetos_enabled",
+                          ["macro", "blacklist", "correlation", "sentiment",
+                            "funding", "time_of_day"])
+    dynamic = mapping.get("dynamic_sizing", True)
+    trail_offset = mapping.get("trail_sl_offset_atr", 0.2)
+
+    approved: list[dict] = []
+    vetoed: list[dict] = []
+    no_setup: list[dict] = []
+    stand_aside: list[dict] = []
+
+    for r in raw_results:
+        status = r.get("status")
+        if status == "STAND_ASIDE":
+            stand_aside.append(r); continue
+        if status in ("INSUFFICIENT_DATA", "STRATEGY_UNAVAILABLE"):
+            stand_aside.append(r); continue
+        if status == "NO_SETUP":
+            no_setup.append(r); continue
+        if status != "TENTATIVE":
+            continue  # safety
+
+        # Stage 3: vetos
+        ctx = {
+            "now": now,
+            "memory_dir": None,
+            "regime_pnl_per_trade": r.get("backtest_pnl_per_trade", 0.0),
+            "enabled": enabled,
+        }
+        veto_results = vetos.evaluate(
+            {"asset": r["asset"], "side": r["side"]}, ctx)
+        r["vetos"] = [{"name": v.name, "passed": v.passed,
+                        "reason": v.reason} for v in veto_results]
+        if not vetos.is_approved(veto_results):
+            r["status"] = "VETOED"
+            vetoed.append(r); continue
+
+        # Stage 4: sizing
+        sizing = rc.compute(r["backtest_pnl_per_trade"],
+                             base_margin=4.0, dynamic=dynamic)
+        r["sizing"] = sizing
+
+        # Stage 5: trail SL annotation
+        atr = r.pop("_atr_15m", 0.0)
+        if r["side"] == "LONG":
+            be_trail = r["entry"] + trail_offset * atr
+        else:
+            be_trail = r["entry"] - trail_offset * atr
+        r["trail_sl"] = round(be_trail, 4)
+        r["trail_sl_offset_atr"] = trail_offset
+        r["atr_15m"] = round(atr, 4)
+        r["status"] = "APPROVED"
+        approved.append(r)
 
     if args.json:
         print(json.dumps({
-            "setups": setups,
+            "status": "OK",
+            "approved": approved,
+            "vetoed": vetoed,
             "no_setup": no_setup,
             "stand_aside": stand_aside,
-            "mapping_used": mapping,
-        }, indent=2))
+            "mapping_version": mapping.get("version", 1),
+        }, indent=2, default=str))
         return
 
-    print(f"\n{'='*70}")
-    print(f"PUNK-SMART — Regime-aware router — {datetime.now().strftime('%H:%M CR')}")
-    print(f"{'='*70}")
+    print(f"\n{'='*72}")
+    print(f"PUNK-SMART v2 — {now.strftime('%H:%M CR')}  |  mapping v{mapping.get('version', 1)}")
+    print(f"{'='*72}")
 
-    if setups:
-        # Sort by R:R TP2 descendente
-        setups.sort(key=lambda x: -x["rr_tp2"])
-        print(f"\n✅ {len(setups)} SETUP(S) ENCONTRADO(S) (best mapping):\n")
-        for i, s in enumerate(setups):
+    if approved:
+        approved.sort(key=lambda x: -x["rr_tp2"])
+        print(f"\n✅ {len(approved)} APPROVED setup(s):\n")
+        for i, s in enumerate(approved):
             arrow = "🟢 LONG" if s["side"] == "LONG" else "🔴 SHORT"
-            print(f"#{i+1} {arrow} {s['asset']} (regime: {s['regime']}, strategy: {s['strategy']})")
-            print(f"   Entry: {s['entry']} | Backtest: {s['backtest_wr']}% WR / ${s['backtest_pnl_per_trade']:+.2f} per trade")
+            print(f"#{i+1} {arrow} {s['asset']}  (regime: {s['regime']}, "
+                  f"strategy: {s['strategy']}, tier: {s.get('tier','global')})")
+            print(f"   Entry: {s['entry']}   |   BT WR {s['backtest_wr']}%, "
+                  f"${s['backtest_pnl_per_trade']:+.2f}/trade")
             print(f"   SL:  {s['sl']} ({s['sl_distance_pct']}%)")
             print(f"   TP1: {s['tp1']} ({s['tp1_distance_pct']}%) — R:R {s['rr_tp1']}")
             print(f"   TP2: {s['tp2']} ({s['tp2_distance_pct']}%) — R:R {s['rr_tp2']}")
+            sz = s["sizing"]
+            print(f"   Size: ${sz['margin_usd']} margin × 10x = ${sz['notional_10x']} "
+                  f"notional   (mult {sz['size_mult']})")
+            print(f"   DUREX: TP1 hit → move SL to {s['trail_sl']} "
+                  f"(BE + {s['trail_sl_offset_atr']}×ATR)")
             print()
     else:
-        print("\n⏳ NO SETUPS válidos del mapping ahora.")
+        print("\n⏳ NO APPROVED setups right now.")
+
+    if vetoed:
+        print(f"\n{'─'*72}\n❌ {len(vetoed)} VETOED setup(s):")
+        for s in vetoed:
+            print(f"  {s['asset']:14s} {s['side']:5s} regime={s['regime']:18s}")
+            for v in s["vetos"]:
+                mark = "✓" if v["passed"] else "✗"
+                print(f"      {mark} {v['name']:12s} {v['reason']}")
 
     if args.show_all:
         if no_setup:
-            print(f"\n{'─'*70}\nAssets con regime tradeable pero sin setup actual ({len(no_setup)}):")
+            print(f"\n{'─'*72}\nNo setup ({len(no_setup)} assets):")
             for s in no_setup:
-                print(f"  {s['asset']:14s} regime={s['regime']:18s} strategy={s.get('strategy','-'):16s} (WR backtest {s.get('backtest_wr','-')}%)")
+                print(f"  {s['asset']:14s} regime={s['regime']:18s} "
+                      f"strategy={s.get('strategy','-'):16s}")
         if stand_aside:
-            print(f"\n{'─'*70}\nAssets STAND_ASIDE (regime no rentable en backtest) ({len(stand_aside)}):")
+            print(f"\n{'─'*72}\nStand aside ({len(stand_aside)} assets):")
             for s in stand_aside:
-                print(f"  {s['asset']:14s} regime={s['regime']:18s} reason: {s.get('reason','')}")
+                print(f"  {s['asset']:14s} regime={s.get('regime','—'):18s} "
+                      f"reason: {s.get('reason','')}")
 
 
 if __name__ == "__main__":
