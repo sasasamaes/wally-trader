@@ -12,6 +12,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+import punk_smart_state as state
+
 SCRIPTS_DIR = Path(__file__).resolve().parent
 
 
@@ -46,3 +48,31 @@ def veto_macro(setup: dict) -> VetoResult:
         return VetoResult("macro", False, chk.get("reason", "macro event"),
                           source="macro_gate")
     return VetoResult("macro", True, "clear", source="macro_gate")
+
+
+def veto_blacklist(setup: dict, now, memory_dir=None) -> VetoResult:
+    asset = setup["asset"]
+    if state.is_blacklisted(asset, now, memory_dir=memory_dir):
+        return VetoResult("blacklist", False,
+                          f"{asset} blacklisted (2 SL streak)",
+                          source="asset_sl_streaks.json")
+    return VetoResult("blacklist", True, "clean", source="asset_sl_streaks.json")
+
+
+def veto_correlation(setup: dict, memory_dir=None) -> VetoResult:
+    asset = setup["asset"]
+    side = setup["side"].upper()
+    bucket = state.bucket_of(asset)
+    if bucket is None:
+        return VetoResult("correlation", True,
+                          f"{asset} unbucketed — no correlation check",
+                          source="signals_received.csv")
+    open_pos = state.open_positions(memory_dir=memory_dir)
+    for p in open_pos:
+        if p["bucket"] == bucket and p["side"] == side and p["asset"] != asset:
+            return VetoResult(
+                "correlation", False,
+                f"{p['asset']} {side} already open in {bucket} bucket",
+                source="signals_received.csv")
+    return VetoResult("correlation", True, "no conflict",
+                      source="signals_received.csv")
