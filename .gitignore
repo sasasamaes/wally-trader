@@ -68,6 +68,9 @@ Thumbs.db
 claude-tradingview-mcp-trading/
 tradingview-mcp/
 
+# Discipline & Observability runtime cache (macro events + bitunix log errors)
+.claude/cache/
+
 # ML System — cache de data histórica Binance y modelos entrenados
 scripts/ml_system/data/
 scripts/ml_system/supervised/model/*.pkl
