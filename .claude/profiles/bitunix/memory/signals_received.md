@@ -135,10 +135,11 @@ Recalibrar filtros: SI/NO
 **Decisión:** HALF size ($50 margin, $2.35 risk = 1.18% capital) — origen: /punk-hunt self-generated, Asia early hour, R:R borderline 1.51 a TP1 / 2.57 a TP2
 
 **Resultado real:**
-  - Outcome: _pendiente_
-  - Exit price: _pendiente_
-  - PnL: _pendiente_
-  - Time to outcome: _pendiente_
+  - Outcome: manual
+  - Exit price: 2376.99
+  - PnL: 3.19
+  - Time to outcome: 1.1h
+  - Held 4-pilar al exit? Y
 
 **Aprendizaje:** _pendiente_
 
@@ -160,3 +161,16 @@ Recalibrar filtros: SI/NO
 - Estado: trade asegurado, runner activo a TP1 ($2,362) / TP2 ($2,350) / TP3 ($2,335)
 - Watchdog actualizado con nuevo SL=2380.30
 - Análisis data-driven respaldó mantener: Smart Money L/S 0.95 (cruzó <1), histórico 51% del tiempo bajo TP2, Hyper Wave 92.47 extremo. EV +$5.17 vs cerrar BE $0.
+
+### 🎉 CIERRE ETHUSDT.P SHORT (lun. 23:20 CR) — PRIMER TRADE GANADOR CON SISTEMA NUEVO
+- Entry: $2,380.26 | Exit: $2,376.99 (-$3.27 favorable a SHORT)
+- Volume cerrado: **0.812 ETH** (no 0.420 — user usó margin 2x del recomendado)
+- Leverage usado: **20X CRUZADO** (⚠️ viola regla #5 sagrada del proyecto — debe ser 10x cap aislado)
+- **PnL realizado: +$3.19116 USDT** (1.60% capital antes de fees)
+- Fees: $1.158
+- Net profit: +$2.03 USDT (1.02% capital)
+- Duración: 1h 20min (apenas excedió target 1h, filosofía rotativa OK)
+- Hourly rate efectivo: ~$1.52/h ⭐
+- **Vs target original:** ganó $3.19 vs TP1 fijo +$3.07 o TP1 adaptativo +$1.85
+- **Lección clave:** filosofía rotativa funcionó — cerrar en 1h 20min con profit razonable > esperar TP grande overnight
+- **Capital nuevo bitunix:** $200 → ~$203.19 (+1.6% en 1.33h, primer day positive)
