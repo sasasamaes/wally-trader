@@ -72,7 +72,7 @@ def is_bitunix_profile() -> bool:
 def log_error(msg: str, body: str = "") -> None:
     err_path = repo_root() / ".claude" / "cache" / "bitunix_log_errors.log"
     err_path.parent.mkdir(parents=True, exist_ok=True)
-    with err_path.open("a") as f:
+    with err_path.open("a", encoding="utf-8") as f:
         f.write(f"--- {datetime.now(CR_OFFSET).isoformat()} {msg} ---\n")
         if body:
             f.write(body + "\n")
@@ -182,8 +182,8 @@ def render_md_entry(fields: dict[str, str]) -> str:
 def append_md(md_path: Path, entry: str) -> None:
     md_path.parent.mkdir(parents=True, exist_ok=True)
     if not md_path.exists():
-        md_path.write_text("# Bitunix — Signals received\n\n## Histórico\n\n")
-    with md_path.open("a") as f:
+        md_path.write_text("# Bitunix — Signals received\n\n## Histórico\n\n", encoding="utf-8")
+    with md_path.open("a", encoding="utf-8") as f:
         f.write(entry)
 
 
@@ -196,7 +196,7 @@ def migrate_legacy_csv(csv_path: Path) -> bool:
     if not csv_path.exists() or csv_path.stat().st_size == 0:
         return False
 
-    with csv_path.open(newline="") as f:
+    with csv_path.open(newline="", encoding="utf-8") as f:
         reader = csv.reader(f)
         try:
             header = tuple(next(reader))
@@ -210,14 +210,14 @@ def migrate_legacy_csv(csv_path: Path) -> bool:
     for legacy_header, defaults in LEGACY_SCHEMAS:
         if header == legacy_header:
             # Backfill missing columns and rewrite
-            with csv_path.open(newline="") as f:
+            with csv_path.open(newline="", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 rows = list(reader)
             for row in rows:
                 for k, v in defaults.items():
                     row.setdefault(k, v)
             tmp_path = csv_path.with_suffix(csv_path.suffix + ".migrating")
-            with tmp_path.open("w", newline="") as f:
+            with tmp_path.open("w", newline="", encoding="utf-8") as f:
                 w = csv.DictWriter(f, fieldnames=CSV_FIELDS)
                 w.writeheader()
                 for row in rows:
@@ -239,7 +239,7 @@ def append_csv(csv_path: Path, fields: dict[str, str]) -> None:
         write_header = False
     else:
         write_header = True
-    with csv_path.open("a", newline="") as f:
+    with csv_path.open("a", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=CSV_FIELDS)
         if write_header:
             w.writeheader()
@@ -302,7 +302,7 @@ def find_open_entries(md_text: str, symbol: str) -> list[tuple[int, int, str]]:
 def update_md_outcome(md_path: Path, start: int, end: int,
                       outcome: str, exit_price: float, pnl: float | None,
                       duration_h: float, held_pillars: bool) -> None:
-    text = md_path.read_text()
+    text = md_path.read_text(encoding="utf-8")
     block = text[start:end]
     block = block.replace("Outcome: _pendiente_", f"Outcome: {outcome}")
     block = block.replace("Exit price: _pendiente_", f"Exit price: {_fmt_price(exit_price)}")
@@ -316,18 +316,18 @@ def update_md_outcome(md_path: Path, start: int, end: int,
             f"Time to outcome: {duration_h:.1f}h",
             f"Time to outcome: {duration_h:.1f}h\n  - Held 4-pilar al exit? {pillars_str}"
         )
-    md_path.write_text(text[:start] + block + text[end:])
+    md_path.write_text(text[:start] + block + text[end:], encoding="utf-8")
 
 
 def update_csv_outcome(csv_path: Path, row_index: int,
                        outcome: str, exit_price: float, pnl: float | None,
                        duration_h: float) -> None:
-    rows = list(csv.DictReader(csv_path.open()))
+    rows = list(csv.DictReader(csv_path.open(encoding="utf-8")))
     rows[row_index]["exit_price"] = _fmt_price(exit_price)
     rows[row_index]["exit_reason"] = outcome
     rows[row_index]["pnl_usd"] = f"{pnl:.2f}" if pnl is not None else ""
     rows[row_index]["duration_h"] = f"{duration_h:.1f}"
-    with csv_path.open("w", newline="") as f:
+    with csv_path.open("w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=CSV_FIELDS)
         w.writeheader()
         w.writerows(rows)
@@ -335,7 +335,7 @@ def update_csv_outcome(csv_path: Path, row_index: int,
 
 def find_open_csv_row(csv_path: Path, symbol: str) -> int | None:
     """Return index of the most recent open (no exit_price) row for symbol."""
-    rows = list(csv.DictReader(csv_path.open()))
+    rows = list(csv.DictReader(csv_path.open(encoding="utf-8")))
     for i in range(len(rows) - 1, -1, -1):
         if rows[i]["symbol"] == symbol and not rows[i].get("exit_price"):
             return i
@@ -356,7 +356,7 @@ def cmd_append_outcome(args: argparse.Namespace) -> int:
         print(f"No bitunix log found at {md_path}.", file=sys.stderr)
         return 1
 
-    md_text = md_path.read_text()
+    md_text = md_path.read_text(encoding="utf-8")
     open_entries = find_open_entries(md_text, args.symbol)
     if not open_entries:
         print(f"No open signal for {args.symbol}. Nothing to close.", file=sys.stderr)

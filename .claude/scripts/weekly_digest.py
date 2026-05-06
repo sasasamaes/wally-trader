@@ -116,7 +116,7 @@ def gather_profile_metrics(root: Path, week_start: date, week_end: date) -> list
         name = p.name
         config_path = p / "config.md"
         log_path = p / "memory" / "trading_log.md"
-        capital = extract_capital(config_path.read_text()) if config_path.exists() else "—"
+        capital = extract_capital(config_path.read_text(encoding="utf-8")) if config_path.exists() else "—"
         if name not in PROFILE_PARSERS:
             rows.append({
                 "profile": name, "capital": capital,
@@ -131,7 +131,7 @@ def gather_profile_metrics(root: Path, week_start: date, week_end: date) -> list
                 "trades": 0, "wr": "—", "status": "not started",
             })
             continue
-        m = PROFILE_PARSERS[name](log_path.read_text(), week_start, week_end)
+        m = PROFILE_PARSERS[name](log_path.read_text(encoding="utf-8"), week_start, week_end)
         rows.append({
             "profile": name, "capital": capital,
             "pnl_week": m["pnl_week"], "pnl_month": m["pnl_month"],
@@ -160,7 +160,7 @@ def render_macro_lookahead(root: Path, week_start_next: date) -> str:
     if not cache_path.exists():
         return "_(macro cache unavailable — refresh: bash .claude/scripts/macro_calendar.py)_\n"
     try:
-        cache = json.loads(cache_path.read_text())
+        cache = json.loads(cache_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return "_(macro cache malformed)_\n"
     horizon = week_start_next + timedelta(days=7)
@@ -275,7 +275,7 @@ Generated: {now.isoformat()}
     out_dir = cwd / DIGEST_DIR_REL
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / f"{week_str}.md"
-    out_path.write_text(md)
+    out_path.write_text(md, encoding="utf-8")
     print(f"weekly_digest: wrote {out_path}")
 
     if not no_notif:

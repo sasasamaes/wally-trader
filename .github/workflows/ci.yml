@@ -11,6 +11,10 @@ jobs:
   test:
     name: Tests + Lint + Adapter Sync
     runs-on: ${{ matrix.os }}
+    env:
+      # PEP 540 — force UTF-8 IO on all platforms (Windows defaults to cp1252
+      # which can't encode em-dashes / accented chars in our fixtures + outputs).
+      PYTHONUTF8: "1"
     strategy:
       fail-fast: false
       matrix:
