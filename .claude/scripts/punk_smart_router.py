@@ -31,6 +31,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from backtest_regime_matrix import (
     fetch, calc_atr, calc_rsi, calc_ema, calc_macd, calc_bb, calc_adx, calc_vwap,
     classify_regime, strat_a_vwap, strat_b_trending_pullback,
+    strat_c_bb_squeeze_break, strat_d_momentum_macd, strat_e_range_bounce,
 )
 import punk_smart_state as state
 import punk_smart_vetos as vetos
@@ -43,6 +44,9 @@ ASSETS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "MSTRUSDT", "AVAXUSDT",
 STRATEGY_FNS = {
     "A_VWAP": strat_a_vwap,
     "B_TrendPullback": strat_b_trending_pullback,
+    "C_BBSqueeze": strat_c_bb_squeeze_break,
+    "D_MACDMomentum": strat_d_momentum_macd,
+    "E_RangeBounce": strat_e_range_bounce,
 }
 
 MAPPING_FILE = Path(__file__).parent / "regime_mapping.json"
@@ -97,7 +101,8 @@ def evaluate_asset(symbol: str, mapping: dict, now: datetime) -> dict:
     strat_fn = STRATEGY_FNS.get(strategy_name)
     if strat_fn is None:
         return {**base, "status": "STRATEGY_UNAVAILABLE",
-                "strategy": strategy_name}
+                "strategy": strategy_name,
+                "reason": f"strategy {strategy_name} not registered in STRATEGY_FNS"}
     setup = strat_fn(bars_15m, bars_1h, i)
     if setup is None:
         return {
