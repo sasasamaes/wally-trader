@@ -391,6 +391,20 @@ def cmd_append_outcome(args: argparse.Namespace) -> int:
         print(f"ERROR: append-outcome failed ({e})", file=sys.stderr)
         return 1
 
+    # Hook for /punk-smart v2 state machine
+    try:
+        import punk_smart_state as _state
+        from datetime import datetime as _dt
+        sym_norm = args.symbol.replace(".P", "").upper()
+        now = _dt.now(_state.CR_OFFSET)
+        if args.outcome == "SL":
+            _state.record_sl(sym_norm, now,
+                              pnl_usd=(args.pnl if args.pnl is not None else 0.0))
+        elif args.outcome.startswith("TP"):
+            _state.record_tp(sym_norm, now)
+    except Exception as e:
+        log_error(f"punk_smart_state hook failed: {e}")
+
     print(f"bitunix_log: closed {args.symbol} with {args.outcome} at {_fmt_price(args.exit_price)}")
     return 0
 

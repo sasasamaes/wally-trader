@@ -28,13 +28,14 @@ Time-out: 6h (24 bars 15m)
 
 import json
 import sys
+import time
 import urllib.request
 from datetime import datetime
 from pathlib import Path
 
 ASSETS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "MSTRUSDT", "AVAXUSDT",
           "INJUSDT", "DOGEUSDT", "WIFUSDT", "XLMUSDT"]
-DAYS = 15
+DAYS = 60
 MARGIN = 100.0
 LEVERAGE = 10
 NOTIONAL = MARGIN * LEVERAGE
@@ -51,6 +52,51 @@ def fetch(symbol, interval, limit):
     except Exception as e:
         print(f"  WARN {symbol}: {e}", file=sys.stderr)
         return []
+
+
+def fetch_paginated(symbol: str, interval: str, days: int) -> list:
+    """Fetch up to `days` of bars by paginating Binance klines (1500-bar cap).
+
+    Strategy: walk forward in time, oldest-first, using endTime cursor.
+    De-duplicate by timestamp.
+
+    Termination: relies solely on `len(page) < 1500` (exchange returned less
+    than max → reached the start of history) and the target count check.
+    The cursor-progress guard (oldest >= end_ts) was intentionally omitted:
+    it would incorrectly fire in test mocks that return non-decreasing
+    timestamps, and in production the `len(page) < 1500` signal is sufficient.
+    """
+    bars_per_day = {"15m": 96, "1h": 24, "4h": 6}.get(interval, 96)
+    target = bars_per_day * days
+    seen: dict = {}
+
+    end_ts = None  # None = "now" on Binance; walk backward via endTime cursor
+    while len(seen) < target:
+        url = (f"https://fapi.binance.com/fapi/v1/klines"
+               f"?symbol={symbol}&interval={interval}&limit=1500")
+        if end_ts is not None:
+            url += f"&endTime={end_ts}"
+        try:
+            with urllib.request.urlopen(url, timeout=20) as resp:
+                page = json.loads(resp.read())
+        except Exception as e:
+            print(f"  WARN paginated {symbol}: {e}", file=sys.stderr)
+            break
+        if not page:
+            break
+        for b in page:
+            t = int(b[0])
+            seen[t] = {"t": t, "o": float(b[1]), "h": float(b[2]),
+                        "l": float(b[3]), "c": float(b[4]), "v": float(b[5])}
+        # Move cursor: endTime = oldest bar in this page minus 1ms
+        oldest = min(int(b[0]) for b in page)
+        end_ts = oldest - 1
+        time.sleep(0.1)
+        if len(page) < 1500:
+            break  # exchange returned less than max → reached the start
+
+    bars = sorted(seen.values(), key=lambda b: b["t"])
+    return bars[-target:] if len(bars) > target else bars
 
 
 def calc_atr(bars, period=14):
@@ -88,23 +134,28 @@ def calc_ema(values, period):
 
 
 def calc_macd(closes, fast=12, slow=26, signal=9):
+    """O(n) incremental MACD — avoids the O(n^2) rebuild-from-scratch bug."""
     if len(closes) < slow + signal:
         return None, None
-    ema_fast = calc_ema(closes, fast)
-    ema_slow = calc_ema(closes, slow)
-    if ema_fast is None or ema_slow is None:
-        return None, None
-    macd_line = ema_fast - ema_slow
-    # Compute signal as EMA of macd over recent bars
+    # Seed EMA_fast and EMA_slow from the first `slow` bars
+    mult_f = 2 / (fast + 1)
+    mult_s = 2 / (slow + 1)
+    mult_sig = 2 / (signal + 1)
+    ef = sum(closes[:fast]) / fast
+    es = sum(closes[:slow]) / slow
+    # Walk forward from bar `slow` onward, accumulating MACD values
     macd_history = []
-    for i in range(slow, len(closes) + 1):
-        ef = calc_ema(closes[:i], fast)
-        es = calc_ema(closes[:i], slow)
-        if ef and es:
-            macd_history.append(ef - es)
+    for v in closes[slow:]:
+        ef = (v - ef) * mult_f + ef
+        es = (v - es) * mult_s + es
+        macd_history.append(ef - es)
+    macd_line = macd_history[-1] if macd_history else 0
     if len(macd_history) < signal:
         return macd_line, None
-    sig = calc_ema(macd_history, signal)
+    # Compute signal EMA over macd_history
+    sig = sum(macd_history[:signal]) / signal
+    for m in macd_history[signal:]:
+        sig = (m - sig) * mult_sig + sig
     return macd_line, sig
 
 
@@ -347,25 +398,34 @@ def strat_e_range_bounce(bars_15m, bars_1h, i):
 
 
 # ===== Simulator (cierre escalonado 50/50) =====
-def simulate(setup, future_bars, max_bars=24):  # 6h
+def simulate(setup, future_bars, max_bars=24, trail_sl_offset_atr: float = 0.2):  # 6h
     if setup is None:
         return None
     e = setup["entry"]; sl = setup["sl"]; tp1 = setup["tp1"]; tp2 = setup["tp2"]
     side = setup["side"]
     duration = 0
     sl_hit = tp1_hit = tp2_hit = False
+    sl_active = sl  # mutable: shifts to BE+offset after TP1
+    # Approximate ATR from setup distances (tp1-entry as proxy for half-ATR scale)
+    atr_proxy = abs(tp1 - e)
+    trail_sl = (e + trail_sl_offset_atr * atr_proxy) if side == "LONG" \
+               else (e - trail_sl_offset_atr * atr_proxy)
     for k, bar in enumerate(future_bars[:max_bars]):
         duration = (k + 1) * 15
         if side == "SHORT":
-            if bar["h"] >= sl:
+            if bar["h"] >= sl_active:
                 sl_hit = True; break
             if bar["l"] <= tp2 and not tp2_hit: tp2_hit = True
-            if bar["l"] <= tp1 and not tp1_hit: tp1_hit = True
+            if bar["l"] <= tp1 and not tp1_hit:
+                tp1_hit = True
+                sl_active = trail_sl  # move SL to BE - 0.2*ATR
         else:
-            if bar["l"] <= sl:
+            if bar["l"] <= sl_active:
                 sl_hit = True; break
             if bar["h"] >= tp2 and not tp2_hit: tp2_hit = True
-            if bar["h"] >= tp1 and not tp1_hit: tp1_hit = True
+            if bar["h"] >= tp1 and not tp1_hit:
+                tp1_hit = True
+                sl_active = trail_sl  # move SL to BE + 0.2*ATR
         if tp2_hit:
             break
     if sl_hit and not tp1_hit:
@@ -376,9 +436,15 @@ def simulate(setup, future_bars, max_bars=24):  # 6h
         d2 = abs(tp2 - e) / e
         pnl_pct = d1 * 0.5 + d2 * 0.5
         outcome = "TP2"
+    elif tp1_hit and sl_hit:
+        # TP1 hit then SL on trail (locks small profit)
+        d1 = abs(tp1 - e) / e
+        trail_lock = trail_sl_offset_atr * atr_proxy / e
+        pnl_pct = d1 * 0.5 + trail_lock * 0.5
+        outcome = "TP1_TRAIL_SL"
     elif tp1_hit:
         d1 = abs(tp1 - e) / e
-        pnl_pct = d1 * 0.5  # 50% TP1, 50% BE
+        pnl_pct = d1 * 0.5  # 50% TP1, 50% riding (timeout)
         outcome = "TP1"
     else:
         if len(future_bars) >= max_bars:
@@ -405,6 +471,10 @@ def main():
     cells["UNKNOWN"] = {s: [] for s in STRATS}
     cells["MIXED"] = {s: [] for s in STRATS}
 
+    # Per-asset cells: cells_per_asset[asset][regime][strategy] = list of trades
+    cells_per_asset: dict = {a: {r: {s: [] for s in STRATS} for r in REGIMES + ["UNKNOWN", "MIXED"]}
+                              for a in ASSETS}
+
     print(f"{'='*80}")
     print(f"REGIME × STRATEGY MATRIX BACKTEST — {DAYS} días, {len(ASSETS)} assets")
     print(f"Margin ${MARGIN}, Lev {LEVERAGE}x, Fees {FEES_PCT}% RT")
@@ -412,8 +482,8 @@ def main():
 
     for sym in ASSETS:
         print(f"  {sym}...", file=sys.stderr)
-        b15 = fetch(sym, "15m", min(1500, 96 * DAYS))
-        b1h = fetch(sym, "1h", min(1500, 24 * DAYS + 60))
+        b15 = fetch_paginated(sym, "15m", days=DAYS)
+        b1h = fetch_paginated(sym, "1h", days=DAYS + 3)  # +3d cushion for 1h aggregations
         if not b15 or not b1h:
             continue
         last_trade_idx = {s: -100 for s in STRATS}
@@ -432,6 +502,7 @@ def main():
                 if result is None:
                     continue
                 cells[regime][sname].append({"asset": sym, **setup, **result})
+                cells_per_asset[sym][regime][sname].append({"asset": sym, **setup, **result})
                 last_trade_idx[sname] = i
 
     # ===== Output matrix =====
@@ -480,9 +551,45 @@ def main():
             mapping[regime] = None
             print(f"  {regime:<22} → INSUFFICIENT DATA (<5 trades any strategy)")
 
-    # ===== Export mapping JSON =====
+    # ===== Build per-asset mapping =====
+    per_asset_mapping: dict = {}
+    for asset in ASSETS:
+        per_asset_mapping[asset] = {}
+        for regime in REGIMES + ["UNKNOWN", "MIXED"]:
+            best = None
+            best_pnl = -9999
+            for sname in STRATS:
+                ts = cells_per_asset[asset][regime][sname]
+                if len(ts) < 10:  # threshold raised from 5 thanks to 60-day data
+                    continue
+                pnl = sum(t["pnl_usd"] for t in ts)
+                if pnl > best_pnl:
+                    best_pnl = pnl
+                    best = sname
+            if best:
+                ts = cells_per_asset[asset][regime][best]
+                wr = sum(1 for t in ts if t["pnl_usd"] > 0) / len(ts) * 100
+                if best_pnl > 0:  # only positive cells get promoted
+                    per_asset_mapping[asset][regime] = {
+                        "strategy": best, "n_trades": len(ts),
+                        "wr": wr, "pnl": best_pnl,
+                        "pnl_per_trade": best_pnl / len(ts),
+                    }
+        if not per_asset_mapping[asset]:
+            del per_asset_mapping[asset]  # don't write empty entries
+
+    # ===== Export mapping JSON (schema v2) =====
     out_file = Path(__file__).parent / "regime_mapping.json"
-    out_file.write_text(json.dumps(mapping, indent=2))
+    schema_v2 = {
+        "version": 2,
+        "vetos_enabled": ["macro", "blacklist", "correlation", "sentiment",
+                            "funding", "time_of_day"],
+        "dynamic_sizing": True,
+        "trail_sl_offset_atr": 0.2,
+        "global": mapping,
+        "per_asset": per_asset_mapping,
+    }
+    out_file.write_text(json.dumps(schema_v2, indent=2))
     print(f"\n✅ Mapping exportado a: {out_file}")
     print("   /punk-smart leerá este archivo para elegir estrategia por contexto.")
 
