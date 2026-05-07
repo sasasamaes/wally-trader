@@ -1,4 +1,4 @@
-.PHONY: doctor wally-mcp-install sync-oc sync-all notion-init notion-migrate notion-rollback sync-pull test-unit test-integration test-parity test help
+.PHONY: doctor wally-mcp-install sync-oc sync-all notion-init notion-migrate notion-rollback sync-pull test-unit test-integration test-parity test help hermes-install hermes-smoke hermes-daemon-install hermes-daemon-uninstall hermes-status
 
 VENV_PY := shared/wally_core/.venv/bin/python
 VENV_PIP := uv pip install --python $(VENV_PY)
@@ -60,3 +60,28 @@ test:  ## Run unit + integration + adapter tests
 	$(MAKE) test-unit
 	$(MAKE) test-integration
 	$(VENV_PY) -m pytest adapters/openclaw/test_transform.py -v
+
+# ── Hermes operational layer ──────────────────────────────────────────────────
+
+hermes-install:  ## Install/refresh Hermes adapter (regenerate skills + register MCPs)
+	bash adapters/hermes/install.sh
+
+hermes-smoke:  ## Smoke test the Hermes setup (6 checks)
+	bash scripts/hermes_smoke.sh
+
+hermes-daemon-install:  ## Load the Hermes daemon launchd plist
+	mkdir -p logs
+	cp .claude/launchd/com.wally.hermes-daemon.plist ~/Library/LaunchAgents/
+	launchctl load ~/Library/LaunchAgents/com.wally.hermes-daemon.plist
+	@echo "✓ Hermes daemon loaded. Check status: launchctl list | grep hermes"
+
+hermes-daemon-uninstall:  ## Unload the Hermes daemon launchd plist
+	launchctl unload ~/Library/LaunchAgents/com.wally.hermes-daemon.plist 2>/dev/null || true
+	rm -f ~/Library/LaunchAgents/com.wally.hermes-daemon.plist
+	@echo "✓ Hermes daemon unloaded"
+
+hermes-status:  ## Show Hermes daemon + MCP status
+	@echo "=== launchd ==="
+	@launchctl list | grep hermes || echo "  daemon not loaded"
+	@echo "=== MCPs ==="
+	@command -v hermes >/dev/null 2>&1 && hermes config get mcp.tradingview.command 2>/dev/null || echo "  hermes not on PATH"

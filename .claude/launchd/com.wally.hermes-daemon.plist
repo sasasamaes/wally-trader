@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  com.wally.hermes-daemon.plist
+  Keeps the Hermes Telegram bot alive on macOS login.
+
+  TODO: confirm Hermes daemon command before loading.
+  The ProgramArguments below uses "hermes serve" (likely correct for
+  Hermes v0.x server/daemon mode). If your version uses a different
+  subcommand (e.g. "hermes bot", "hermes daemon", "hermes run"),
+  update the <string> entries in ProgramArguments accordingly.
+
+  Install:
+    make hermes-daemon-install
+  Uninstall:
+    make hermes-daemon-uninstall
+  Logs:
+    tail -f /Users/josecampos/Documents/wally-trader/logs/hermes-daemon.log
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.wally.hermes-daemon</string>
+
+    <!-- TODO: confirm Hermes daemon command -->
+    <!-- Change "serve" to the correct subcommand for your Hermes version. -->
+    <!-- Common alternatives: hermes bot | hermes daemon | hermes run     -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/hermes</string>
+        <string>serve</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/josecampos/Documents/wally-trader</string>
+
+    <!-- Start automatically on user login -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- Restart if the process crashes or exits non-zero -->
+    <key>KeepAlive</key>
+    <true/>
+
+    <!-- Throttle rapid restart loops (seconds between restart attempts) -->
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+
+    <!-- Logs inside the repo so "make hermes-status" can easily tail them -->
+    <key>StandardOutPath</key>
+    <string>/Users/josecampos/Documents/wally-trader/logs/hermes-daemon.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/josecampos/Documents/wally-trader/logs/hermes-daemon.log</string>
+
+    <!-- Forward PATH so hermes can find node/python and the MCP servers -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin</string>
+        <key>HOME</key>
+        <string>/Users/josecampos</string>
+    </dict>
+
+    <key>ProcessType</key>
+    <string>Interactive</string>
+</dict>
+</plist>
