@@ -1,6 +1,6 @@
 # OpenClaw adapter (v1 — soporte total)
 
-Genera `.openclaw/skills/` desde `system/` para que [OpenClaw](https://openclaw.dev) cargue el sistema Wally Trader como skills nativos.
+Genera `.openclaw/skills/` desde `system/` para que [OpenClaw](https://openclaw.ai) cargue el sistema Wally Trader como skills nativos.
 
 <!-- TODO: refine narrative for OpenClaw once upstream docs are stable. Current adapter is based on agentskills.io compatibility (same standard as Hermes/OpenCode). -->
 

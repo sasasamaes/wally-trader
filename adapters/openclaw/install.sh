@@ -49,7 +49,7 @@ if [ -d "$OPENCLAW_HOME" ]; then
   fi
 else
   echo "ℹ️  OpenClaw not installed yet ($OPENCLAW_HOME missing). Skipping symlink."
-  echo "   Install OpenClaw: see https://openclaw.dev for installation instructions."
+  echo "   Install OpenClaw: see https://openclaw.ai for installation instructions."
   echo "   Then re-run this install.sh to create the symlink."
 fi
 
@@ -88,7 +88,7 @@ echo "✅ OpenClaw adapter ready."
 echo "   .openclaw/skills/ will auto-regenerate on git commit when system/ changes."
 echo ""
 echo "📋 Next steps:"
-echo "   1. Install OpenClaw (if not yet): see https://openclaw.dev for installation instructions"
+echo "   1. Install OpenClaw (if not yet): see https://openclaw.ai for installation instructions"
 echo "   2. openclaw setup    # configure model + provider"
 echo "   3. openclaw          # start interactive CLI (auto-loads AGENTS.md + skills)"
 echo ""

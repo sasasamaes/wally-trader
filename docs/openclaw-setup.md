@@ -19,7 +19,7 @@ Install `uv` if missing:
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-Install OpenClaw (see https://openclaw.dev for the latest install command):
+Install OpenClaw (see https://openclaw.ai for the latest install command):
 ```bash
 npm install -g @openclaw/cli
 ```
