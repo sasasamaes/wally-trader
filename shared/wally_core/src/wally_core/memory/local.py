@@ -32,13 +32,15 @@ class LocalBackend(MemoryBackend):
 
     def append_signal(self, profile: str, signal: Signal) -> str:
         path = self._signals_csv(profile)
-        write_header = not path.exists() or path.stat().st_size == 0
         row = signal.model_dump()
         row["ts"] = signal.ts.isoformat()
         row["side"] = signal.side.value
         row["decision"] = signal.decision.value
         row["outcome"] = signal.outcome.value
         with shared_write(path) as f:
+            # Check header inside the lock so concurrent processes don't
+            # each see an empty file and each write a duplicate header row.
+            write_header = f.seek(0, 2) == 0  # seek to end; 0 means file is empty
             writer = csv.DictWriter(f, fieldnames=self.SIGNAL_COLS)
             if write_header:
                 writer.writeheader()

@@ -1,4 +1,5 @@
 import os
+import multiprocessing
 import pytest
 from datetime import datetime, timezone
 from wally_core.memory import (
@@ -57,3 +58,37 @@ def test_health_check_returns_status(backend):
     h = backend.health_check()
     assert h["backend"] == "local"
     assert h["status"] in ("ok", "warn", "error")
+
+
+# ---------------------------------------------------------------------------
+# Concurrent-write integration test
+# ---------------------------------------------------------------------------
+
+def _writer_proc(profiles_dir_str, profile, n):
+    """Child process: writes n signals to LocalBackend."""
+    os.environ["WALLY_PROFILES_DIR"] = profiles_dir_str
+    from wally_core.memory.local import LocalBackend
+    b = LocalBackend()
+    for i in range(n):
+        b.append_signal(profile, _sample_signal(profile=profile))
+
+
+def test_concurrent_writes_preserve_all_rows(tmp_path, monkeypatch):
+    monkeypatch.setenv("WALLY_PROFILES_DIR", str(tmp_path / "profiles"))
+    procs = [
+        multiprocessing.Process(
+            target=_writer_proc,
+            args=(str(tmp_path / "profiles"), "bitunix", 10),
+        )
+        for _ in range(5)
+    ]
+    for p in procs:
+        p.start()
+    for p in procs:
+        p.join()
+
+    csv_path = tmp_path / "profiles" / "bitunix" / "memory" / "signals_received.csv"
+    assert csv_path.exists(), "CSV was never created"
+    rows = csv_path.read_text().strip().split("\n")
+    # header + 50 signal rows (5 processes × 10 signals each)
+    assert len(rows) == 51, f"Expected 51 lines (header + 50 rows), got {len(rows)}"
