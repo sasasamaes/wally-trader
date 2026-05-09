@@ -1,4 +1,4 @@
-.PHONY: doctor wally-mcp-install sync-oc sync-all notion-init notion-migrate notion-rollback sync-pull test-unit test-integration test-parity test help hermes-install hermes-smoke hermes-daemon-install hermes-daemon-uninstall hermes-status hermes-restart hermes-logs hermes-telegram-setup hermes-systemd-install hermes-systemd-uninstall hermes-doctor
+.PHONY: doctor wally-mcp-install sync-oc sync-all notion-init notion-migrate notion-rollback sync-pull test-unit test-integration test-parity test help hermes-install hermes-smoke hermes-daemon-install hermes-daemon-uninstall hermes-status hermes-restart hermes-logs hermes-telegram-setup hermes-systemd-install hermes-systemd-uninstall hermes-doctor dashboard dashboard-install dashboard-uninstall
 
 VENV_PY := shared/wally_core/.venv/bin/python
 VENV_PIP := uv pip install --python $(VENV_PY)
@@ -123,3 +123,19 @@ hermes-systemd-uninstall:  ## Remove Hermes systemd-user service
 
 hermes-doctor:  ## Extended smoke test (calls hermes-smoke + WSL/Linux specific checks)
 	bash scripts/hermes_smoke.sh
+
+# ── Dashboard ─────────────────────────────────────────────────────────────────
+
+dashboard:  ## Run the web dashboard on localhost:8080
+	$(VENV_PY) -m wally_core.dashboard_server
+
+dashboard-install:  ## Install dashboard deps + load launchd plist
+	$(VENV_PIP) -e "shared/wally_core[dashboard]"
+	mkdir -p logs
+	cp .claude/launchd/com.wally.dashboard.plist ~/Library/LaunchAgents/
+	launchctl load ~/Library/LaunchAgents/com.wally.dashboard.plist || true
+	@echo "Dashboard daemon installed. Open http://localhost:8080"
+
+dashboard-uninstall:  ## Stop + unload dashboard daemon
+	launchctl unload ~/Library/LaunchAgents/com.wally.dashboard.plist || true
+	rm -f ~/Library/LaunchAgents/com.wally.dashboard.plist

@@ -11,8 +11,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+dashboard = ["fastapi>=0.100", "uvicorn>=0.23", "httpx>=0.24"]
 notion = ["notion-client>=2.2"]
-test = ["pytest>=8.0", "pytest-cov>=4.1", "vcrpy>=6.0", "freezegun>=1.4"]
+test = ["pytest>=8.0", "pytest-cov>=4.1", "vcrpy>=6.0", "freezegun>=1.4", "httpx>=0.24"]
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]
