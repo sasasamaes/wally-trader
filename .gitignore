@@ -81,6 +81,7 @@ scripts/ml_system/**/*.parquet
 
 # Git worktrees (isolated dev branches)
 .worktrees/
+.claude/worktrees/
 
 # Personal trading log — gitignored para open source (contiene capital real + trades específicos)
 .claude/profiles/retail/memory/trading_log.md
