@@ -38,9 +38,28 @@ No es un bot automatizado. Es una **disciplina acompañada** — Claude hace el 
 
 ---
 
-## 🚀 Instalación rápida — un solo prompt por harness
+## 🚀 Instalación
 
-Pegá el prompt correspondiente en el agente que estés usando. El agente clona el repo, instala dependencias, configura el adapter y corre el smoke test. Tarda ~2-3 minutos.
+Pegá el prompt del harness que vayas a usar — el agente clona el repo, instala dependencias y corre el smoke test. **Tiempo: ~2-3 minutos.**
+
+### 🧭 ¿Qué harness elegir? (decision tree)
+
+```
+¿Querés operar desde el celular vía Telegram/Discord?
+    └── SÍ  → 🤝 Hermes  (línea 158)
+    └── NO  → ¿En qué OS estás?
+              ├── macOS / Linux nativo / WSL Ubuntu
+              │     └── ¿Qué CLI preferís?
+              │         ├── Claude Code (Anthropic, default)  → 🤖 línea 79
+              │         ├── OpenClaw (multi-modelo, OpenRouter) → 🐧 línea 104
+              │         └── OpenCode (open-source)             → 💻 línea 133
+              └── Windows nativo (sin WSL) → ❌ no soportado, instalá WSL2 Ubuntu
+```
+
+**Combinaciones más comunes:**
+- 💻 **macOS desk + 📱 Telegram remoto** → Claude Code + Hermes daemon (recomendado para uso diario)
+- 🪟 **Windows + WSL2 Ubuntu** → Hermes con `bash scripts/setup-windows-wsl.sh` (script auto-detecta y configura systemd)
+- 🌍 **Multi-device (Mac home + Windows oficina + iPhone)** → todos los adapters + Notion memory backend (estado sincronizado cross-device)
 
 ### 📋 Prerequisitos por plataforma
 
@@ -75,6 +94,12 @@ make --version
 **Conclusión práctica:**
 - **macOS**: experiencia completa (incluyendo Telegram → TV remoto via Hermes daemon).
 - **Linux/WSL**: análisis y memoria 100% funcionales; lo que falla son los componentes que dibujan en TV Desktop o usan launchd. Para drawing, mantener una Mac dedicada al MCP server de TV o ejecutar TV en Windows host con WSL2 forwarding.
+
+**Patrón híbrido recomendado para Windows users:**
+1. Hermes daemon corre en WSL Ubuntu (procesa Telegram + análisis + memoria)
+2. TradingView Desktop corre en Windows host (gratis, mismo login, layouts sincronizan via TV cloud)
+3. Memory backend en Notion (Hybrid mode) → estado compartido con tu Mac si tenés
+4. Resultado: `/punk-hunt`, `/regime`, `/signal` funcionan desde Telegram. Drawing TV requiere abrir TV Desktop manualmente o tunneling MCP.
 
 ### 🤖 Claude Code
 
@@ -157,80 +182,98 @@ Después leé AGENTS.md (si existe) o CLAUDE.md.
 
 ### 🤝 Hermes (Telegram / Discord / Slack)
 
-```
-Install the Wally Trader system for Hermes (multi-channel agent runtime).
-End goal: send /morning or /chart from Telegram and have it work, including
-drawing on TradingView Desktop.
+**Use case:** operar desde el celular vía Telegram (`/punk-hunt`, `/regime`, `/signal`) mientras tu Mac/PC mantiene el daemon corriendo y dibuja en TradingView Desktop.
 
-Steps:
+#### macOS — instalación rápida (3 minutos)
 
-1. If not in the repo, clone:
-   git clone https://github.com/sasasamaes/wally-trader && cd wally-trader
-
-2. If Hermes is not installed yet:
-   curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
-
-3. Install the shared library + MCP server:
-   make wally-mcp-install
-
-4. Activate the Hermes adapter (regenerates .hermes/skills/ AND auto-registers
-   tradingview + wally + notion MCP servers in Hermes config):
-   make hermes-install
-
-5. Verify with smoke test (6 checks):
-   make hermes-smoke
-
-6. Report:
-   - 6/6 checks passing? Which failed?
-   - Output of: hermes config get mcp.tradingview.command
-   - Output of: hermes config get mcp.wally.command
-   - Output of: hermes config get mcp.notion.command
-
-After this, the user still needs to manually:
-- Configure Telegram bot token (BotFather → hermes config set telegram.bot_token X)
-- Set allowed_chat_ids
-- Always-on daemon (depends on platform — see below)
-
-Read docs/hermes-setup.md for the full Telegram/daemon setup guide.
-```
-
-#### Instalación manual en WSL Ubuntu (pasos reales verificados)
-
-Si el `Makefile` no aplica (ej: WSL sin launchd, sin Mac), estos son los pasos manuales que funcionan:
-
-**1. Clonar el repo en WSL:**
 ```bash
+# 1. Clonar repo + instalar dependencias core
+git clone https://github.com/sasasamaes/wally-trader && cd wally-trader
+make wally-mcp-install
+
+# 2. Instalar Hermes CLI (si no lo tenés)
+curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
+
+# 3. Registrar adapter Hermes (skills + MCPs auto-config)
+make hermes-install
+
+# 4. Setup Telegram bot guiado (pide token de @BotFather + chat_id)
+make hermes-telegram-setup
+
+# 5. Smoke test (6 checks)
+make hermes-smoke
+
+# 6. Daemon siempre-on (launchd nativo)
+make hermes-daemon-install
+
+# Verificar
+make hermes-status
+```
+
+Después de esto, en Telegram mandá `/regime` a tu bot y debería responder en <30s.
+
+📖 **Guía completa:** [docs/hermes-quickstart.md](docs/hermes-quickstart.md) — incluye troubleshooting, comandos remotos disponibles y cross-device workflow.
+
+#### Windows + WSL2 Ubuntu — instalación automatizada (5 minutos)
+
+**Pre-requisito:** WSL2 Ubuntu instalado con systemd habilitado.
+
+```powershell
+# Desde PowerShell — habilitar systemd en WSL si no está
+wsl --install -d Ubuntu                                 # solo si no tenés Ubuntu
+# Después dentro de Ubuntu, edita /etc/wsl.conf:        # [boot]\nsystemd=true
+wsl --shutdown                                          # reinicia para aplicar systemd
+```
+
+```bash
+# Dentro de WSL Ubuntu:
 git clone https://github.com/sasasamaes/wally-trader ~/wally-trader
 cd ~/wally-trader
+
+# Setup automatizado (instala deps + Hermes + Notion + systemd unit)
+bash scripts/setup-windows-wsl.sh
+
+# Setup Telegram bot guiado
+make hermes-telegram-setup
+
+# Instalar daemon como systemd-user service
+make hermes-systemd-install
+
+# Smoke test extendido (incluye checks WSL específicos)
+make hermes-doctor
 ```
 
-**2. Instalar Hermes CLI:**
+📖 **Guía completa Windows/WSL:** [docs/hermes-quickstart.md#windows--wsl2-ubuntu-setup](docs/hermes-quickstart.md#windows--wsl2-ubuntu-setup) — incluye TV Desktop limitation, cross-OS sync via Notion, common issues.
+
+#### Linux nativo (Debian/Ubuntu/Fedora) — vía systemd
+
 ```bash
+git clone https://github.com/sasasamaes/wally-trader && cd wally-trader
+make wally-mcp-install
 curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
-# Hermes queda en ~/.local/bin/hermes
+make hermes-install
+make hermes-telegram-setup
+make hermes-systemd-install     # crea ~/.config/systemd/user/wally-hermes.service
+make hermes-doctor              # smoke test + checks Linux
 ```
 
-**3. Registrar las skills de wally-trader en Hermes:**
-```bash
-hermes config set skills.external_dirs '["/home/$USER/wally-trader/.hermes/skills"]'
-```
-Esto carga los ~85 skills del proyecto (wally-agents, wally-commands, wally-skills).  
-Verificar con: `hermes skills list | grep wally`
+#### Comandos útiles Hermes
 
-**4. Apuntar el directorio de trabajo al proyecto:**
+| Comando | Función |
+|---|---|
+| `make hermes-status` | Estado del daemon + MCPs cargados |
+| `make hermes-restart` | Restart daemon (auto-detecta launchd vs systemd) |
+| `make hermes-logs` | Tail del log (`logs/hermes-daemon.log`) |
+| `make hermes-doctor` | Smoke test extendido (CLI + skills + MCPs + venv) |
+| `make hermes-daemon-uninstall` / `hermes-systemd-uninstall` | Quitar daemon |
 
-Editar `~/.hermes/config.yaml` y cambiar la sección `terminal:`:
-```yaml
-terminal:
-  cwd: /home/<tu-usuario>/wally-trader
-```
-Esto hace que `AGENTS.md` se cargue automáticamente y todos los scripts Python tengan el path correcto.
+#### Configuración manual avanzada — modelos LLM (override)
 
-**5. Configurar el modelo LLM:**
+> **Nota:** lo que sigue es para casos donde querés override manual del modelo LLM o si el script automatizado falla. **Para instalación standard usá los pasos de la sección anterior** — `bash scripts/setup-windows-wsl.sh` y `make hermes-install` ya cubren lo siguiente.
 
-Hermes requiere mínimo 64K de contexto. Opciones:
+**Hermes requiere mínimo 64K de contexto.** Opciones de modelo:
 
-**Opción A — Ollama local + Anthropic (configuración real verificada en WSL):**
+##### Opción A — Ollama local + Anthropic fallback (recomendada para WSL)
 
 ```bash
 # Instalar Ollama
@@ -271,7 +314,7 @@ Estrategia de costos:
 - **OpenRouter free** como último recurso (puede tener rate-limit en horas pico)
 - Para análisis complejos puntuales: `/model claude-sonnet-4-6` en Telegram, volver con `/model hermes3:latest`
 
-**Opción B — Solo OpenRouter gratuito (sin Anthropic ni Ollama):**
+##### Opción B — Solo OpenRouter gratuito (sin Anthropic ni Ollama)
 
 Agrega `OPENROUTER_API_KEY=sk-or-...` en `~/.hermes/.env`. Modelos con 64K+ contexto que funcionan:
 - `qwen/qwen3-next-80b-a3b-instruct:free` (262K ctx)
@@ -280,7 +323,7 @@ Agrega `OPENROUTER_API_KEY=sk-or-...` en `~/.hermes/.env`. Modelos con 64K+ cont
 
 > Los modelos gratuitos de OpenRouter tienen rate-limit frecuente en horas pico. Sin Ollama local como fallback, el `/morning` puede fallar. Se recomienda Opción A.
 
-**6. Configurar proveedores auxiliares (compresión, títulos de sesión):**
+##### Proveedores auxiliares (compresión, títulos de sesión)
 
 Con Anthropic disponible, usar Haiku para tareas auxiliares (mejor calidad que Ollama local, costo mínimo):
 
@@ -338,89 +381,65 @@ auxiliary:
 
 Sin API key de Anthropic, usar Ollama para todos los auxiliares (ver sección anterior).
 
-**7. Configurar el bot de Telegram:**
-```bash
-# Obtener token de @BotFather en Telegram
-hermes config set telegram.bot_token "TU_TOKEN_AQUI"
+#### 📱 Acceso desde celular sin Telegram — iOS/Android PWA
 
-# Iniciar gateway
-hermes gateway start
-```
-
-**8. Verificar:**
-```bash
-hermes status           # gateway running + telegram configured
-hermes skills list      # debe mostrar 85 local skills
-```
-
-En Telegram, envía `/reset` y luego `/morning` para probar.
-#### 🔁 Daemon siempre-on por plataforma
-
-Para que Hermes responda mensajes de Telegram cuando vos no estás frente al equipo, necesita correr como servicio.
-
-**macOS (launchd)** — provisto out-of-the-box:
+Si preferís dashboard web en vez de chat:
 
 ```bash
-make hermes-daemon-install   # carga ~/Library/LaunchAgents/com.wally.hermes-daemon.plist
-launchctl list | grep hermes # verifica que arrancó
+# 1. Levantar el dashboard local (FastAPI en 127.0.0.1:8080)
+make dashboard
+
+# 2. Generar token mobile
+.claude/scripts/generate_mobile_token.sh
+# (output: $HOME/.wally/mobile_token)
+
+# 3. Exponer 8080 a tu LAN o vía Tailscale (recomendado)
+#    Tailscale: tailscale up; en el celular instalá Tailscale app + login mismo workspace
+
+# 4. iPhone Safari / Android Chrome
+#    Visitá http://<mac.local>:8080  → "Add to Home Screen"
 ```
 
-**Linux nativo / WSL2 con systemd** — crear unit manualmente:
+PWA expone read-only views: capital cross-profile, posiciones abiertas, tilt, heat, calibration, equity curve. Auth vía API key en header `X-Api-Key`.
 
-```bash
-mkdir -p ~/.config/systemd/user
-cat > ~/.config/systemd/user/wally-hermes.service <<'EOF'
-[Unit]
-Description=Wally Trader - Hermes Daemon
-After=network-online.target
+📖 **Guía completa:** [docs/IOS_PWA.md](docs/IOS_PWA.md)
 
-[Service]
-Type=simple
-WorkingDirectory=%h/wally-trader
-ExecStart=/usr/local/bin/hermes serve
-Restart=always
-RestartSec=10
-StandardOutput=append:%h/wally-trader/logs/hermes-daemon.log
-StandardError=append:%h/wally-trader/logs/hermes-daemon.log
+**Windows nativo (sin WSL)** — no soportado. Todo el sistema asume bash + Unix paths. Usá WSL2 Ubuntu.
 
-[Install]
-WantedBy=default.target
-EOF
+### ⚡ Atajo bash — instalar TODO de una vez (sin agente)
 
-mkdir -p ~/wally-trader/logs
-systemctl --user daemon-reload
-systemctl --user enable --now wally-hermes
-systemctl --user status wally-hermes
-```
-
-(Ajustá `WorkingDirectory` y `ExecStart` al path real de tu repo y de tu binario `hermes`.)
-
-**WSL2** requiere systemd habilitado. Si `systemctl --user` no funciona, agregá esto a `/etc/wsl.conf`:
-
-```ini
-[boot]
-systemd=true
-```
-
-Y reiniciá WSL: `wsl --shutdown` desde PowerShell, después abrí Ubuntu de nuevo. Ver [docs Microsoft](https://learn.microsoft.com/en-us/windows/wsl/systemd) para detalles.
-
-**Windows nativo (sin WSL)** — no soportado actualmente. Todo el sistema asume bash + Unix paths. Usá WSL2 Ubuntu.
-
-### ⚡ Atajo bash (sin agente)
-
-Si preferís terminal directa:
+Si preferís terminal directa y querés todos los adapters listos:
 
 ```bash
 git clone https://github.com/sasasamaes/wally-trader && cd wally-trader \
   && make wally-mcp-install \
-  && bash adapters/claude-code/install.sh \
-  && bash adapters/openclaw/install.sh \
-  && bash adapters/opencode/install.sh \
-  && make hermes-install \
+  && make sync-all \
   && make doctor
 ```
 
-Esto deja los 4 harnesses listos. Después podés usar el que prefieras según contexto.
+`make sync-all` corre los 5 install.sh: claude-code, openclaw, opencode, hermes, codex. Después usá el harness que prefieras según contexto.
+
+### 🧠 Memoria unificada cross-device — Notion (opcional pero recomendado)
+
+Si vas a usar wally-trader en **>1 device** (Mac home + Windows oficina + iPhone Telegram), configurá Notion como memory backend para que el estado quede sincronizado:
+
+```bash
+# 1. Crear integration en notion.so/my-integrations → copiar API key
+export NOTION_API_KEY=secret_...
+
+# 2. Inicializar workspace (crea 7 databases: profiles, signals, journal, etc.)
+make notion-init
+
+# 3. Migrar memoria local existente a Notion (idempotente)
+make notion-migrate
+
+# 4. Activar Hybrid mode (escribe local primero, async-mirror a Notion)
+echo "WALLY_MEMORY_BACKEND=hybrid" >> .env
+```
+
+Después, en cada nuevo device repetís `make notion-init` con la **misma** `NOTION_API_KEY` y obtenés acceso al mismo estado.
+
+📖 **Guía completa:** [docs/notion-memory-setup.md](docs/notion-memory-setup.md) — incluye templates, sync-pull/push, conflict resolution, brother walkthrough.
 
 ### 🩺 Verificación post-instalación
 
@@ -428,10 +447,25 @@ Esto deja los 4 harnesses listos. Después podés usar el que prefieras según c
 |---|---|
 | `make doctor` | Health check general (Python deps, MCP servers, profiles, locks) |
 | `make hermes-smoke` | 6 checks específicos de Hermes (CLI, skills, MCPs, venv) |
+| `make hermes-doctor` | Smoke extendido + checks WSL/Linux específicos |
 | `make test-unit` | 72 tests de lógica (regime, validate, risk, locking, memory) |
 | `make test-integration` | 27 tests de las MCP tools |
+| `make test` | Suite completa (unit + integration + adapter parity) — **113 tests** |
 
-Los 4 deben dar verde antes de operar capital real.
+Los 4 primeros deben dar verde antes de operar capital real.
+
+### 🔧 Troubleshooting común
+
+| Síntoma | Causa probable | Fix |
+|---|---|---|
+| `make: command not found` | Make no instalado | macOS: `xcode-select --install` · Linux/WSL: `sudo apt install make` |
+| `libomp` error en xgboost | Falta OpenMP runtime | macOS: `brew install libomp` · Linux: `sudo apt install libgomp1` |
+| `hermes: command not found` después de install | PATH no incluye `~/.local/bin` | `export PATH="$HOME/.local/bin:$PATH"` en `~/.bashrc` o `~/.zshrc` |
+| `systemctl --user` falla en WSL | systemd no habilitado | Editar `/etc/wsl.conf` `[boot]\nsystemd=true` + `wsl --shutdown` desde PowerShell |
+| Bot Telegram no responde | Daemon no arrancado o chat_id no autorizado | `make hermes-status` + verificar `allowed_chat_ids` |
+| `/chart` falla en Telegram | TV Desktop no abierto o en otro símbolo | Abrir TV Desktop manualmente en el símbolo correcto |
+| Notion sync lento o duplicados | Hybrid mode con conflict | `make sync-pull PROFILE=<name>` antes de operar |
+| Test suite roja en `multiprocessing` | macOS spawn flake (issue conocido) | Correr `pytest shared/wally_core/tests/test_locking.py` aislado |
 
 ---
 
