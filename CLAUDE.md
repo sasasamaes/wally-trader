@@ -448,6 +448,26 @@ Three new automated systems added in branch `feat/discipline-observability`:
 - Disclaimer: tratar output como **draft** que necesita 1 revisión visual + 1 backtest antes de confiar
 - Para strategies con backtester usa `strategy()` en vez de `indicator()` (preguntar al user si ambiguo)
 
+### `/liq-heatmap` — Liquidation cluster estimator (2026-05-09)
+- Slash command: `/liq-heatmap <SYMBOL>` estima clusters de liquidación sin APIs pagadas
+- CLI: `python3 .claude/scripts/liq_heatmap.py --symbol BTCUSDT --quick`
+- Combina: Binance Futures public data (OI, L/S retail+smart) + 24h price swings + leverage tier distribution (5x/10x/20x/50x/100x con weights típicos)
+- Output: top N clusters por side (LONG_LIQ price-down / SHORT_LIQ price-up) con heat score 0-100 + magnet (cluster más cercano con heat≥50)
+- Wire-in TV: dibuja líneas horizontales en TradingView para clusters heat≥70 (rojas LONG-side / verdes SHORT-side / sólida thicker para magnet)
+- Use cases: pre-trade (verificar SL no en honeypot), mid-trade (ajustar TP hacia magnet), squeeze setups (asymmetric long en short clusters densos)
+- Tests: 10/10 green en `test_liq_heatmap.py`
+- Limitaciones: aproximación, no es Coinglass real; solo Binance OI; falla en alts con OI <$5M
+
+### `/strategy-import` — Strategy distiller desde fuentes externas (2026-05-09)
+- Slash command: `/strategy-import youtube <URL>` | `file <PATH>` | `url <URL>` | `text "..."`
+- CLI: `python3 .claude/scripts/strategy_distill.py --youtube|--file|--url|--text ...`
+- Workflow Fase 1 — extracción: yt-dlp para YouTube auto-subs, pdftotext/PyPDF2 para PDFs, urllib + HTML strip para web URLs
+- Workflow Fase 2 — distilación (Claude): lee texto crudo en `.claude/strategy_imports/raw/<slug>.txt` y produce JSON declarativo en `.claude/strategy_imports/rules/<slug>.json` con schema (entry_rules, exit_rules, filters, asset_universe, timeframe, risk_per_trade_pct, etc.)
+- Filtros honest-first: rechaza promesas garantizadas ("100% WR"), esquemas pump-dump, content sin lógica clara (output `NOT_A_STRATEGY`)
+- Tests: 10/10 green en `test_strategy_distill.py`
+- Limitaciones: YT auto-subs imperfectos; PDFs scaneados (imágenes) requieren OCR previo; Twitter API no integrada (copiar texto manual)
+- Próximo: `/strategy-scan <slug>` (futuro) escaneará universe definido buscando setups que matcheen rules
+
 ### Bitunix signal log capture (#3)
 - Auto-log: cada `/signal` ejecutado con `WALLY_PROFILE=bitunix` appendea su reporte a `signals_received.md` y `.csv`
 - Cierre manual: `/log-outcome SYMBOL TP1|TP2|TP3|SL|manual EXIT_PRICE [--id N] [--pnl USD]`
