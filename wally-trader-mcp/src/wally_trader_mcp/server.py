@@ -18,6 +18,7 @@ from .tools.portfolio_heat import portfolio_heat as _portfolio_heat
 from .tools.auto_sl_tp import auto_sl_tp as _auto_sl_tp
 from .tools.tilt_check import tilt_check_tool as _tilt_check
 from .tools.divergence import divergence_check_tool as _divergence_check
+from .tools.correlation_report import correlation_report as _correlation_report
 
 mcp = FastMCP("wally-trader")
 
@@ -187,6 +188,12 @@ def tilt_check(
 def divergence_check(profile: str, window_days: int = 30) -> dict:
     """Live vs backtest calibration divergence."""
     return _divergence_check(profile, window_days)
+
+
+@mcp.tool()
+def correlation_report(symbols_csv: str, lookback_days: int = 30) -> dict:
+    """Pairwise correlation matrix (last N days returns)."""
+    return _correlation_report(symbols_csv, lookback_days)
 
 
 def main():

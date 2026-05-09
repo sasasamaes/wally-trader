@@ -62,15 +62,43 @@ def macos_notify(title: str, body: str, sound: str = "Glass") -> bool:
         return False
 
 
-# ---------- Channel: Telegram (stub) -------------------------
+# ---------- Channel: Telegram --------------------------------
 
-def telegram_send(title: str, body: str) -> bool:
+def telegram_send(title: str, body: str, inline_keyboard: list = None) -> bool:
+    """Send Telegram message with optional inline keyboard.
+
+    inline_keyboard: list of list of dicts {text, callback_data}
+    Example: [[{"text": "Close", "callback_data": "close"}, {"text": "Hold", "callback_data": "hold"}]]
+    """
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
     chat_id = os.environ.get("TELEGRAM_CHAT_ID")
     if not token or not chat_id:
-        return False  # silent no-op (v1 stub)
-    # Full implementation in v2
-    return False
+        return False
+
+    try:
+        import urllib.request
+        import urllib.parse
+        text = f"*{title}*\n{body}" if title else body
+        params = {"chat_id": chat_id, "text": text, "parse_mode": "Markdown"}
+        if inline_keyboard:
+            import json as _json
+            keyboard = {"inline_keyboard": inline_keyboard}
+            params["reply_markup"] = _json.dumps(keyboard)
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
+        data = urllib.parse.urlencode(params).encode()
+        req = urllib.request.Request(url, data=data, method="POST")
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            return resp.status == 200
+    except Exception as e:
+        try:
+            from datetime import datetime, timezone
+            log_path = _repo_root() / ".claude/cache/notify_errors.log"
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(log_path, "a") as f:
+                f.write(f"{datetime.now(timezone.utc).isoformat()} | telegram_send failed: {e}\n")
+        except Exception:
+            pass
+        return False
 
 
 # ---------- Channel: Email (stub) ----------------------------
