@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.wally.online-ml-retrain</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/josecampos/Documents/wally-trader/shared/wally_core/.venv/bin/python</string>
+        <string>/Users/josecampos/Documents/wally-trader/.claude/scripts/learning/online_ml_retrain.py</string>
+        <string>--profile</string>
+        <string>bitunix</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/josecampos/Documents/wally-trader</string>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Weekday</key>
+        <integer>0</integer>
+        <key>Hour</key>
+        <integer>13</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/josecampos/Library/Logs/wally-trader/online-ml-retrain.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/josecampos/Library/Logs/wally-trader/online-ml-retrain.err</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>

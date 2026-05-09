@@ -176,3 +176,27 @@ ascii:  ## ASCII sparkline (usage: make ascii SYM=BTCUSDT TF=1h BARS=60)
 	python3 .claude/scripts/ascii_chart.py --symbol $${SYM:-BTCUSDT} --tf $${TF:-1h} --bars $${BARS:-60}
 
 .PHONY: health backup ops-install ops-uninstall habit habit-checkin ascii
+
+learning-status:  ## Show learning layer status (L1-L8)
+	$(VENV_PY) -c "from wally_core.learning import calibration_report; import json; print(json.dumps(calibration_report(), indent=2))"
+
+learning-install:  ## Install all 6 learning launchd plists
+	mkdir -p ~/Library/LaunchAgents
+	cp .claude/launchd/com.wally.weekly-pattern-scan.plist ~/Library/LaunchAgents/
+	cp .claude/launchd/com.wally.weekly-composite-update.plist ~/Library/LaunchAgents/
+	cp .claude/launchd/com.wally.monthly-strategy-refresh.plist ~/Library/LaunchAgents/
+	cp .claude/launchd/com.wally.daily-drift-check.plist ~/Library/LaunchAgents/
+	cp .claude/launchd/com.wally.post-mortem-watcher.plist ~/Library/LaunchAgents/
+	cp .claude/launchd/com.wally.online-ml-retrain.plist ~/Library/LaunchAgents/
+	for p in weekly-pattern-scan weekly-composite-update monthly-strategy-refresh daily-drift-check post-mortem-watcher online-ml-retrain; do \
+	  launchctl load ~/Library/LaunchAgents/com.wally.$$p.plist || true; \
+	done
+	@echo "6 learning daemons loaded -- verify: launchctl list | grep wally"
+
+learning-uninstall:  ## Unload and remove all 6 learning launchd plists
+	for p in weekly-pattern-scan weekly-composite-update monthly-strategy-refresh daily-drift-check post-mortem-watcher online-ml-retrain; do \
+	  launchctl unload ~/Library/LaunchAgents/com.wally.$$p.plist 2>/dev/null || true; \
+	  rm -f ~/Library/LaunchAgents/com.wally.$$p.plist; \
+	done
+
+.PHONY: learning-status learning-install learning-uninstall

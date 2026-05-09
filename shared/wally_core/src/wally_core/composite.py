@@ -1,7 +1,9 @@
 """Composite signal score — combines all confluences into single 0-100 grade."""
 from __future__ import annotations
+import json
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 from typing import Optional
 
 
@@ -11,6 +13,40 @@ class SignalGrade(str, Enum):
     B = "B"  # 65-79
     C = "C"  # 50-64
     F = "F"  # <50
+
+
+# Default weights (used when no adaptive weights file is found)
+_DEFAULT_WEIGHTS = {
+    "multifactor": 0.25,
+    "regime_aligned": 0.20,
+    "ml": 0.20,
+    "sentiment": 0.15,
+    "macro_clear": 0.10,
+    "smart_router": 0.10,
+}
+
+
+def _load_adaptive_weights(
+    profile: Optional[str] = None,
+    profiles_dir: str = ".claude/profiles",
+) -> Optional[dict]:
+    """Load adaptive weights from profile learning directory.
+
+    Returns None if profile is None, file missing, or load fails — caller uses defaults.
+    """
+    if not profile:
+        return None
+    path = Path(profiles_dir) / profile / "memory" / "learning" / "composite_weights.json"
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text())
+        weights = data.get("weights") if isinstance(data, dict) else data
+        if isinstance(weights, dict) and len(weights) >= 6:
+            return weights
+        return None
+    except Exception:
+        return None
 
 
 @dataclass
@@ -30,9 +66,11 @@ def composite_signal_score(
     sentiment_score: int = 50,  # 0-100, 50 neutral
     macro_clear: bool = True,  # macro_gate_check returns no event in window
     smart_router_decision: str = "no_setup",  # approved/no_setup/vetoed/stand_aside
+    profile: Optional[str] = None,  # if set, loads adaptive weights from L3
+    profiles_dir: str = ".claude/profiles",
 ) -> CompositeScoreResult:
     """Weighted composite:
-    - 25% multifactor
+    - 25% multifactor (default, overridden by adaptive weights if available)
     - 20% regime alignment (binary 0 or 100)
     - 20% ml score (default 50 if unavailable)
     - 15% sentiment
@@ -43,7 +81,14 @@ def composite_signal_score(
     - macro_clear=False → score capped at 50
     - smart_router='vetoed' → score capped at 40
     - smart_router='stand_aside' AND regime_aligned=False → score capped at 30
+
+    Adaptive weights (L3): if profile is set and composite_weights.json exists,
+    those weights override defaults. Falls back to defaults if missing or invalid.
     """
+    # Load adaptive weights (L3 integration) — backward compat: None → use defaults
+    adaptive = _load_adaptive_weights(profile, profiles_dir)
+    weights = adaptive if adaptive is not None else _DEFAULT_WEIGHTS
+
     breakdown = {}
     veto_reasons = []
 
@@ -62,14 +107,14 @@ def composite_signal_score(
     }.get(smart_router_decision, 50)
     breakdown["smart_router"] = sr_score
 
-    # Weighted
+    # Weighted — use adaptive or default weights
     score = round(
-        0.25 * multifactor_score
-        + 0.20 * breakdown["regime_aligned"]
-        + 0.20 * breakdown["ml"]
-        + 0.15 * sentiment_score
-        + 0.10 * breakdown["macro_clear"]
-        + 0.10 * sr_score
+        weights.get("multifactor", 0.25) * multifactor_score
+        + weights.get("regime_aligned", 0.20) * breakdown["regime_aligned"]
+        + weights.get("ml", 0.20) * breakdown["ml"]
+        + weights.get("sentiment", 0.15) * sentiment_score
+        + weights.get("macro_clear", 0.10) * breakdown["macro_clear"]
+        + weights.get("smart_router", 0.10) * sr_score
     )
 
     # Apply hard caps
