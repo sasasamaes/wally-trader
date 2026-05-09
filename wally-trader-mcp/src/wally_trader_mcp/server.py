@@ -16,6 +16,7 @@ from .tools.levels_now import levels_now as _levels_now
 from .tools.macross_signal import macross_signal as _macross_signal
 from .tools.portfolio_heat import portfolio_heat as _portfolio_heat
 from .tools.auto_sl_tp import auto_sl_tp as _auto_sl_tp
+from .tools.tilt_check import tilt_check_tool as _tilt_check
 
 mcp = FastMCP("wally-trader")
 
@@ -169,6 +170,16 @@ def portfolio_heat(positions_json: str, capital_usd: float, max_heat_pct: float 
 def auto_sl_tp(entry: float, side: str, atr_pct: float, regime: str = "RANGE_CHOP") -> dict:
     """Compute volatility-adjusted SL + 4 staggered TPs (R:R 2.5/4/6/8)."""
     return _auto_sl_tp(entry, side, atr_pct, regime)
+
+
+@mcp.tool()
+def tilt_check(
+    profile: str,
+    recent_trades_json: str = "[]",
+    cooldown_file: str = ".claude/cache/cooldowns.json",
+) -> dict:
+    """Tilt detection + cooldown status for a profile."""
+    return _tilt_check(profile, recent_trades_json, cooldown_file)
 
 
 def main():
