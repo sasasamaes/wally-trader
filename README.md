@@ -257,6 +257,29 @@ make hermes-systemd-install     # crea ~/.config/systemd/user/wally-hermes.servi
 make hermes-doctor              # smoke test + checks Linux
 ```
 
+### 🤝 Hermes (Telegram / Discord / Slack)
+
+**Caso de uso:** operar desde el celular vía Telegram (`/punk-hunt`, `/regime`, `/signal`) mientras tu Mac/PC mantiene el daemon corriendo y dibuja en TradingView Desktop.
+
+#### Instalación y Configuración en un entorno tipo Hermes
+
+Si ya estás dentro de un agente Hermes (como ahora), los pasos para poner a punto `wally-trader` son:
+
+1.  **Actualizar el repositorio:** Asegurarse de tener la última versión.
+    ```bash
+    git pull origin main
+    ```
+2.  **Ejecutar el setup universal:** Instala todas las dependencias necesarias y configura los scripts.
+    ```bash
+    bash setup.sh
+    ```
+3.  **Verificar la instalación:** Correr el doctor para confirmar que todo está en orden.
+    ```bash
+    make doctor
+    ```
+
+Con estos 3 pasos, el sistema queda listo para operar desde Hermes.
+
 #### Comandos útiles Hermes
 
 | Comando | Función |
