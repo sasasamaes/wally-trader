@@ -270,6 +270,71 @@ Ordenar por score descendente. Mostrar Top-5 en tabla.
 absoluto es NO_TRADABLE, mencionarlo informativamente pero seleccionar el #1 con
 `tradeable=True` como TOP candidato real.
 
+### FASE 4.5 — Hard Vetoes (validados por backtest 2026-05-10)
+
+Antes de avanzar a FASE 5, los siguientes filtros DEBEN pasar. Si alguno falla, el setup
+es REJECT inmediato (sin importar score 70+).
+
+📊 **Backtest base:** 14 días × 10 altcoins × 713 setups score≥70.
+- WR base: **38.7%** (estrategia perdedora -92.93R sin filtros)
+- Con F1+F2: WR **51.1%** sobre 47 setups (+5.28R) ✅
+
+#### Veto F1 — Smart Money L/S contrario
+
+```bash
+# Pull top traders POSITION ratio (no API key)
+curl -s "https://fapi.binance.com/futures/data/topLongShortPositionRatio?symbol=<SYMBOL>&period=1h&limit=1"
+```
+
+| Setup direction | Smart Money L/S threshold | Acción |
+|---|---|---|
+| **SHORT** | ratio > **1.4** (longs cargados arriba) | ❌ REJECT |
+| **LONG**  | ratio < **0.7** (shorts cargados abajo) | ❌ REJECT |
+
+**Por qué:** smart money posicionado en contra significa que tienen incentivo económico de empujar el precio en tu contra para tomar profit. Backtest muestra que ignorar este filtro lleva a WR 38.7% en SHORT continuation (vs 42.7% con veto, +4pp).
+
+**Exception:** si ratio NO está disponible (asset sin data en Binance Futures) → continuar (no bloquear, asset puede ser exclusivo Bitunix).
+
+#### Veto F2 — Proximity to 24h extreme
+
+```python
+# Calcular distancia desde 24h extreme
+last_close = float(klines[-1][4])
+window_24h = klines[-96:]  # 96 × 15m = 24h
+high_24h = max(float(b[2]) for b in window_24h)
+low_24h = min(float(b[3]) for b in window_24h)
+
+if side == "SHORT":
+    dist_from_low = (last_close - low_24h) / low_24h * 100
+    if dist_from_low <= 2.0: VETO  # Bounce risk too high
+elif side == "LONG":
+    dist_from_high = (high_24h - last_close) / last_close * 100
+    if dist_from_high <= 2.0: VETO  # Reversal risk too high
+```
+
+| Setup direction | Distance threshold | Acción |
+|---|---|---|
+| **SHORT** | precio dentro 2% del 24h low | ❌ REJECT |
+| **LONG**  | precio dentro 2% del 24h high | ❌ REJECT |
+
+**Por qué:** entry cerca de extreme = bounce técnico predecible mata la thesis de continuación. Backtest: F1+F2 combo = WR 51.1% vs F1 solo = WR 42.7% (+8pp).
+
+#### Veto F3 (NO IMPLEMENTAR)
+
+Originalmente propuesto: "magnet liq within 5%". Backtest reveló que es **redundante** — 99.4% de setups ya cumplen. NO añadir como filtro.
+
+#### Output del veto
+
+Si setup pasa Fase 4 con score ≥70 pero falla algún Veto F1 o F2:
+```
+🟡 SETUP REJECTED (Veto Layer):
+  TONUSDT.P SHORT score 75
+  ❌ F1 fail: Smart Money L/S 1.62 > 1.4 threshold (longs cargados arriba)
+  ❌ F2 fail: precio $2.40 está -0.7% del 24h low $2.379 (riesgo bounce)
+  
+  Recomendación: skip, esperar mejor setup que pase los 2 vetos.
+```
+
 ### FASE 5 — Decisión: TOP score vs threshold + Time-Achievability Gate
 
 **Threshold base:** ≥70 (override con `--min-score`)
