@@ -1,18 +1,26 @@
-# 🌭 Wally Trader — Triple-Profile Trading System
+# 🌭 Wally Trader — Multi-Profile AI-Assisted Trading System
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-113%20passing-brightgreen.svg)](#)
+[![Tests](https://img.shields.io/badge/tests-323%20passing-brightgreen.svg)](#)
 [![Multi-CLI](https://img.shields.io/badge/harness-Claude%20Code%20%7C%20OpenClaw%20%7C%20OpenCode%20%7C%20Hermes-blue.svg)](#)
 [![Memory](https://img.shields.io/badge/memory-Local%20%7C%20Notion%20%7C%20Hybrid-purple.svg)](#)
+[![V3](https://img.shields.io/badge/version-V3%20pre--trade%20gates%20%2B%20L8%20learning-orange.svg)](#)
 
 > Nombrado en honor a **Wally**, perro salchicha y CEO mascota del proyecto.
 
-Sistema de trading algorítmico-asistido **triple-profile**: retail BingX BTCUSDT.P, FTMO MT5 multi-asset, y Fotmarkets bonus micro-capital. Construido sobre TradingView + Claude Code + Pine Script + MQL5 EA.
+Sistema de trading algorítmico-asistido **multi-profile** (7 profiles): retail Binance/BingX, FTMO MT5 multi-asset, FundingPips, Fotmarkets, Bitunix copy-validated, Quantfury BTC-denominated. Construido sobre TradingView + Claude Code + Pine Script + MQL5 EA.
 
 **Autor:** [Francisco Campos Diaz (@sasasamaes)](https://github.com/sasasamaes) · **License:** [MIT](LICENSE) · **Contribuciones:** ver [CONTRIBUTING.md](CONTRIBUTING.md)
 
-**Status actual:** Retail validado con 3 wins (+36.3% / $10 → $13.63). FTMO profile + MT5 bridge implementados. **Bitunix profile activo $200 con suite adaptativa completa** (`/punk-morning`, `/punk-hunt`, `/punk-watch` + scoring 4 confluencias Elite Crypto + TPs/SL adaptativos al contexto).
-**Objetivo:** Escalar retail $10 → $100, pasar challenge FTMO $10k fundeado, y ejecutar 1 trade/hora rotativo en bitunix capturando $20-100/día con WR ~70%.
+**Status actual:** Bitunix validado con 9 wins / 1 BE en sem 2026-W19 (WR 89% / +$112 net). Sistema V3 con 5-layer veto pipeline (macro + session + correlation + win-streak + extreme-momentum-pattern), backtest 14-day validation (WR 38% → 51% con F1+F2), y L8 self-learning desde user overrides (4 cases tracked, 100% WR).
+
+**🚀 V3 highlights (2026-05-09/10):**
+- **Pattern recognition** del winning signature documentado por L8 (`extreme_momentum_fade.py`)
+- **Session-quality gate** detectando Asia death zones (VWAP-flat detector)
+- **Liquidation heatmap** sin Coinglass (estima clusters con OI + L/S + leverage tiers)
+- **Strategy importer** desde YouTube/PDF/text (yt-dlp + Claude distillation)
+- **Pine v6 generator** desde lenguaje natural con auto-compile MCP
+- **Pre-mortem command** con 8 preguntas Klein-1998 obligatorias
 
 ---
 
@@ -257,13 +265,11 @@ make hermes-systemd-install     # crea ~/.config/systemd/user/wally-hermes.servi
 make hermes-doctor              # smoke test + checks Linux
 ```
 
-### 🤝 Hermes (Telegram / Discord / Slack)
+### 🤖 Hermes — uso desde el agente
 
-**Caso de uso:** operar desde el celular vía Telegram (`/punk-hunt`, `/regime`, `/signal`) mientras tu Mac/PC mantiene el daemon corriendo y dibuja en TradingView Desktop.
+**Caso de uso:** ya estás operando *desde dentro* de un agente Hermes y querés ponerlo al día con la última versión del repo.
 
-#### Instalación y Configuración en un entorno tipo Hermes
-
-Si ya estás dentro de un agente Hermes (como ahora), los pasos para poner a punto `wally-trader` son:
+Los pasos:
 
 1.  **Actualizar el repositorio:** Asegurarse de tener la última versión.
     ```bash
@@ -811,7 +817,39 @@ python3 .claude/scripts/bitunix_pairs_check.py --symbols DOGE,WIF # validar cust
 /neptune           leer outputs de indicadores Neptune
 ```
 
+**🆕 V3 — Pre-trade gates + pattern recognition (2026-05-09 / 2026-05-10):**
+```
+/pine-gen <desc>          🎨 Genera Pine Script v6 desde lenguaje natural + auto-compile en TV
+/liq-heatmap <SYMBOL>     🔥 Estima clusters de liquidación + magnet (sin Coinglass)
+/strategy-import youtube|file|text  📥 Distila estrategia desde YT/PDF/notas a JSON rules
+/premortem <args>         🔍 Pre-mortem 8 preguntas (Klein 1998) antes de entry
+/punk-watch               ⏱ Vigilancia adaptativa con magnet check (refinado)
+```
+
+**🆕 Auto-aplicados (sin comando, gates en validators):**
+```
+session_quality.py        🚫 VWAP-flat / Asia-chop detector (FASE 0.5)
+correlation_guard.py      🛡 Pre-entry risk concentration check
+extreme_momentum_fade.py  🌊 Detector del winning pattern documentado por L8
+backtest_punk_filters.py  📊 Validación stats de filtros (run histórico)
+```
+
+**FASE 4.5 — Hard Vetoes en `/punk-hunt` (validados por backtest 2026-05-10, 14d × 10 alts):**
+- F1: Smart Money L/S contrary (>1.4 SHORT, <0.7 LONG) → REJECT
+- F2: Entry within 2% del 24h extreme → REJECT (bounce/reversal risk)
+- F4: Correlation guard (>0.75 + same direction) → REJECT
+- F5: Win-streak cooldown (3+ wins → HALF, 5+ → SKIP_DAY)
+
+**FASE 4.4 — Extreme Momentum Fade pattern (NEW from L8 learning):**
+- Detectado en 4 user-overrides ganadores (DYDX 2x + TON + SUI = 100% WR, +$96.12 net)
+- Pattern signature codificado: pump 24h ≥+15% + RSI ≥75 + vol decay + retail-trapped divergence
+- Si match → F1+F2 vetoes son WARN (no BLOCK), score boost +10
+- Solo HARD_REJECT si smart money L/S >4.0 contra trade
+
+**Score threshold lift:** /punk-hunt MIN_SCORE 70 → 80 (data dice score 70-79 = WR 22%, score 80+ = WR 44%+)
+
 ⭐ = nuevos en esta versión (Chainlink + QuantMuse + Bitunix adaptive trading suite).
+🆕 = added 2026-05-09/10 (V3: pre-trade gates + pattern recognition + L8 learning).
 
 ---
 
