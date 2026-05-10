@@ -64,3 +64,64 @@
 - Capital $500-700: subir a $20 margin solo en A+ signals
 - Cualquier momento >$300 por encima de baseline → considerar retiro a wallet/uso
 
+
+---
+
+## 2026-05-09 → 2026-05-10 — TONUSDT.P SHORT (BE close ⚪)
+
+**Trade:**
+- Entry: $2.3997 (sat 11:59 CR)
+- Exit:  $2.3997 (sun 10:30 CR aprox.) → **BE manual close**
+- Hold: ~3h drawdown profundo + bounce a entry → cierre defensivo
+- Position: 402.9 TON SHORT @ 20x cross | Margin $49
+
+**P&L:**
+- **Realizado: $0.00** (BE)
+- Fee inicial: -$0.58 (taker market)
+- **Net: -$0.58**
+
+**Origen:** Self-generated `/punk-hunt` scan (score 75/100)
+- LH+LL 4/4 en 15m
+- ATR 1.33%
+- Vol $96M 24h
+- 24h chg -8% (momentum continuation thesis)
+
+**Por qué falló la thesis:**
+1. Entry justo encima del 24h low ($2.379) — bounce técnico predecible
+2. Smart Money L/S 1.62 (longs cargados arriba) → empujaron precio en contra
+3. Vol decay rápido (0.27x → 0.18x en 1h) = setup degradándose
+4. Magnet $2.36 (descubierto post-trade vía /liq-heatmap nuevo) nunca se alcanzó
+
+**Decisiones operativas:**
+1. ✅ NO promediaste cuando estaba -$12.61 (-25.7% margin) — disciplina
+2. ✅ NO movías SL caóticamente — paciencia
+3. ✅ Holdeaste cuando yo recomendé cut → resulted in BE save vs -$13 lock
+4. ✅ Saliste apenas regresó a entry → preserve capital, no greed
+
+**Lección sistémica para `/punk-hunt`:**
+> Setup score ≥75 NO es suficiente si:
+> - Smart Money L/S > 1.4 en dirección opuesta a tu trade
+> - Entry está dentro de 2% del 24h low/high (riesgo bounce alto)
+> - Magnet de liquidaciones está a >5% de distancia
+> 
+> Próxima iteración del scan debe incorporar L/S filter como hard veto + liq-heatmap proximity como soft filter.
+
+**Estado capital:**
+- Pre-trade: $200.00
+- Post-trade: **$199.42** (-$0.58 fee)
+- Day P&L: -0.29% (≈ flat)
+- Daily block (-6%): NO breached ✅
+
+**Slot summary día:**
+- Slots usados: 1/2
+- Trades ejecutados: 1
+- Win rate día: 0/1 (BE no cuenta como win ni loss)
+
+**Estadísticas semanales (sem 2026-W19):**
+- Trades cerrados: 9 (8W / 0L / 1BE)
+- WR weekly: 89% (excluyendo BE)
+- Capital trajectory: $200 → $442.45 → $200 (post-withdraw $242) → $199.42
+- Net realized week: +$112.37 (descontando fees y considerando withdrawal)
+
+**Disciplina mark:**
+- ⭐ Día neutral exitoso. En zona donde otros traders revenge-tradean tras drawdown, vos cerraste limpio y respetaste el sistema.
