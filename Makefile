@@ -65,6 +65,9 @@ hermes-install:  ## Install/refresh Hermes adapter (regenerate skills + register
 hermes-smoke:  ## Smoke test the Hermes setup (6 checks)
 	bash scripts/hermes_smoke.sh
 
+hermes-smoke-new:  ## Smoke test the new commands added 2026-05-09/10 (pine-gen, liq-heatmap, strategy-import)
+	bash scripts/hermes_smoke_new.sh
+
 hermes-daemon-install:  ## Load the Hermes daemon launchd plist
 	mkdir -p logs
 	cp .claude/launchd/com.wally.hermes-daemon.plist ~/Library/LaunchAgents/

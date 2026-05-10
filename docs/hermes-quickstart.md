@@ -34,15 +34,37 @@ Then: `/chart` → TradingView Desktop on your Mac redraws current setup.
 
 ## Commands available remotely
 
+### Core trading commands
 | Telegram command | Description |
 |---|---|
 | `/regime` | Detect current market regime (ADX + DI) |
 | `/status` | Show profile status + open trades |
 | `/punk-morning` | Pre-session bitunix scan |
-| `/punk-hunt` | Hunt for best setup now |
-| `/signal SYMBOL SIDE entry sl=X tp=Y` | Validate a signal |
+| `/punk-hunt` | Hunt for best setup now (with FASE 4.5 F1+F2 vetoes) |
+| `/punk-watch` | Adaptive watch on active bitunix trade |
+| `/signal SYMBOL SIDE entry sl=X tp=Y` | Validate a community signal |
 | `/chart` | Redraw current TV chart with levels |
+
+### New commands (2026-05-09 / 2026-05-10)
+| Telegram command | Description |
+|---|---|
+| `/liq-heatmap SYMBOL` | Estimate liquidation cluster levels — finds magnet zones where MMs hunt stops |
+| `/pine-gen <descripción>` | Generate Pine Script v6 indicator from natural language + auto-compile in TV |
+| `/strategy-import youtube <URL>` | Distill strategy from YouTube transcript into rules JSON |
+| `/strategy-import file <PATH>` | Distill strategy from PDF/MD/TXT |
+| `/strategy-import text "..."` | Distill from raw pasted text |
+
+### Pre-trade gates (auto-applied by validators)
+- **Macro events gate** (`macro_gate.py`) — blocks trades within ±30min of high-impact events
+- **Session-quality gate** (FASE 0.5) — blocks if VWAP-flat + range-compressed (Asia death zone detector)
+- **Punk-hunt vetoes** (FASE 4.5) — F1: Smart Money L/S contrary | F2: proximity to 24h extreme
+
+### Other utilities
+| Telegram command | Description |
+|---|---|
 | `/cushion --day-realized X --position-pnl Y --liq-distance-pct Z --capital N` | Cushion-aware hold/cut decision |
+| `/risk` | Position sizing for current profile |
+| `/journal` | Close day, append to log + dual-write Notion |
 
 ## Troubleshooting
 
