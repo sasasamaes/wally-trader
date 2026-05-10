@@ -289,10 +289,47 @@ Ordenar por score descendente. Mostrar Top-5 en tabla.
 absoluto es NO_TRADABLE, mencionarlo informativamente pero seleccionar el #1 con
 `tradeable=True` como TOP candidato real.
 
+### FASE 4.4 — Extreme Momentum Fade detector (NEW 2026-05-10, L8 learning)
+
+ANTES de aplicar los hard vetoes, chequear si el setup encaja en el pattern
+**Extreme Momentum Fade** documentado por L8 override tracker:
+
+```bash
+python3 .claude/scripts/extreme_momentum_fade.py --symbol <SYMBOL> --quick
+```
+
+**Track record del pattern (L8 calibration 2026-05-10):**
+- 4 cases documented (DYDX 2x, TON, SUI)
+- WR: **100%**
+- Avg P&L: **+$24.03**
+- Net: +$96.12
+
+**Pattern signature SHORT:**
+- 24h chg ≥ +15% O RSI 1H ≥ 75
+- Vol decay (last 1H vol < 0.5x peak hour)
+- RSI extreme overbought (≥80) bonus
+- Distance from peak <5% (entry near top)
+- Retail L/S > 1.6 + Smart < 1.5 = "retail trapped" divergence
+
+**Pattern signature LONG (mirror):**
+- 24h chg ≤ -8% O RSI 1H ≤ 25
+- Mirror conditions
+
+**Si verdict = STRONG_MATCH (score ≥70) o MATCH (score ≥50):**
+→ Pasa override más permisivo: vetoes F1+F2 son **WARN, no BLOCK**.
+→ El user override visual sobre setups de este pattern ha tenido 100% WR.
+→ Score boost: +10 al base score del scoring 4-confluencias.
+
+**Si verdict = HARD_REJECT (smart LS extremo >4.0 contra trade):**
+→ REJECT absoluto (incluso patrón coincide). Smart money extreme contra mata fade.
+
+**Si verdict = NO_MATCH:**
+→ Aplicar F1+F2 normal con strict thresholds.
+
 ### FASE 4.5 — Hard Vetoes (validados por backtest 2026-05-10)
 
-Antes de avanzar a FASE 5, los siguientes filtros DEBEN pasar. Si alguno falla, el setup
-es REJECT inmediato.
+Antes de avanzar a FASE 5, los siguientes filtros DEBEN pasar (excepto en pattern STRONG_MATCH FASE 4.4).
+Si alguno falla, el setup es REJECT inmediato.
 
 📊 **Backtest base:** 14 días × 10 altcoins × 713 setups score≥70.
 - WR base: **38.7%** (estrategia perdedora -92.93R sin filtros)
