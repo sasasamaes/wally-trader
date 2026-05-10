@@ -292,11 +292,19 @@ absoluto es NO_TRADABLE, mencionarlo informativamente pero seleccionar el #1 con
 ### FASE 4.5 — Hard Vetoes (validados por backtest 2026-05-10)
 
 Antes de avanzar a FASE 5, los siguientes filtros DEBEN pasar. Si alguno falla, el setup
-es REJECT inmediato (sin importar score 70+).
+es REJECT inmediato.
 
 📊 **Backtest base:** 14 días × 10 altcoins × 713 setups score≥70.
 - WR base: **38.7%** (estrategia perdedora -92.93R sin filtros)
 - Con F1+F2: WR **51.1%** sobre 47 setups (+5.28R) ✅
+- **Score≥80 + F1+F2: WR ~60%+ esperado** (sample n=34 mostró WR 44.1% sin vetoes)
+
+**📈 LIFT 2026-05-10:** threshold mínimo subido de **70 → 80** basado en backtest:
+- Score 70-79: WR solo 22.2% (ruido predominante)
+- Score 80-89: WR 44.1% (zona viable con vetoes)
+- Score 90-100: WR 47.6% (premium signals)
+
+`MIN_SCORE = 80` (override `--min-score 70` permitido pero NO recomendado).
 
 #### Veto F1 — Smart Money L/S contrario
 
@@ -341,6 +349,37 @@ elif side == "LONG":
 #### Veto F3 (NO IMPLEMENTAR)
 
 Originalmente propuesto: "magnet liq within 5%". Backtest reveló que es **redundante** — 99.4% de setups ya cumplen. NO añadir como filtro.
+
+#### Veto F4 — Correlation Guard (added 2026-05-10)
+
+```bash
+python3 .claude/scripts/correlation_guard.py --symbol <SYMBOL> --side <SIDE> --quick
+```
+
+Si el verdict es BLOCK → REJECT. Razón: ya tenés posición en otro asset altamente correlacionado (>0.75) en la MISMA dirección = riesgo doblado, no diversificado. Ejemplos clásicos: ETH SHORT + SOL SHORT (corr ~0.85 en cripto), o DOGE LONG + SHIB LONG (memes corr ~0.9).
+
+Exit codes:
+- `0` (OK) → continuar
+- `1` (BLOCK) → REJECT
+- `2` (WARN) → permitir pero size 70% del normal
+
+#### Veto F5 — Win-Streak Cooldown (added 2026-05-10)
+
+Read recent closed trades (últimos 7 días). Si hay **3+ wins consecutivas** sin loss/BE intermedio → forzar HALF SIZE para próximo trade. Si **5+ wins** → SKIP_DAY (cerrar sesión).
+
+Razón: overconfidence post-streak es la causa #1 de give-back de profits. Mirror del tilt detector pero en la dirección opuesta.
+
+```python
+from wally_core.discipline import win_streak_advice, TradeRecord
+
+# Build TradeRecord list from signals_received.csv (last 7 days)
+advice = win_streak_advice(recent_trades)
+
+if advice.advice == "SKIP_DAY":
+    return REJECT(reason=f"5+ wins streak — close session, take the W")
+if advice.advice == "HALF_SIZE":
+    proposed_margin *= 0.5
+```
 
 #### Output del veto
 

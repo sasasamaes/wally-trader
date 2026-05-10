@@ -280,3 +280,65 @@ def discipline_scorecard(
         "avg_pnl_usd": round(sum(t.pnl_usd for t in recent_trades) / n, 2),
         "score": max(0, 100 - cooldown_breaches * 20 - checklist_overrides * 10),
     }
+
+
+# -----------------------------------------------------------------------------
+# Win-streak detection — overconfidence prevention (added 2026-05-10)
+# -----------------------------------------------------------------------------
+
+
+@dataclass
+class WinStreakAdvice:
+    """Advice based on consecutive win count."""
+    consecutive_wins: int
+    advice: str  # NORMAL_SIZE | HALF_SIZE | SKIP_DAY
+    reason: str
+    size_multiplier: float  # 1.0 normal, 0.5 half, 0.0 skip
+
+
+def win_streak_advice(recent_trades: list[TradeRecord]) -> WinStreakAdvice:
+    """Detect win streaks and recommend size reduction to prevent overconfidence.
+
+    Mirror of tilt detection but for the OPPOSITE bias — after multiple wins,
+    traders often increase size, get sloppy, give back profits.
+
+    Rules:
+      - 0-2 wins streak: NORMAL_SIZE (no change)
+      - 3-4 wins streak: HALF_SIZE (reduce 50%) — disciplinary brake
+      - 5+ wins streak: SKIP_DAY (close session) — take the W, don't push luck
+
+    Considers ONLY consecutive wins from most recent trade backwards. A loss
+    or BE between wins resets the counter.
+    """
+    if not recent_trades:
+        return WinStreakAdvice(0, "NORMAL_SIZE", "No recent trades", 1.0)
+
+    # Sort by timestamp descending; count consecutive non-losses from most recent
+    sorted_trades = sorted(recent_trades, key=lambda t: t.timestamp, reverse=True)
+    streak = 0
+    for t in sorted_trades:
+        if t.is_loss:
+            break
+        # Only count actual wins (positive PnL), not BE
+        if t.pnl_usd > 0:
+            streak += 1
+        else:
+            break  # BE counts as streak-breaker too (no win)
+
+    if streak >= 5:
+        return WinStreakAdvice(
+            streak,
+            "SKIP_DAY",
+            f"{streak} consecutive wins — overconfidence zone. Close session, "
+            f"book the W, fresh mind tomorrow.",
+            0.0,
+        )
+    if streak >= 3:
+        return WinStreakAdvice(
+            streak,
+            "HALF_SIZE",
+            f"{streak} consecutive wins — bias toward overconfidence. "
+            f"Take next trade at HALF size as disciplinary brake.",
+            0.5,
+        )
+    return WinStreakAdvice(streak, "NORMAL_SIZE", "Streak normal range", 1.0)
