@@ -1,19 +1,19 @@
 # Dragno AI — Tracking Summary
 
-_Last updated: 2026-05-10 20:35:49_
+_Last updated: 2026-05-10 20:59:25_
 
 ## Aggregate
 
 | Metric | Value |
 |---|---|
-| Trades total | 14 |
+| Trades total | 16 |
 | Days tracked | 1 |
-| Trades / day | 14.0 |
-| Win Rate | 57.14% |
-| Profit Factor | 1.687 |
-| Net PnL | $+1.0792 |
+| Trades / day | 16.0 |
+| Win Rate | 50.0% |
+| Profit Factor | 1.236 |
+| Net PnL | $+0.5052 |
 | Avg win | $+0.3312 |
-| Avg loss | $-0.2618 |
+| Avg loss | $-0.2681 |
 | Best win | $+0.8132 |
 | Worst loss | $-0.5946 |
 
@@ -21,17 +21,17 @@ _Last updated: 2026-05-10 20:35:49_
 
 | Metric | Value |
 |---|---|
-| New net PnL | $+1.6860 |
-| Delta | $+0.6068 (+56.2%) |
-| SL hits | 2 |
-| New Profit Factor | 2.749 |
+| New net PnL | $+1.1618 |
+| Delta | $+0.6567 (+130.0%) |
+| SL hits | 4 |
+| New Profit Factor | 1.781 |
 | New worst loss | $-0.2758 |
 
 ## By Side
 
 | Side | Count | Wins | Net PnL |
 |---|---|---|---|
-| LONG | 5 | 3 | $+0.3676 |
+| LONG | 7 | 3 | $-0.2065 |
 | SHORT | 9 | 5 | $+0.7117 |
 
 ## Top 3 Winners
@@ -48,7 +48,7 @@ _Last updated: 2026-05-10 20:35:49_
 |---|---|---|
 | SUSDT | -19.92% | $-0.5946 |
 | VIRTUALUSDT | -15.28% | $-0.5268 |
-| PIEVERSEUSDT | -4.84% | $-0.1634 |
+| TAOUSDT | -8.97% | $-0.3023 |
 
 ## Caveat
 
