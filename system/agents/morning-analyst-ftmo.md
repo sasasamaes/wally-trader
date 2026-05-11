@@ -181,6 +181,16 @@ Sugerir `alert_create` en P1, P2, y break de PDH/PDL.
 - Force exit 16:00 CR
 - No overnight
 
+### Fase Fib Extension multi-asset (NUEVO 2026-05-10)
+
+Para cada asset del watchlist activo, corre:
+
+```bash
+python3 .claude/scripts/fib_extension.py --symbol $ASSET --tf 1w --quick
+```
+
+Si `level_label != OK`, surface en el reporte como "Exhaustion candidate" con el nivel y precio del siguiente fib. **Informativo solamente — no bloquea trades**. Para FTMO/FundingPips assets (XAUUSD, NAS100, SPX500), si están en EXHAUSTION_HIGH o EXTREME, sesgo a NO operar long o priorizar shorts.
+
 ### FASE 14 — VEREDICTO FINAL
 Resumen ejecutivo:
 - Asset seleccionado (o SKIP HOY)

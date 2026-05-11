@@ -60,6 +60,31 @@ Decisión por exit code:
 - `1` (BLOCK) → respuesta inmediata `NO-GO: session dead (VWAP-flat + range compressed). Wait for breakout candle.` NO seguir con filtros.
 - Cualquier otro exit (ERROR fetching klines) → continuar pero loggear warning. No bloquear por fallo de feed.
 
+### FASE 0.6 — Macro tier check (NUEVO 2026-05-10)
+
+Run before evaluating 4 filters:
+
+```bash
+python3 .claude/scripts/macro_gate.py --check-tier
+```
+
+- `tier=HARD` → **NO-GO** (already enforced by existing macro check, but surface explicitly here)
+- `tier=WARN` → reduce size 50%, continue
+- `tier=SOFT` → INFO message, continue (informativo, no bloquea)
+- `tier=OK` → continue normalmente
+
+### FASE 0.7 — Volume/OBV divergence (NUEVO 2026-05-10)
+
+Para la dirección propuesta del trade, corre:
+
+```bash
+python3 .claude/scripts/volume_divergence.py --symbol $SYMBOL --tf 1h --direction $SIDE --quick
+```
+
+- `verdict=WARN_DIVERGENCE_AGAINST_LONG` o `_SHORT` → reduce size 50%, surface warning textual
+- `verdict=OK` → continue silently
+- `divergence=INSUFFICIENT_DATA` → INFO, no bloquea
+
 ## Protocolo
 
 ### 1. Lee estado actual

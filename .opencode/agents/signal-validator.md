@@ -71,6 +71,37 @@ Decisión por exit code:
 
 **Excepción bitunix:** profile bitunix puede operar señales comunidad incluso con WARN si el setup tiene multifactor>+50 (override visual válido), pero NUNCA con BLOCK.
 
+### FASE 0.6 — Macro tier check (NUEVO 2026-05-10)
+
+```bash
+python3 .claude/scripts/macro_gate.py --check-tier
+```
+
+- `HARD` → NO-GO
+- `WARN` → reduce size 50%, continue
+- `SOFT` → INFO message + sugiere alternativa tier-0 (MUGRES) si profile=bitunix
+- `OK` → continue
+
+### FASE 0.7 — Volume/OBV divergence (NUEVO 2026-05-10)
+
+```bash
+python3 .claude/scripts/volume_divergence.py --symbol $SYMBOL --tf 1h --direction $SIDE --quick
+```
+
+- `WARN_DIVERGENCE_AGAINST_*` → reduce size 50%, surface warning
+- `OK` → continue silently
+
+### FASE 0.8 — USDT.D bias (NUEVO 2026-05-10)
+
+```bash
+python3 .claude/scripts/usdtd_tracker.py --quick
+```
+
+Lectura del `btc_inverse_bias`:
+- LONG signal + bias=BEARISH (USDT.D subiendo) → WARN textual (capital rota a stables)
+- SHORT signal + bias=BULLISH (USDT.D bajando) → WARN textual (capital sale de stables)
+- Aligned o NEUTRAL → continue silently
+
 ## 🔍 Parsing de la señal
 
 El usuario te puede dar una señal en varios formatos:

@@ -136,6 +136,19 @@ Si rechaza y vuelve a 76k → RANGE continúa
 Recomendación temporal: ESPERAR próximo close 4H antes de operar.
 ```
 
+### USDT.D context (NUEVO 2026-05-10)
+
+Después de clasificar el régimen BTC, corre:
+
+```bash
+python3 .claude/scripts/usdtd_tracker.py --quick
+```
+
+Anexa al reporte: `USDT.D` actual + `btc_inverse_bias`. Es un factor de confluencia (no override del régimen):
+- USDT.D UP (bias BEARISH) + BTC RANGE → sesgo bajista en el rango
+- USDT.D DOWN (bias BULLISH) + BTC RANGE → sesgo alcista en el rango
+- USDT.D FLAT → sin info adicional
+
 ## Nunca
 
 - Nunca clasificar VOLATILE con optimismo — si es volátil es NO OPERAR

@@ -257,6 +257,16 @@ Recordar: max 3 trades, 2 SLs → stop, nunca mover SL en contra, pausa 30 min p
 ### FASE 15: VEREDICTO
 Una línea clara.
 
+### Fase Fib Extension (NUEVO 2026-05-10)
+
+Para BTC, corre:
+
+```bash
+python3 .claude/scripts/fib_extension.py --symbol BTCUSDT --tf 1w --quick
+```
+
+Si `level_label != OK`, surface en el reporte matutino con etiqueta "Exhaustion candidate" y el nivel (MILD=150%, HIGH=200%, EXTREME=261.8%). **Informativo solamente — no bloquea trades**. Útil como contexto: si BTC está en EXHAUSTION_HIGH semanal, sesgo a fades / take profits anticipados.
+
 ### FASE 16 (fin de día si aplica): Journal
 Actualizar `trading_log.md` con trades del día.
 
