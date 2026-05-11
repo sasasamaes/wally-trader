@@ -45,6 +45,17 @@ def md_path() -> Path:
     return repo_root() / "memory" / "external_traders" / "dragno_ai.md"
 
 
+def derive_margin(pyg_pct: float, pyg_usd: float) -> float:
+    """Derive position margin from PYG% and PYG USD.
+
+    Bitunix shows PYG% on margin (leverage-adjusted). Margin = |pyg_usd| / (|pyg_pct|/100).
+    Returns 0.0 if pyg_pct is zero (avoid divide-by-zero).
+    """
+    if pyg_pct == 0.0:
+        return 0.0
+    return abs(pyg_usd) / (abs(pyg_pct) / 100.0)
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description="Track Dragno AI bot trades")
     group = p.add_mutually_exclusive_group(required=True)
