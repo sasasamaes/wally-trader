@@ -12,7 +12,7 @@ Options:
 from __future__ import annotations
 
 import argparse
-import csv
+import csv as _csv
 import json
 import sys
 from datetime import datetime
@@ -106,6 +106,60 @@ def parse_input_rows(raw: list[dict]) -> list[dict]:
         normalized["margin_est"] = round(derive_margin(normalized["pyg_pct"], normalized["pyg_usd"]), 4)
         out.append(normalized)
     return out
+
+
+NUMERIC_FIELDS = ("leverage", "entry", "exit", "pyg_pct", "pyg_usd", "margin_est", "duration_min")
+
+
+def read_rows() -> list[dict]:
+    """Read CSV into list of dicts with numeric fields coerced. Returns [] if missing/empty."""
+    path = csv_path()
+    if not path.exists():
+        return []
+    with path.open(newline="") as f:
+        reader = _csv.DictReader(f)
+        rows = []
+        for raw in reader:
+            row = dict(raw)
+            for k in NUMERIC_FIELDS:
+                if k in row and row[k] != "":
+                    try:
+                        row[k] = int(row[k]) if k in ("leverage", "duration_min") else float(row[k])
+                    except ValueError:
+                        pass
+            rows.append(row)
+        return rows
+
+
+def write_rows(rows: list[dict]) -> None:
+    """Overwrite the CSV with the given rows (creates parent dirs)."""
+    path = csv_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="") as f:
+        writer = _csv.DictWriter(f, fieldnames=CSV_FIELDS)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({k: row.get(k, "") for k in CSV_FIELDS})
+
+
+def _dedup_key(row: dict) -> tuple[str, str, str]:
+    return (str(row["date"]), str(row["time_open"]), str(row["symbol"]).upper())
+
+
+def append_rows_dedup(new_rows: list[dict]) -> int:
+    """Append rows to CSV, skipping any whose dedup key already exists. Returns count added."""
+    existing = read_rows()
+    seen = {_dedup_key(r) for r in existing}
+    added = 0
+    for r in new_rows:
+        if _dedup_key(r) in seen:
+            continue
+        existing.append(r)
+        seen.add(_dedup_key(r))
+        added += 1
+    if added > 0:
+        write_rows(existing)
+    return added
 
 
 def main() -> int:

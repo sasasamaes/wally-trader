@@ -61,3 +61,51 @@ def test_parse_input_rows_rejects_malformed():
         assert False, "Should have raised"
     except (KeyError, ValueError):
         pass
+
+
+import csv as _csv
+import pytest
+
+
+@pytest.fixture
+def tmp_csv(tmp_path, monkeypatch):
+    """Isolated CSV path."""
+    path = tmp_path / "dragno_ai.csv"
+    monkeypatch.setattr(dt, "csv_path", lambda: path)
+    return path
+
+
+def test_read_rows_empty_when_missing(tmp_csv):
+    assert dt.read_rows() == []
+
+
+def test_write_and_read_roundtrip(tmp_csv):
+    rows = [{
+        "date": "2026-05-10", "time_open": "11:19:47", "time_close": "13:08:02",
+        "symbol": "KITEUSDT", "side": "SHORT", "leverage": 10,
+        "entry": 0.18340, "exit": 0.18034,
+        "pyg_pct": 15.48, "pyg_usd": 0.45994,
+        "margin_est": 2.97, "duration_min": 108, "source": "manual_screenshot",
+    }]
+    dt.write_rows(rows)
+    loaded = dt.read_rows()
+    assert len(loaded) == 1
+    assert loaded[0]["symbol"] == "KITEUSDT"
+    assert loaded[0]["pyg_pct"] == 15.48  # numeric, not string
+    assert loaded[0]["leverage"] == 10
+
+
+def test_append_dedup_skips_existing(tmp_csv):
+    base = {
+        "date": "2026-05-10", "time_open": "11:19:47", "time_close": "13:08:02",
+        "symbol": "KITEUSDT", "side": "SHORT", "leverage": 10,
+        "entry": 0.18340, "exit": 0.18034,
+        "pyg_pct": 15.48, "pyg_usd": 0.45994,
+        "margin_est": 2.97, "duration_min": 108, "source": "manual_screenshot",
+    }
+    dt.write_rows([base])
+    # Try appending same trade + a new one
+    new_trade = dict(base, symbol="ORDIUSDT", time_open="13:42:03")
+    added = dt.append_rows_dedup([base, new_trade])
+    assert added == 1  # only ORDIUSDT is new
+    assert len(dt.read_rows()) == 2
