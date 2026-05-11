@@ -344,7 +344,80 @@ def cmd_stats(sl_cap: float) -> int:
 
 
 def cmd_regenerate_md(sl_cap: float) -> int:
-    raise NotImplementedError
+    """Rewrite the human-readable .md summary from the CSV."""
+    rows = read_rows()
+    path = md_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not rows:
+        path.write_text("# Dragno AI — Tracking\n\nNo data yet.\n")
+        return 0
+    s = compute_stats(rows, sl_cap=sl_cap)
+    cf = s["counterfactual"]
+    md = [
+        "# Dragno AI — Tracking Summary",
+        "",
+        f"_Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}_",
+        "",
+        "## Aggregate",
+        "",
+        "| Metric | Value |",
+        "|---|---|",
+        f"| Trades total | {s['total_trades']} |",
+        f"| Days tracked | {s['days_tracked']} |",
+        f"| Trades / day | {s['trades_per_day']} |",
+        f"| Win Rate | {s['win_rate_pct']}% |",
+        f"| Profit Factor | {s['profit_factor']} |",
+        f"| Net PnL | ${s['net_pnl']:+.4f} |",
+        f"| Avg win | ${s['avg_win']:+.4f} |",
+        f"| Avg loss | ${s['avg_loss']:+.4f} |",
+        f"| Best win | ${s['best_win']:+.4f} |",
+        f"| Worst loss | ${s['worst_loss']:+.4f} |",
+        "",
+        f"## Counterfactual (SL {cf['sl_cap']:.1f}%)",
+        "",
+        "| Metric | Value |",
+        "|---|---|",
+        f"| New net PnL | ${cf['new_net_pnl']:+.4f} |",
+        f"| Delta | ${cf['delta_usd']:+.4f} ({cf['delta_pct']:+.1f}%) |",
+        f"| SL hits | {cf['sl_hits']} |",
+        f"| New Profit Factor | {cf['new_profit_factor']} |",
+        f"| New worst loss | ${cf['new_worst_loss']:+.4f} |",
+        "",
+        "## By Side",
+        "",
+        "| Side | Count | Wins | Net PnL |",
+        "|---|---|---|---|",
+        f"| LONG | {s['long']['count']} | {s['long']['wins']} | ${s['long']['net_pnl']:+.4f} |",
+        f"| SHORT | {s['short']['count']} | {s['short']['wins']} | ${s['short']['net_pnl']:+.4f} |",
+        "",
+        "## Top 3 Winners",
+        "",
+        "| Symbol | PYG% | USD |",
+        "|---|---|---|",
+    ]
+    for t in s["top_winners"]:
+        md.append(f"| {t['symbol']} | {t['pyg_pct']:+.2f}% | ${t['pyg_usd']:+.4f} |")
+    md.extend([
+        "",
+        "## Top 3 Losers",
+        "",
+        "| Symbol | PYG% | USD |",
+        "|---|---|---|",
+    ])
+    for t in s["top_losers"]:
+        md.append(f"| {t['symbol']} | {t['pyg_pct']:+.2f}% | ${t['pyg_usd']:+.4f} |")
+    md.extend([
+        "",
+        "## Caveat",
+        "",
+        "> Counterfactual assumes one-way price movement: trades that closed worse than the SL cap",
+        "> are assumed to have passed through the cap on the way down. Trades that closed positive",
+        "> are assumed to have NOT touched the cap intra-trade. Without 1m/5m OHLCV per trade,",
+        "> this model overestimates SL benefit for trades with deep drawdowns that later recovered.",
+        "",
+    ])
+    path.write_text("\n".join(md))
+    return 0
 
 
 if __name__ == "__main__":
