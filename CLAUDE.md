@@ -468,6 +468,17 @@ Three new automated systems added in branch `feat/discipline-observability`:
 - Limitaciones: YT auto-subs imperfectos; PDFs scaneados (imágenes) requieren OCR previo; Twitter API no integrada (copiar texto manual)
 - Próximo: `/strategy-scan <slug>` (futuro) escaneará universe definido buscando setups que matcheen rules
 
+### `/track-dragno` — External bot performance tracker (2026-05-10)
+- Slash command: `/track-dragno` — append trades from screenshots OR show stats dashboard
+- CLI: `python3 .claude/scripts/dragno_track.py --append-from-stdin | --stats | --regenerate-md`
+- Manual ingestion: user pastes Bitunix screenshots → Claude parses → JSON piped to script → CSV append + dedup
+- Counterfactual integrated: every dashboard shows what PnL would have been with SL -8% hard cap
+- Storage: `memory/external_traders/dragno_ai.csv` (append-only) + `dragno_ai.md` (regenerated)
+- Validates the 2026-05-10 hypothesis: Dragno AI's edge is real (WR 57%, PF 1.69) but SL -8% would have improved net PnL by +80% by clipping 2 outlier losses (VIRTUAL -15%, SUSDT -20%)
+- Tests: 13 in `test_dragno_track.py` (derive_margin, parse_input_rows, dedup, compute_stats, counterfactual baseline pin)
+- YAGNI scope: no scraping, no API, single-bot (one CSV per bot if more added later)
+- Spec: `docs/superpowers/specs/2026-05-10-track-dragno-design.md`
+
 ### Bitunix signal log capture (#3)
 - Auto-log: cada `/signal` ejecutado con `WALLY_PROFILE=bitunix` appendea su reporte a `signals_received.md` y `.csv`
 - Cierre manual: `/log-outcome SYMBOL TP1|TP2|TP3|SL|manual EXIT_PRICE [--id N] [--pnl USD]`
