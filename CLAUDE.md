@@ -499,6 +499,53 @@ Three new automated systems added in branch `feat/discipline-observability`:
 - Design: `docs/superpowers/specs/2026-05-04-discipline-observability-bundle-design.md`
 - Implementation plan: `docs/superpowers/plans/2026-05-04-discipline-observability-bundle.md`
 
+## Live Insights Bundle (Bundle 2, 2026-05-10)
+
+Five features inspired by Dragno community master live (YouTube `Be8IYJLgdYA`, 25 min):
+
+### Feature A — USDT.D dominance tracker
+- CLI: `python3 .claude/scripts/usdtd_tracker.py [--json|--quick]`
+- Source: CoinGecko `/global` (free, no auth). Cache 10 min en `.claude/cache/usdtd.json`.
+- Returns: USDT.D, BTC.D, trend (UP/DOWN/FLAT), btc_inverse_bias (BEARISH/BULLISH/NEUTRAL).
+- Inverse-correlation thesis: USDT.D ↑ = capital rotando a stables = bearish BTC.
+- Wired into: `regime-detector` (USDT.D context), `signal-validator` (FASE 0.8).
+
+### Feature B — Macro multi-tier blackout
+- CLI: `python3 .claude/scripts/macro_gate.py --check-tier [--soft-hours N]`
+- Tiers:
+  - `HARD` (±30 min de high-impact event) → NO-GO
+  - `WARN` (±4 horas) → reduce size 50%
+  - `SOFT` (próximas 48h con default, configurable) → INFO + sugiere tier-0 MUGRES
+  - `OK` → continue normalmente
+- Wired into: `trade-validator` FASE 0.6, `signal-validator` FASE 0.6.
+
+### Feature C — Volume/OBV divergence pre-entry
+- CLI: `python3 .claude/scripts/volume_divergence.py --symbol BTCUSDT --direction LONG --quick`
+- Detecta: precio sube pero OBV/volumen bajan → divergencia bearish → WARN contra LONG.
+- Implementa el veto del master: "subiendo sin fuerza, no es creíble".
+- Wired into: `trade-validator` FASE 0.7, `signal-validator` FASE 0.7.
+
+### Feature D — Auto-MUGRE switch on macro WARN/SOFT
+- `/punk-hunt` ejecuta `macro_gate --check-tier` antes del scan:
+  - `HARD` → aborta scan
+  - `WARN`/`SOFT` → auto-fuerza `--tier-0` (MUGRES, decoupled de BTC)
+  - `OK` → scan estándar
+- Override con `--no-auto-tier` para forzar scan normal.
+
+### Feature E — Fib extension exhaustion
+- CLI: `python3 .claude/scripts/fib_extension.py --symbol BTCUSDT --tf 1w --quick`
+- Auto-detecta swing high/low del rango visible y clasifica el precio actual:
+  - `OK` (< 150% extension)
+  - `EXHAUSTION_MILD` (≥ 150%)
+  - `EXHAUSTION_HIGH` (≥ 200%)
+  - `EXHAUSTION_EXTREME` (≥ 261.8%)
+- Wired into: `morning-analyst` (BTC), `morning-analyst-ftmo` (multi-asset). Informativo only.
+
+**Tests:** 36 nuevos green (usdtd 6 + macro_gate +5 = 17 total + vol_div 5 + fib_ext 8).
+
+**Spec:** `docs/superpowers/specs/2026-05-10-live-insights-bundle-design.md`
+**Plan:** `docs/superpowers/plans/2026-05-10-live-insights-bundle.md`
+
 ## Disclaimer
 
 Nada en este proyecto es consejo financiero. Futuros con leverage pueden liquidar capital en minutos con un wick. Usa capital que puedas perder sin afectar tu vida.
