@@ -105,6 +105,52 @@ def next_events(cache: dict[str, Any] | None, now: datetime, days: int) -> dict[
     return {"events": upcoming, "stale": is_stale(cache, now)}
 
 
+WARN_HOURS = 4
+
+
+def _event_payload(ev: dict, delta_min: float) -> dict:
+    return {
+        "name": ev["name"],
+        "country": ev.get("country", "?"),
+        "datetime_cr": f"{ev['date']}T{ev['time_cr']}:00-06:00",
+        "hours_until": round(delta_min / 60.0, 2),
+    }
+
+
+def check_tier(cache: dict | None, now: datetime, soft_hours: int = 48) -> dict:
+    """Return tiered macro status: HARD | WARN | SOFT | OK."""
+    if cache is None:
+        return {"tier": "OK", "reason": "no_cache", "stale": True, "next_event": None}
+    high_events = [e for e in cache["events"] if e.get("impact") == "high"]
+    upcoming = []
+    for ev in high_events:
+        ev_dt = event_datetime(ev)
+        delta = (ev_dt - now).total_seconds() / 60.0  # minutes
+        upcoming.append((delta, ev))
+    upcoming.sort(key=lambda x: x[0] if x[0] >= 0 else float("inf"))
+
+    if not upcoming:
+        return {"tier": "OK", "reason": "no_high_events", "next_event": None}
+
+    # HARD: within ±30 min of any high-impact event
+    for delta, ev in upcoming:
+        if abs(delta) <= WINDOW_MINUTES:
+            return {"tier": "HARD", "next_event": _event_payload(ev, delta)}
+
+    # WARN: within ±WARN_HOURS hours
+    for delta, ev in upcoming:
+        if abs(delta) <= WARN_HOURS * 60:
+            return {"tier": "WARN", "next_event": _event_payload(ev, delta)}
+
+    # SOFT: within next `soft_hours` (positive direction only)
+    for delta, ev in upcoming:
+        if 0 < delta <= soft_hours * 60:
+            return {"tier": "SOFT", "next_event": _event_payload(ev, delta)}
+
+    nearest_delta, nearest_ev = upcoming[0]
+    return {"tier": "OK", "next_event": _event_payload(nearest_ev, nearest_delta)}
+
+
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--cache", type=Path, default=DEFAULT_CACHE)
@@ -114,8 +160,12 @@ def main() -> int:
     sub.add_argument("--check-now", action="store_true")
     sub.add_argument("--check-day", type=str, metavar="YYYY-MM-DD")
     sub.add_argument("--next-events", action="store_true")
+    sub.add_argument("--check-tier", action="store_true",
+                     help="Output tier: OK/SOFT/WARN/HARD based on macro proximity")
     p.add_argument("--days", type=int, default=7,
                    help="Used with --next-events.")
+    p.add_argument("--soft-hours", type=int, default=48,
+                   help="Hours ahead to look for SOFT tier (default 48)")
     args = p.parse_args()
 
     cache = load_cache(args.cache)
@@ -125,6 +175,10 @@ def main() -> int:
         result = check_now(cache, now)
     elif args.check_day:
         result = check_day(cache, args.check_day, now)
+    elif args.check_tier:
+        result = check_tier(cache, now, args.soft_hours)
+        print(json.dumps(result, indent=2))
+        return 0
     else:  # --next-events
         result = next_events(cache, now, args.days)
 

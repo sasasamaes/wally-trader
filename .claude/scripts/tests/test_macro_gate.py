@@ -1,10 +1,17 @@
 import json
 import subprocess
-from datetime import datetime, timedelta
+import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+
+# Allow importing macro_gate as a module for unit-testing check_tier directly
+_SCRIPTS = Path(__file__).resolve().parent.parent
+if str(_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS))
+import macro_gate as mg
 
 FIXTURES = Path(__file__).parent / "fixtures" / "macro"
 SCRIPT = Path(__file__).parent.parent / "macro_gate.py"
@@ -150,3 +157,66 @@ def test_check_now_not_blocked_response_includes_reason_key(tmp_path):
     assert payload["blocked"] is False
     assert "reason" in payload
     assert payload["reason"] is None
+
+
+# ---------------------------------------------------------------------------
+# check_tier tests
+# ---------------------------------------------------------------------------
+
+def test_check_tier_returns_hard_when_within_30min():
+    """HARD tier when ±30 min of high-impact event."""
+    cache = {
+        "fetched_at": "2026-05-13T10:00:00-06:00",
+        "events": [
+            {"name": "FOMC", "country": "US", "date": "2026-05-13",
+             "time_cr": "13:00", "impact": "high"},
+        ],
+    }
+    now = datetime(2026, 5, 13, 12, 50, tzinfo=mg.CR_OFFSET)  # 10 min before
+    result = mg.check_tier(cache, now)
+    assert result["tier"] == "HARD"
+
+
+def test_check_tier_returns_warn_when_within_4h():
+    cache = {
+        "fetched_at": "2026-05-13T10:00:00-06:00",
+        "events": [
+            {"name": "FOMC", "country": "US", "date": "2026-05-13",
+             "time_cr": "13:00", "impact": "high"},
+        ],
+    }
+    now = datetime(2026, 5, 13, 10, 0, tzinfo=mg.CR_OFFSET)  # 3h before
+    result = mg.check_tier(cache, now)
+    assert result["tier"] == "WARN"
+
+
+def test_check_tier_returns_soft_when_within_48h():
+    cache = {
+        "fetched_at": "2026-05-12T10:00:00-06:00",
+        "events": [
+            {"name": "FOMC", "country": "US", "date": "2026-05-13",
+             "time_cr": "13:00", "impact": "high"},
+        ],
+    }
+    now = datetime(2026, 5, 12, 12, 0, tzinfo=mg.CR_OFFSET)  # ~25h before
+    result = mg.check_tier(cache, now)
+    assert result["tier"] == "SOFT"
+
+
+def test_check_tier_returns_ok_when_far_away():
+    cache = {
+        "fetched_at": "2026-05-08T10:00:00-06:00",
+        "events": [
+            {"name": "FOMC", "country": "US", "date": "2026-05-13",
+             "time_cr": "13:00", "impact": "high"},
+        ],
+    }
+    now = datetime(2026, 5, 8, 12, 0, tzinfo=mg.CR_OFFSET)  # 5 days before
+    result = mg.check_tier(cache, now)
+    assert result["tier"] == "OK"
+
+
+def test_check_tier_returns_ok_when_cache_empty():
+    result = mg.check_tier(None, datetime(2026, 5, 8, 12, 0, tzinfo=mg.CR_OFFSET))
+    assert result["tier"] == "OK"
+    assert result.get("stale") is True
