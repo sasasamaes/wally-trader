@@ -19,6 +19,23 @@ metadata:
 <!-- OpenClaw invokes via /punk-hunt -->
 
 
+## Pre-flight: Macro tier check (NUEVO 2026-05-10)
+
+Antes de escanear, ejecuta:
+
+```bash
+TIER=$(python3 .claude/scripts/macro_gate.py --check-tier 2>/dev/null | python3 -c "import sys, json; print(json.load(sys.stdin).get('tier', 'OK'))" 2>/dev/null || echo "OK")
+echo "Macro tier: $TIER"
+```
+
+Lógica de routing según el tier:
+- **HARD** → **ABORTA** scan. Imprime: "🚫 Macro HARD blackout. NO scan today." y termina con exit code 2.
+- **WARN** → procede pero **fuerza tier-0** (MUGRES) si user no pasó `--no-auto-tier`. Imprime: "⚠️ Macro WARN — auto-engaging tier-0 (mugres) for decoupling."
+- **SOFT** → procede pero **fuerza tier-0** si user no pasó `--no-auto-tier`. Imprime: "ℹ️ Macro SOFT (FOMC/CPI en <48h) — auto-engaging tier-0."
+- **OK** → procede con scan estándar (o `--tier-0` si user lo pasó explícito).
+
+User puede override con `--no-auto-tier` para forzar scan normal pese al tier WARN/SOFT (útil si confías en tu juicio del día).
+
 Caza autónoma de oportunidades para profile `bitunix`. A diferencia de `/signal` (valida señal externa de Discord) y `/punk-morning` (prep pre-sesión), este comando **genera su propia recomendación**:
 
 1. Escanea el watchlist punkchainer's (24 tradeables + 8 contexto, o 9-asset subset MUGRE en tier-0)
