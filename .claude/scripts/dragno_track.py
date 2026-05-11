@@ -56,6 +56,58 @@ def derive_margin(pyg_pct: float, pyg_usd: float) -> float:
     return abs(pyg_usd) / (abs(pyg_pct) / 100.0)
 
 
+SIDE_MAP = {"largo": "LONG", "long": "LONG", "corto": "SHORT", "short": "SHORT"}
+
+
+def _parse_signed_float(s) -> float:
+    """Parse a possibly-prefixed numeric string. Python's float() handles '-15.28'
+    and '15.48' natively but rejects '+15.48' in some legacy locales — strip '+' first."""
+    return float(str(s).replace("+", "").strip())
+
+
+def _duration_minutes(time_open: str, time_close: str) -> int:
+    """Minutes between two HH:MM:SS strings. Negative or cross-midnight returns 0."""
+    fmt = "%H:%M:%S"
+    try:
+        t0 = datetime.strptime(time_open, fmt)
+        t1 = datetime.strptime(time_close, fmt)
+    except ValueError:
+        return 0
+    delta = (t1 - t0).total_seconds() / 60.0
+    return max(0, int(round(delta)))
+
+
+def parse_input_rows(raw: list[dict]) -> list[dict]:
+    """Normalize Claude-parsed screenshot rows into CSV-ready dicts.
+
+    Required input fields per row: date, time_open, time_close, symbol, side,
+    leverage, entry, exit, pyg_pct, pyg_usd.
+    """
+    out = []
+    for r in raw:
+        side_key = str(r["side"]).strip().lower()
+        if side_key not in SIDE_MAP:
+            raise ValueError(f"Unknown side: {r['side']!r}")
+        leverage_str = str(r["leverage"]).strip().lower().rstrip("x")
+        normalized = {
+            "date": r["date"],
+            "time_open": r["time_open"],
+            "time_close": r["time_close"],
+            "symbol": str(r["symbol"]).upper(),
+            "side": SIDE_MAP[side_key],
+            "leverage": int(leverage_str),
+            "entry": float(r["entry"]),
+            "exit": float(r["exit"]),
+            "pyg_pct": _parse_signed_float(r["pyg_pct"]),
+            "pyg_usd": _parse_signed_float(r["pyg_usd"]),
+            "duration_min": _duration_minutes(r["time_open"], r["time_close"]),
+            "source": "manual_screenshot",
+        }
+        normalized["margin_est"] = round(derive_margin(normalized["pyg_pct"], normalized["pyg_usd"]), 4)
+        out.append(normalized)
+    return out
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description="Track Dragno AI bot trades")
     group = p.add_mutually_exclusive_group(required=True)
