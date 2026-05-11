@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-# Sub-routers will be wired in as phases land. Keep the file thin so we
-# don't end up with one mega-import that breaks every time a feature
-# branch touches an unrelated endpoint.
+from app.api.v1.agents import router as agents_router
+from app.api.v1.keys import router as keys_router
+
 router = APIRouter()
+router.include_router(agents_router)
+router.include_router(keys_router)
 
 
 @router.get("/ping", tags=["meta"])
