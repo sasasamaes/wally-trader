@@ -162,6 +162,96 @@ def append_rows_dedup(new_rows: list[dict]) -> int:
     return added
 
 
+def compute_stats(rows: list[dict], sl_cap: float = DEFAULT_SL_CAP) -> dict:
+    """Compute aggregate + counterfactual + side breakdown + top winners/losers."""
+    if not rows:
+        return {
+            "total_trades": 0, "wins": 0, "losses": 0, "win_rate_pct": 0.0,
+            "net_pnl": 0.0, "profit_factor": 0.0,
+            "avg_win": 0.0, "avg_loss": 0.0, "best_win": 0.0, "worst_loss": 0.0,
+            "days_tracked": 0, "trades_per_day": 0.0,
+            "counterfactual": {
+                "sl_cap": sl_cap, "sl_hits": 0,
+                "new_net_pnl": 0.0, "delta_usd": 0.0, "delta_pct": 0.0,
+                "new_profit_factor": 0.0, "new_worst_loss": 0.0,
+            },
+            "long": {"count": 0, "wins": 0, "net_pnl": 0.0},
+            "short": {"count": 0, "wins": 0, "net_pnl": 0.0},
+            "top_winners": [], "top_losers": [],
+        }
+
+    pnls = [float(r["pyg_usd"]) for r in rows]
+    wins = [p for p in pnls if p > 0]
+    losses = [p for p in pnls if p <= 0]
+    win_rate = 100.0 * len(wins) / len(pnls)
+    pf = (sum(wins) / abs(sum(losses))) if losses and sum(losses) != 0 else 0.0
+
+    # Counterfactual: cap losses worse than sl_cap at sl_cap
+    new_pnls = []
+    sl_hits = 0
+    for r in rows:
+        pct = float(r["pyg_pct"])
+        usd = float(r["pyg_usd"])
+        if pct < sl_cap:
+            margin = derive_margin(pct, usd)
+            new_pnls.append((sl_cap / 100.0) * margin)
+            sl_hits += 1
+        else:
+            new_pnls.append(usd)
+    new_net = sum(new_pnls)
+    delta_usd = new_net - sum(pnls)
+    delta_pct = (delta_usd / sum(pnls) * 100.0) if sum(pnls) != 0 else 0.0
+    new_losses = [p for p in new_pnls if p <= 0]
+    new_pf = (sum(wins) / abs(sum(new_losses))) if new_losses and sum(new_losses) != 0 else 0.0
+
+    longs = [r for r in rows if r["side"] == "LONG"]
+    shorts = [r for r in rows if r["side"] == "SHORT"]
+    long_pnls = [float(r["pyg_usd"]) for r in longs]
+    short_pnls = [float(r["pyg_usd"]) for r in shorts]
+
+    sorted_rows = sorted(rows, key=lambda r: float(r["pyg_usd"]), reverse=True)
+    top_winners = [{"symbol": r["symbol"], "pyg_pct": float(r["pyg_pct"]), "pyg_usd": float(r["pyg_usd"])} for r in sorted_rows[:3]]
+    top_losers = [{"symbol": r["symbol"], "pyg_pct": float(r["pyg_pct"]), "pyg_usd": float(r["pyg_usd"])} for r in sorted_rows[-3:][::-1]]
+
+    days = {r["date"] for r in rows}
+
+    return {
+        "total_trades": len(rows),
+        "wins": len(wins),
+        "losses": len(losses),
+        "win_rate_pct": round(win_rate, 2),
+        "net_pnl": round(sum(pnls), 4),
+        "profit_factor": round(pf, 3),
+        "avg_win": round(sum(wins) / len(wins), 4) if wins else 0.0,
+        "avg_loss": round(sum(losses) / len(losses), 4) if losses else 0.0,
+        "best_win": round(max(pnls), 4),
+        "worst_loss": round(min(pnls), 4),
+        "days_tracked": len(days),
+        "trades_per_day": round(len(rows) / len(days), 2) if days else 0.0,
+        "counterfactual": {
+            "sl_cap": sl_cap,
+            "sl_hits": sl_hits,
+            "new_net_pnl": round(new_net, 4),
+            "delta_usd": round(delta_usd, 4),
+            "delta_pct": round(delta_pct, 2),
+            "new_profit_factor": round(new_pf, 3),
+            "new_worst_loss": round(min(new_pnls), 4) if new_pnls else 0.0,
+        },
+        "long": {
+            "count": len(longs),
+            "wins": sum(1 for p in long_pnls if p > 0),
+            "net_pnl": round(sum(long_pnls), 4),
+        },
+        "short": {
+            "count": len(shorts),
+            "wins": sum(1 for p in short_pnls if p > 0),
+            "net_pnl": round(sum(short_pnls), 4),
+        },
+        "top_winners": top_winners,
+        "top_losers": top_losers,
+    }
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description="Track Dragno AI bot trades")
     group = p.add_mutually_exclusive_group(required=True)
