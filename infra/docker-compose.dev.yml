@@ -1,0 +1,91 @@
+# Local development stack: postgres + redis + api + workers.
+# Frontend (web/) runs separately with `npm run dev` to keep HMR fast.
+#
+# Usage:
+#   docker compose -f infra/docker-compose.dev.yml up
+#   docker compose -f infra/docker-compose.dev.yml down -v   # wipe volumes
+#
+# The `api` and `workers` services build from ../api/Dockerfile and mount the
+# source as a bind-mount so editing files triggers reload via uvicorn --reload
+# / arq --watch.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: wally-postgres
+    environment:
+      POSTGRES_USER: wally
+      POSTGRES_PASSWORD: wally
+      POSTGRES_DB: wally_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - wally_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wally -d wally_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: wally-redis
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - wally_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ..
+      dockerfile: api/Dockerfile
+    container_name: wally-api
+    env_file:
+      - ../.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://wally:wally@postgres:5432/wally_dev
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../api:/app/api
+      - ../shared:/app/shared
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  workers:
+    build:
+      context: ..
+      dockerfile: api/Dockerfile
+    container_name: wally-workers
+    env_file:
+      - ../.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://wally:wally@postgres:5432/wally_dev
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ../api:/app/api
+      - ../workers:/app/workers
+      - ../shared:/app/shared
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # Placeholder — actual worker entrypoint lands in Phase 3 when ARQ jobs
+    # are implemented. For now, this just stays idle.
+    command: ["sh", "-c", "echo 'workers idle until Phase 3' && tail -f /dev/null"]
+
+volumes:
+  wally_pgdata:
+  wally_redisdata:

@@ -1,0 +1,128 @@
+name: Web App CI
+
+on:
+  push:
+    branches: [main, "feat/web-app-*"]
+    paths:
+      - "web/**"
+      - "api/**"
+      - "workers/**"
+      - "infra/**"
+      - "shared/**"
+      - ".github/workflows/web-app-ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "api/**"
+      - "workers/**"
+      - "infra/**"
+      - "shared/**"
+      - ".github/workflows/web-app-ci.yml"
+  workflow_dispatch:
+
+# The original Wally Trader CLI/CI workflow (ci.yml) still covers the
+# `.claude/scripts/` Python side. This workflow is web-app-specific and only
+# triggers when the new directories change so the existing pipeline stays fast.
+
+jobs:
+  api:
+    name: API — Python 3.13 + pytest + ruff + mypy
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: wally
+          POSTGRES_PASSWORD: wally
+          POSTGRES_DB: wally_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U wally -d wally_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+asyncpg://wally:wally@localhost:5432/wally_test
+      REDIS_URL: redis://localhost:6379/0
+      MASTER_KEK: ""   # Generated per-step before tests
+      ENV: dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python 3.13
+        run: uv python install 3.13
+
+      - name: Install dependencies
+        working-directory: api
+        run: uv sync
+
+      - name: Generate test MASTER_KEK
+        run: |
+          echo "MASTER_KEK=$(uv run --directory api python -c 'from app.security.encryption import generate_master_kek; print(generate_master_kek())')" >> $GITHUB_ENV
+
+      - name: Ruff
+        working-directory: api
+        run: uv run ruff check app tests
+
+      - name: Mypy
+        working-directory: api
+        run: uv run mypy app
+        continue-on-error: true  # strict mode is aspirational early on
+
+      - name: Apply migrations
+        working-directory: api
+        run: uv run alembic upgrade head
+
+      - name: Pytest
+        working-directory: api
+        run: uv run pytest --cov=app --cov-report=term-missing
+
+  web:
+    name: Web — Next.js 15 + typecheck + lint + build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: web
+        run: npm ci || npm install
+
+      - name: Typecheck
+        working-directory: web
+        run: npm run typecheck
+
+      - name: Lint
+        working-directory: web
+        run: npm run lint -- --max-warnings=0
+        continue-on-error: true  # aspirational while shadcn components land
+
+      - name: Build
+        working-directory: web
+        env:
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          NEXT_PUBLIC_API_URL: http://localhost:8000
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_dummy
+        run: npm run build

@@ -16,6 +16,11 @@
 !.opencode/config.json
 # Hermes adapter — generated skills tree (tracked so clone-and-go works)
 !.hermes/skills/**/*.json
+# Web app — Next.js + FastAPI bootstrap (feat/web-app-bootstrap)
+!web/**/*.json
+!api/**/*.json
+!infra/**/*.json
+!workers/**/*.json
 
 # Screenshots (can be large)
 tradingview-mcp/screenshots/
