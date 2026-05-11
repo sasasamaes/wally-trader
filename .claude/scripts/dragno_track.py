@@ -252,6 +252,42 @@ def compute_stats(rows: list[dict], sl_cap: float = DEFAULT_SL_CAP) -> dict:
     }
 
 
+def _format_dashboard(s: dict) -> str:
+    """Format stats dict into a pretty dashboard string."""
+    cf = s["counterfactual"]
+    lines = [
+        "=" * 70,
+        f"  DRAGNO AI — TRACKING DASHBOARD",
+        "=" * 70,
+        f"  Trades: {s['total_trades']}   Days: {s['days_tracked']}   Trades/day: {s['trades_per_day']}",
+        f"  WR: {s['win_rate_pct']}%   PF: {s['profit_factor']}",
+        f"  Net PnL: ${s['net_pnl']:+.4f}",
+        f"  Avg win: ${s['avg_win']:+.4f}   Avg loss: ${s['avg_loss']:+.4f}",
+        f"  Best win: ${s['best_win']:+.4f}   Worst loss: ${s['worst_loss']:+.4f}",
+        "",
+        f"  COUNTERFACTUAL (SL {cf['sl_cap']:.1f}%):",
+        f"    New net PnL: ${cf['new_net_pnl']:+.4f}   Delta: ${cf['delta_usd']:+.4f} ({cf['delta_pct']:+.1f}%)",
+        f"    SL hits: {cf['sl_hits']}   New PF: {cf['new_profit_factor']}   New worst loss: ${cf['new_worst_loss']:+.4f}",
+        "",
+        f"  BY SIDE:",
+        f"    LONG  — count {s['long']['count']}, wins {s['long']['wins']}, net ${s['long']['net_pnl']:+.4f}",
+        f"    SHORT — count {s['short']['count']}, wins {s['short']['wins']}, net ${s['short']['net_pnl']:+.4f}",
+        "",
+        f"  TOP 3 WINNERS:",
+    ]
+    for t in s["top_winners"]:
+        lines.append(f"    {t['symbol']:<14} {t['pyg_pct']:+7.2f}%   ${t['pyg_usd']:+.4f}")
+    lines.append("")
+    lines.append(f"  TOP 3 LOSERS:")
+    for t in s["top_losers"]:
+        lines.append(f"    {t['symbol']:<14} {t['pyg_pct']:+7.2f}%   ${t['pyg_usd']:+.4f}")
+    lines.append("")
+    lines.append("  CAVEAT: counterfactual assumes one-way moves. Trades that closed")
+    lines.append("  positive are assumed to NOT have touched the SL intra-trade.")
+    lines.append("=" * 70)
+    return "\n".join(lines)
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description="Track Dragno AI bot trades")
     group = p.add_mutually_exclusive_group(required=True)
@@ -271,11 +307,40 @@ def main() -> int:
 
 
 def cmd_append_from_stdin(sl_cap: float) -> int:
-    raise NotImplementedError
+    """Read JSON array from stdin, parse, dedup-append to CSV. Then print summary."""
+    try:
+        raw = json.load(sys.stdin)
+    except json.JSONDecodeError as e:
+        print(f"ERROR: invalid JSON on stdin: {e}", file=sys.stderr)
+        return 1
+    if not isinstance(raw, list):
+        print("ERROR: stdin must be a JSON array of trade objects", file=sys.stderr)
+        return 1
+    try:
+        parsed = parse_input_rows(raw)
+    except (KeyError, ValueError) as e:
+        print(f"ERROR: malformed trade row: {e}", file=sys.stderr)
+        return 1
+    added = append_rows_dedup(parsed)
+    total = len(read_rows())
+    print(f"Added {added} new trade(s). Total tracked: {total}.")
+    print()
+    # Print stats after append
+    cmd_stats(sl_cap)
+    # Regenerate md
+    cmd_regenerate_md(sl_cap)
+    return 0
 
 
 def cmd_stats(sl_cap: float) -> int:
-    raise NotImplementedError
+    """Compute and print stats dashboard."""
+    rows = read_rows()
+    if not rows:
+        print("No data yet. Run /track-dragno with screenshots to populate the log.")
+        return 2
+    s = compute_stats(rows, sl_cap=sl_cap)
+    print(_format_dashboard(s))
+    return 0
 
 
 def cmd_regenerate_md(sl_cap: float) -> int:
