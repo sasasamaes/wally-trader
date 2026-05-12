@@ -50,3 +50,31 @@ def test_detect_swing_picks_min_low_and_max_high():
     assert high == 130
     assert low_idx == 1
     assert high_idx == 2
+
+
+def test_retracement_explicit_swing_levels():
+    """Given an explicit swing high/low, all 5 retracement levels are correct."""
+    from fib_extension import retracement_zones
+
+    out = retracement_zones(swing_low=73500.0, swing_high=78285.0, direction="long")
+
+    rng = 78285.0 - 73500.0
+    assert abs(out["entry_zones"]["382"] - (78285.0 - rng * 0.382)) < 1e-6
+    assert abs(out["entry_zones"]["500"] - (78285.0 - rng * 0.500)) < 1e-6
+    assert abs(out["entry_zones"]["618"] - (78285.0 - rng * 0.618)) < 1e-6
+    assert abs(out["sl_075"] - (78285.0 - rng * 0.75)) < 1e-6
+    assert out["tp_swing"] == 78285.0
+    assert out["direction"] == "long"
+
+
+def test_retracement_direction_autodetect():
+    """A bar series ending above the midpoint of the recent swing infers LONG bias."""
+    from fib_extension import autodetect_direction
+
+    # 10 synthetic closes forming a swing low at 100, swing high at 200, ending at 175 (above mid)
+    closes = [100, 110, 130, 160, 190, 200, 195, 185, 178, 175]
+    assert autodetect_direction(closes) == "long"
+
+    # ending at 125 (below mid 150) → short
+    closes_short = [200, 190, 170, 150, 130, 110, 100, 105, 115, 125]
+    assert autodetect_direction(closes_short) == "short"
