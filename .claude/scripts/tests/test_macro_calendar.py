@@ -165,6 +165,23 @@ def test_parse_ff_response_finds_expected_high_impact_events():
         f"NFP-class event missing from {names}"
 
 
+def test_parse_ff_date_handles_two_digit_days():
+    """Regression: 'SunMay 10' (2-digit day) must parse.
+
+    The original format list only had %a%b%d (no separator), which silently
+    accepted single-digit days because Python's strptime tolerates a leading
+    space before %d. From the 10th onward the day no longer fits that slot
+    and parsing failed, so the live FF cache went empty every month at day 10.
+    """
+    from macro_calendar import _parse_ff_date
+    # _parse_ff_date picks the year nearest today; just verify MM-DD.
+    assert _parse_ff_date("SunMay 10").endswith("-05-10")
+    assert _parse_ff_date("MonMay 11").endswith("-05-11")
+    assert _parse_ff_date("TueMay 12").endswith("-05-12")
+    # Sanity: 1-digit days still work after the fix.
+    assert _parse_ff_date("SunMay 3").endswith("-05-03")
+
+
 def test_convert_ff_time_to_cr_dst_aware():
     """Verify EST (winter) and EDT (summer) both convert correctly to CR."""
     from macro_calendar import _convert_ff_time_to_cr

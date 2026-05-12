@@ -108,7 +108,11 @@ def _parse_ff_date(s: str) -> str:
     s = s.replace("\n", " ").strip()
     today = datetime.now(CR_OFFSET).date()
     candidates: list[date] = []
-    for fmt in ("%Y %a %b %d", "%Y %a%b%d", "%Y %b %d"):
+    # %Y %a%b %d covers FF's compact form with a space before the day number
+    # ('SunMay 10'). Without this explicit space, strptime only accepted
+    # 1-digit days via %d's whitespace-prefix tolerance, so the parser
+    # silently failed every month from day 10 onward.
+    for fmt in ("%Y %a %b %d", "%Y %a%b %d", "%Y %a%b%d", "%Y %b %d"):
         for year in (today.year, today.year + 1, today.year - 1):
             try:
                 dt = datetime.strptime(f"{year} {s}", fmt).date()
