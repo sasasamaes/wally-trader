@@ -100,3 +100,14 @@ def test_grab_too_late_after_4_bars_no_signal():
     ]
     grab = detect_break_and_grab(london_bars, asian_high=asian_high, asian_low=asian_low)
     assert grab is None
+
+
+def test_parse_ts_handles_naive_iso_as_utc():
+    """ISO string without tz suffix is interpreted as UTC (project convention)."""
+    from asian_range import _parse_ts
+    from datetime import timezone
+
+    dt_naive = _parse_ts("2026-05-13T04:00:00")
+    dt_aware = _parse_ts("2026-05-13T04:00:00+00:00")
+    assert dt_naive.tzinfo == timezone.utc
+    assert dt_naive == dt_aware

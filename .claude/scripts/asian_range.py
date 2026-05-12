@@ -17,7 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 ASIAN_START_HOUR_UTC = 23
@@ -27,7 +27,11 @@ SL_BUFFER_PIPS = 0.0002  # 2 pips for EURUSD; override via --buffer
 
 
 def _parse_ts(ts_iso: str) -> datetime:
-    return datetime.fromisoformat(ts_iso.replace("Z", "+00:00"))
+    dt = datetime.fromisoformat(ts_iso.replace("Z", "+00:00"))
+    if dt.tzinfo is None:
+        # No tz info → assume UTC (project convention; data sources are TV MCP / Binance)
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
 
 
 def _in_asian_session(ts: datetime) -> bool:
@@ -96,7 +100,7 @@ def detect_break_and_grab(
 def evaluate_setup(bars: list[dict], *, anchor: str | None = None) -> dict:
     """Full pipeline: compute Asian H/L, look for grab in bars after anchor."""
     if anchor is None:
-        # use the latest bar's timestamp at hour 08:00 UTC as anchor
+        # use the latest bar as anchor — caller is responsible for anchoring to London open
         anchor = bars[-1]["ts"]
     anchor_dt = _parse_ts(anchor)
     asian = asian_session_high_low(bars, anchor=anchor)
