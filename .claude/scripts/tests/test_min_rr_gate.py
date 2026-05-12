@@ -43,3 +43,10 @@ def test_wr_clamped_at_bounds():
     low_wr = compute_min_rr(wr=0.05)   # clamped to 0.20 → 0.8/0.2 * 1.2 = 4.80
     assert 0.29 < high_wr < 0.31
     assert 4.79 < low_wr < 4.81
+
+
+def test_fetch_wr_for_profile_returns_zero_when_log_missing(tmp_path):
+    """fetch_wr_for_profile returns (0.0, 0) when the profile log doesn't exist (graceful degradation)."""
+    from min_rr_gate import fetch_wr_for_profile
+    out = fetch_wr_for_profile("nonexistent-profile-xyz")
+    assert out == (0.0, 0)

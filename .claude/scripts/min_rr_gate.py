@@ -9,7 +9,7 @@ Usage:
     python3 min_rr_gate.py --wr 0.55 --setup-rr 1.5 --sample-size 30
     python3 min_rr_gate.py --profile retail --setup-rr 1.5
 
-Exit codes: 0=OK 2=WARN.
+Exit codes: 0=OK 2=WARN 3=missing args.
 """
 from __future__ import annotations
 
@@ -26,6 +26,7 @@ MIN_SAMPLE = 10
 FALLBACK_MIN_RR = 1.5
 
 SCRIPTS_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPTS_DIR.parent.parent  # scripts/ → .claude/ → repo root
 
 
 def compute_min_rr(*, wr: float) -> float:
@@ -55,7 +56,7 @@ def evaluate(*, wr: float, setup_rr: float, sample_size: int) -> dict:
 
 def fetch_wr_for_profile(profile: str) -> tuple[float, int]:
     """Call journal_metrics.py on the profile log and return (wr_decimal, n_trades)."""
-    log_path = Path(f".claude/profiles/{profile}/memory/trading_log.md")
+    log_path = REPO_ROOT / ".claude" / "profiles" / profile / "memory" / "trading_log.md"
     if not log_path.exists():
         return (0.0, 0)
     res = subprocess.run(
@@ -77,7 +78,7 @@ def fetch_wr_for_profile(profile: str) -> tuple[float, int]:
     except json.JSONDecodeError:
         return (0.0, 0)
     wr_pct = float(data.get("win_rate_pct", 0.0))
-    n = int(data.get("total_trades", data.get("n_trades", 0)))
+    n = int(data.get("trades_total", data.get("total_trades", data.get("n_trades", 0))))
     return (wr_pct / 100.0, n)
 
 
