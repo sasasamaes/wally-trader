@@ -1,7 +1,7 @@
 # 🌭 Wally Trader — Multi-Profile AI-Assisted Trading System
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-323%20passing-brightgreen.svg)](#)
+[![Tests](https://img.shields.io/badge/tests-570%2B%20passing-brightgreen.svg)](#)
 [![Multi-CLI](https://img.shields.io/badge/harness-Claude%20Code%20%7C%20OpenClaw%20%7C%20OpenCode%20%7C%20Hermes-blue.svg)](#)
 [![Memory](https://img.shields.io/badge/memory-Local%20%7C%20Notion%20%7C%20Hybrid-purple.svg)](#)
 [![V3](https://img.shields.io/badge/version-V3%20pre--trade%20gates%20%2B%20L8%20learning-orange.svg)](#)
@@ -21,6 +21,16 @@ Sistema de trading algorítmico-asistido **multi-profile** (7 profiles): retail 
 - **Strategy importer** desde YouTube/PDF/text (yt-dlp + Claude distillation)
 - **Pine v6 generator** desde lenguaje natural con auto-compile MCP
 - **Pre-mortem command** con 8 preguntas Klein-1998 obligatorias
+
+**🆕 V3.1 highlights — YouTube Improvements Bundle (Bundle 3, 2026-05-12):**
+- **`/pullback`** — impulse → fib 0.382-0.618 retrace → continuation detector (ADX≥25 gate). Llena el gap del Mean Reversion en TRENDING.
+- **`/asian-range`** — Asian session H/L + London-open grab/fakeout (EURUSD 5m, secondary strategy fotmarkets)
+- **Min-R:R adaptive gate** (`min_rr_gate.py`) — `min_rr = ((1-wr)/wr)*1.2` desde rolling 30d WR del profile. Wired en `trade-validator` FASE 0.9 + `signal-validator`.
+- **Fib retracement zones** — `fib_extension.py --mode retracement` devuelve entry zones 0.382/0.500/0.618 + SL 0.75 + TP swing
+- **Challenge readiness gate** (`challenge_readiness.py`) — bloquea compra de otro funded challenge si no hay 3 meses positivos consecutivos. Wired en `/challenge`.
+- **Strategy-Builder master prompt** (`docs/prompts/wally-strategy-builder.md`) — single Markdown copy-pasteable que genera EAs MQL5 (MT5/FTMO/FundingPips), scans Python signal-only (Bitunix/Binance), siempre reutilizando los gates existentes (macro_gate + session_quality + min_rr_gate + volume_divergence + cross-profile BTC exclusion)
+- **CI green** — web (Next.js 15 typecheck/lint/build) + api (FastAPI ruff/mypy/pytest) ambos verdes. ruff config con per-file-ignores para FastAPI Depends + interface methods
+- 22+ nuevos tests sintéticos en el bundle. **Total ahora ~570 tests** en `.claude/scripts/tests/` + `shared/wally_core/tests/`
 
 ---
 
@@ -739,7 +749,7 @@ Statusline refleja el profile activo + equivalente en colones:
 | `bitunix` 🆕 | $50 | Copy-validated | 2% | -30% pause | 3 | Bitunix (referral `punkchainer`) |
 | `quantfury` 🆕 | 0.01 BTC | BTC-denominated | 2% del BTC | -10% BTC stack | 3 | Quantfury (broker app) |
 
-### Comandos cuantitativos disponibles (33 total)
+### Comandos cuantitativos disponibles (35+ total)
 
 **Análisis matutino y validación:**
 ```
@@ -824,6 +834,25 @@ python3 .claude/scripts/bitunix_pairs_check.py --symbols DOGE,WIF # validar cust
 /strategy-import youtube|file|text  📥 Distila estrategia desde YT/PDF/notas a JSON rules
 /premortem <args>         🔍 Pre-mortem 8 preguntas (Klein 1998) antes de entry
 /punk-watch               ⏱ Vigilancia adaptativa con magnet check (refinado)
+```
+
+**🆕 V3.1 — YouTube Improvements Bundle (2026-05-12, Alex Ruiz × 4):**
+```
+/pullback [SYMBOL] [TF]   🌊 Impulse→fib 0.382-0.618→continuation (ADX≥25). Standalone, no router yet
+/asian-range [SYMBOL]     🌅 Asian H/L + London grab/fakeout (EURUSD 5m, fotmarkets secondary)
+```
+
+**Auto-aplicados (sin comando, gates en validators):**
+```
+min_rr_gate.py            📐 R:R floor adaptativo desde WR rolling 30d (FASE 0.9 trade-validator)
+challenge_readiness.py    ✋ Bloquea compra de challenge si <3 meses positivos (`/challenge`)
+fib_extension.py --mode retracement  📏 Entry zones 0.382/0.500/0.618 + SL 0.75
+```
+
+**Documentación / herramientas (no es slash command):**
+```
+docs/prompts/wally-strategy-builder.md   📝 Master prompt multi-venue (MT5+Bitunix+Binance)
+                                            "Bot opcional" — MT5 ejecuta, Bitunix/Binance signal-only
 ```
 
 **🆕 Auto-aplicados (sin comando, gates en validators):**
