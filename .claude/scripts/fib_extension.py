@@ -61,7 +61,8 @@ def retracement_zones(
 
     For LONG bias: entries are progressive retracements down from swing_high.
     For SHORT bias: entries are progressive retracements up from swing_low.
-    SL at 0.75 retracement; TP at the opposite swing extreme.
+    SL at 0.75 retracement; TP at the anchor swing extreme (swing_high for LONG,
+    swing_low for SHORT).
     """
     if swing_high <= swing_low:
         raise ValueError("swing_high must exceed swing_low")
@@ -81,9 +82,9 @@ def retracement_zones(
 
     entry_zones = {
         f"{int(round(r * 1000))}".zfill(3): round(anchor + sign * rng * r, 4)
-        for r in (0.382, 0.500, 0.618)
+        for r in RETRACEMENT_RATIOS[:3]
     }
-    sl = round(anchor + sign * rng * 0.75, 4)
+    sl = round(anchor + sign * rng * RETRACEMENT_RATIOS[-1], 4)
 
     return {
         "direction": direction,
@@ -173,6 +174,7 @@ def main() -> int:
             print("ERROR: no bars returned", file=sys.stderr)
             return 2
         direction = autodetect_direction(closes)
+        # uses close prices (wicks excluded intentionally — close-to-close retracements)
         out = retracement_zones(
             swing_low=min(closes),
             swing_high=max(closes),

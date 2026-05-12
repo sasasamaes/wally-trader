@@ -53,7 +53,7 @@ def test_detect_swing_picks_min_low_and_max_high():
 
 
 def test_retracement_explicit_swing_levels():
-    """Given an explicit swing high/low, all 5 retracement levels are correct."""
+    """Given an explicit swing high/low, all 4 retracement levels are correct."""
     from fib_extension import retracement_zones
 
     out = retracement_zones(swing_low=73500.0, swing_high=78285.0, direction="long")
