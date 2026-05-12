@@ -82,25 +82,93 @@ def classify(monthly_pnl: dict[str, float], today: str | date) -> dict:
     }
 
 
+_PNL_COL_PRIORITY = [
+    re.compile(r"^p\s*n\s*l\s*\$$", re.IGNORECASE),
+    re.compile(r"^pnl\s*\$$", re.IGNORECASE),
+    re.compile(r"^p\s*&\s*l\s*\$$", re.IGNORECASE),
+    re.compile(r"^pnl$", re.IGNORECASE),
+    re.compile(r"^p&l$", re.IGNORECASE),
+    re.compile(r"^p/l$", re.IGNORECASE),
+]
+
+_ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def _find_pnl_column(header_cells: list[str]) -> int | None:
+    """Return the index of the PnL column, preferring $-denominated over %."""
+    for pattern in _PNL_COL_PRIORITY:
+        for i, cell in enumerate(header_cells):
+            if pattern.match(cell):
+                return i
+    return None
+
+
+def _first_iso_date(cells: list[str]) -> str | None:
+    for cell in cells:
+        if _ISO_DATE_RE.match(cell):
+            return cell
+    return None
+
+
+def _parse_pnl(raw: str) -> float | None:
+    cleaned = raw.replace("$", "").replace("+", "").replace(",", "").strip()
+    if not cleaned or cleaned in {"—", "-", "TBD"}:
+        return None
+    try:
+        return float(cleaned)
+    except ValueError:
+        return None
+
+
 def _parse_monthly_from_log(log_path: Path) -> dict[str, float]:
-    """Sum PnL$ rows from a trading_log.md markdown table grouped by YYYY-MM."""
+    """Sum PnL$ rows from a trading_log.md markdown table grouped by YYYY-MM.
+
+    Header-aware: locates the PnL column by name (PnL $ / PnL / P&L), case-
+    insensitively, preferring dollar-denominated over percent.
+    """
     if not log_path.exists():
         return {}
     text = log_path.read_text()
     monthly: dict[str, float] = {}
-    row_re = re.compile(
-        r"^\|\s*(\d{4}-\d{2}-\d{2})\s*\|.*?\|\s*([+\-]?\$?\d+\.?\d*)\s*\|",
-        re.MULTILINE,
-    )
-    for match in row_re.finditer(text):
-        date_str, pnl_str = match.group(1), match.group(2)
-        pnl_clean = pnl_str.replace("$", "").replace("+", "")
-        try:
-            pnl = float(pnl_clean)
-        except ValueError:
-            continue
-        ym = date_str[:7]
-        monthly[ym] = monthly.get(ym, 0.0) + pnl
+
+    table_block: list[str] = []
+    in_table = False
+
+    def flush_table(rows: list[str]) -> None:
+        if len(rows) < 2:
+            return
+        header_cells = [c.strip() for c in rows[0].split("|")]
+        pnl_idx = _find_pnl_column(header_cells)
+        if pnl_idx is None:
+            return
+        # Skip header (index 0) and separator (index 1) if present
+        data_start = 2 if len(rows) > 1 and set(rows[1].replace("|", "").strip()) <= {"-", ":", " "} else 1
+        for row in rows[data_start:]:
+            cells = [c.strip() for c in row.split("|")]
+            if pnl_idx >= len(cells):
+                continue
+            date_str = _first_iso_date(cells)
+            if date_str is None:
+                continue
+            pnl_raw = cells[pnl_idx]
+            pnl = _parse_pnl(pnl_raw)
+            if pnl is None:
+                continue
+            ym = date_str[:7]
+            monthly[ym] = monthly.get(ym, 0.0) + pnl
+
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("|"):
+            table_block.append(stripped)
+            in_table = True
+        else:
+            if in_table:
+                flush_table(table_block)
+                table_block = []
+                in_table = False
+    if in_table:
+        flush_table(table_block)
     return monthly
 
 
@@ -112,8 +180,7 @@ def main() -> int:
 
     log_path = REPO_ROOT / ".claude" / "profiles" / args.profile / "memory" / "trading_log.md"
     monthly = _parse_monthly_from_log(log_path)
-    today = date.today().isoformat()
-    out = classify(monthly, today=today)
+    out = classify(monthly, today=date.today())
     out["profile"] = args.profile
 
     if args.json:
