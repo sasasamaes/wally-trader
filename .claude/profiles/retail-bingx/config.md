@@ -53,3 +53,29 @@ Ver archivos en `./memory/`:
 - `tradingview_setup.md` — config TV
 - `liquidations_data.md` — fuentes datos BingX/Binance
 - `backtest_findings.md` — aprendizajes de 144 configs
+
+## Cost Reality (added 2026-05-12)
+
+Capital $0.93 + BingX taker fee 0.05% + leverage 10× makes real execution non-viable:
+
+| Metric | Value |
+|---|---|
+| Capital | $0.93 |
+| Size at 2% risk | $0.0186 margin |
+| Notional at 10× | $0.186 |
+| Taker fee/side | 0.05% |
+| Round-trip cost | $0.0002 (0.02% of capital) |
+
+Cost as % of capital is negligible *in absolute terms*, but:
+- **Minimum tick size** on BTCUSDT.P (BingX) is $0.10, larger than the price move that
+  $0.0002 fee implies — so any single tick of adverse slippage equals multiple round-trips.
+- **Funding** at 0.01% per 8h on $0.186 notional = $0.0000186/cycle — tiny, but on a runner
+  held overnight (regulation violation per CLAUDE.md anyway) it stacks.
+- **Practical minimum** order size on BingX perp can exceed what a $0.93 account permits at
+  10×, forcing oversize or no-fill.
+
+**Operating rule:** `retail-bingx` is a **pedagogical / observation-only** profile. Use it
+for replay analysis, signal validation rehearsal, and journal-entry practice — do not
+execute real fills. Inherited from the three historical wins ($10 → $13.63) preserved in
+`memory/trading_log.md`, the profile retains learning value without continued execution
+exposure.
