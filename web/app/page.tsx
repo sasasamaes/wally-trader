@@ -1,5 +1,12 @@
+import type { Route } from "next";
 import Link from "next/link";
 import { ArrowRight, Bot, Lock, ChartCandlestick } from "lucide-react";
+
+// Optional catch-all routes (`[[...slug]]`) match the parent path at runtime
+// but Next.js typedRoutes doesn't expose the bare parent in its generated
+// union type. Casting `as Route` is the documented escape hatch.
+const SIGN_IN = "/sign-in" as Route;
+const SIGN_UP = "/sign-up" as Route;
 
 export default function LandingPage() {
   return (
@@ -9,11 +16,11 @@ export default function LandingPage() {
           wally<span className="text-muted-foreground">.trader</span>
         </Link>
         <nav className="flex items-center gap-4 text-sm">
-          <Link href="/sign-in" className="text-muted-foreground hover:text-foreground">
+          <Link href={SIGN_IN} className="text-muted-foreground hover:text-foreground">
             Sign in
           </Link>
           <Link
-            href="/sign-up"
+            href={SIGN_UP}
             className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-primary-foreground transition hover:opacity-90"
           >
             Get started <ArrowRight className="h-3 w-3" />
@@ -35,7 +42,7 @@ export default function LandingPage() {
         </p>
         <div className="flex gap-3">
           <Link
-            href="/sign-up"
+            href={SIGN_UP}
             className="inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:opacity-90"
           >
             Start free trial <ArrowRight className="h-4 w-4" />
