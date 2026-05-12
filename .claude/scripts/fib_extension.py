@@ -47,6 +47,65 @@ def detect_swing(bars: list[dict]) -> tuple[float, float, int, int]:
     return min(lows), max(highs), low_idx, high_idx
 
 
+# ---------------------------------------------------------------------------
+# Retracement mode — entry zones from a swing
+# ---------------------------------------------------------------------------
+
+RETRACEMENT_RATIOS = [0.382, 0.500, 0.618, 0.750]
+
+
+def retracement_zones(
+    *, swing_low: float, swing_high: float, direction: str
+) -> dict:
+    """Compute fib retracement entry zones from a swing.
+
+    For LONG bias: entries are progressive retracements down from swing_high.
+    For SHORT bias: entries are progressive retracements up from swing_low.
+    SL at 0.75 retracement; TP at the anchor swing extreme (swing_high for LONG,
+    swing_low for SHORT).
+    """
+    if swing_high <= swing_low:
+        raise ValueError("swing_high must exceed swing_low")
+    if direction not in ("long", "short"):
+        raise ValueError("direction must be 'long' or 'short'")
+
+    rng = swing_high - swing_low
+
+    if direction == "long":
+        anchor = swing_high
+        sign = -1
+        tp = swing_high
+    else:
+        anchor = swing_low
+        sign = +1
+        tp = swing_low
+
+    entry_zones = {
+        f"{int(round(r * 1000))}".zfill(3): round(anchor + sign * rng * r, 4)
+        for r in RETRACEMENT_RATIOS[:3]
+    }
+    sl = round(anchor + sign * rng * RETRACEMENT_RATIOS[-1], 4)
+
+    return {
+        "direction": direction,
+        "swing_high": round(swing_high, 4),
+        "swing_low": round(swing_low, 4),
+        "entry_zones": entry_zones,
+        "sl_075": sl,
+        "tp_swing": round(tp, 4),
+    }
+
+
+def autodetect_direction(closes: list[float]) -> str:
+    """Direction from a closes series: LONG if last close >= midpoint of (max, min)."""
+    if not closes:
+        raise ValueError("closes must not be empty")
+    hi = max(closes)
+    lo = min(closes)
+    mid = (hi + lo) / 2
+    return "long" if closes[-1] >= mid else "short"
+
+
 def fetch_bars(symbol: str, tf: str = "1w", bars: int = 100,
                _fetcher=None) -> list[dict]:
     if _fetcher is not None:
@@ -101,7 +160,37 @@ def main() -> int:
     p.add_argument("--bars", type=int, default=100)
     p.add_argument("--json", action="store_true")
     p.add_argument("--quick", action="store_true")
+    p.add_argument("--mode", choices=["extension", "retracement"], default="extension")
     args = p.parse_args()
+
+    if args.mode == "retracement":
+        try:
+            raw = fetch_bars(args.symbol, args.tf, args.bars)
+        except Exception as e:  # noqa: BLE001
+            print(f"ERROR fetching bars: {e}", file=sys.stderr)
+            return 2
+        closes = [b["close"] for b in raw]
+        if not closes:
+            print("ERROR: no bars returned", file=sys.stderr)
+            return 2
+        direction = autodetect_direction(closes)
+        # uses close prices (wicks excluded intentionally — close-to-close retracements)
+        out = retracement_zones(
+            swing_low=min(closes),
+            swing_high=max(closes),
+            direction=direction,
+        )
+        if args.json:
+            print(json.dumps(out))
+        else:
+            print(f"{args.symbol} {args.tf} retracement {direction.upper()}")
+            for level, price in out["entry_zones"].items():
+                print(f"  fib {int(level)/1000:.3f}: {price}")
+            print(f"  SL  fib 0.750: {out['sl_075']}")
+            print(f"  TP  swing:    {out['tp_swing']}")
+        return 0
+
+    # --- extension mode (unchanged) ---
     try:
         result = analyze(args.symbol, args.tf, args.bars)
     except Exception as e:  # noqa: BLE001

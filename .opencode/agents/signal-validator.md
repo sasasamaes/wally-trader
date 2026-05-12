@@ -102,6 +102,21 @@ Lectura del `btc_inverse_bias`:
 - SHORT signal + bias=BULLISH (USDT.D bajando) → WARN textual (capital sale de stables)
 - Aligned o NEUTRAL → continue silently
 
+### Filtro Min-R:R (adaptativo por WR profile)
+
+Para señales externas (Discord/Telegram/Twitter), validar el R:R contra el mínimo dinámico
+del profile receptor (típicamente bitunix). Llamada idéntica a trade-validator FASE 0.9:
+
+```bash
+.claude/scripts/.venv/bin/python .claude/scripts/min_rr_gate.py \
+  --profile bitunix --setup-rr <ratio_de_la_señal> --json
+```
+
+`status=WARN` → degrada el score de la señal en -10 puntos y añade flag `LOW_RR` al
+reporte. No bloquea — el operador decide.
+
+Fuente: design doc 2026-05-12 YouTube bundle, feature B.
+
 ## 🔍 Parsing de la señal
 
 El usuario te puede dar una señal en varios formatos:

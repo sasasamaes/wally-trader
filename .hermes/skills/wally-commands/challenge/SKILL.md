@@ -68,7 +68,24 @@ Pasos que ejecuta Claude:
    - Si cualquier regla BREACHED → "🚫 CHALLENGE BREACHED — <regla>. Cuenta nueva requerida."
    - Si overrides > 0 → "📋 Revisa overrides.log al /journal"
 
-6. **AGREGADO DESDE NOTION FTMO DB (si Notion MCP activo):**
+6. **Readiness para siguiente challenge:**
+
+   Ejecutar antes de pagar otro challenge ($99-$199):
+
+   ```bash
+   .claude/scripts/.venv/bin/python .claude/scripts/challenge_readiness.py \
+     --profile $WALLY_PROFILE --json
+   ```
+
+   Lectura del status:
+   - **READY** → puedes comprar el siguiente challenge con base sólida (3 meses positivos)
+   - **BORDERLINE** → 1-2 meses positivos, espera al menos 1 mes más de track récord
+   - **NOT_READY** → mes pasado negativo o sin histórico, NO compres ahora
+
+   Regla V3 de Alex Ruiz: no comprar nuevo challenge hasta acreditar 3 meses consecutivos positivos en el profile activo.
+   Fuente: design doc 2026-05-12 YouTube bundle, feature F.
+
+7. **AGREGADO DESDE NOTION FTMO DB (si Notion MCP activo):**
    - Lee `.claude/.env` para `NOTION_FTMO_DB_ID`. Verifica acceso a tools `mcp__notion_*`
    - Si disponible:
      - Query `mcp__notion__query_database` con filter por fecha >= fecha-inicio-challenge

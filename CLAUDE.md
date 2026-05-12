@@ -546,6 +546,52 @@ Five features inspired by Dragno community master live (YouTube `Be8IYJLgdYA`, 2
 **Spec:** `docs/superpowers/specs/2026-05-10-live-insights-bundle-design.md`
 **Plan:** `docs/superpowers/plans/2026-05-10-live-insights-bundle.md`
 
+## YouTube Improvements Bundle (Bundle 3, 2026-05-12)
+
+Six improvements distilled from four Alex Ruiz videos (es):
+
+### Feature B — Dynamic Min-R:R Gate
+- CLI: `.claude/scripts/.venv/bin/python .claude/scripts/min_rr_gate.py --profile <name> --setup-rr <ratio>`
+- Formula: `min_rr = ((1-wr)/wr) * 1.2` with WR clamped [0.20, 0.80], fallback 1.5 when <10 trades.
+- Wired into `trade-validator` FASE 0.9 and `signal-validator` (LOW_RR score penalty).
+
+### Feature C — Fib Retracement Zones (extension of fib_extension.py)
+- CLI: `.claude/scripts/.venv/bin/python .claude/scripts/fib_extension.py --mode retracement --symbol BTCUSDT --tf 1h`
+- Output: 0.382 / 0.500 / 0.618 entry zones + SL at 0.75 + TP at swing extreme.
+- Used internally by pullback_detector.py.
+
+### Feature F — Three-Months-Positive Challenge Gate
+- CLI: `.claude/scripts/.venv/bin/python .claude/scripts/challenge_readiness.py --profile <name>`
+- Returns READY / BORDERLINE / NOT_READY based on last 3 months of PnL parsed from the profile log.
+- Wired into `/challenge` as a soft advisory banner before any "buy next challenge" decision.
+
+### Feature G — retail-bingx Cost Reality (documentation only)
+- `.claude/profiles/retail-bingx/config.md` updated to mark the profile as observation-only ($0.93 capital + tick size makes real execution non-viable despite tiny fees).
+
+### Feature A — Pullback Detector (standalone, no router wire-in yet)
+- CLI: `.claude/scripts/.venv/bin/python .claude/scripts/pullback_detector.py --symbol BTCUSDT --tf 15m`
+- Slash: `/pullback [SYMBOL] [TF]`
+- Pipeline: ADX≥25 gate → impulse (3+ same-color, ATR>μ) → fib 0.382-0.618 retrace → continuation candle.
+- Output: entry / SL (fib 0.75) / 3 TPs (Fibonacci extensions) / confidence 0-100.
+- **Standalone-first** by design — backtest vs MA Crossover required before wiring into `regime_mapping.json`.
+
+### Feature E — Asian Range Secondary Strategy (fotmarkets)
+- CLI: `.claude/scripts/.venv/bin/python .claude/scripts/asian_range.py --file <bars5m.json> --check-grab`
+- Slash: `/asian-range [SYMBOL] --file <path>`
+- Pipeline: compute Asian session H/L (UTC 23:00-08:00) → detect break-and-reverse within 4 bars of London open.
+- **Secondary only** — Fotmarkets-Micro 5m remains primary. See `.claude/profiles/fotmarkets/strategy_asian_range.md`.
+
+### Out of scope (intentional)
+- HMM regime detector — Alex's own V2 conclusion walked back HMM-for-param-tuning; existing `regime_mapping.json` + ADX cover the use case.
+- 3h IA course (V4) — chapters 1:21, 1:36, 1:53, 2:06, 2:30 identified as worth manual viewing, but no programmatic distillation.
+
+### Tests
+- 22+ new tests across `test_min_rr_gate.py`, `test_fib_extension.py` (new tests), `test_challenge_readiness.py`, `test_pullback_detector.py`, `test_asian_range.py`. All synthetic fixtures, no live-data dependence.
+
+### Spec & plan
+- Design: `docs/superpowers/specs/2026-05-12-youtube-improvements-bundle-design.md`
+- Plan: `docs/superpowers/plans/2026-05-12-youtube-improvements-bundle.md`
+
 ## Disclaimer
 
 Nada en este proyecto es consejo financiero. Futuros con leverage pueden liquidar capital en minutos con un wick. Usa capital que puedas perder sin afectar tu vida.

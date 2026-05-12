@@ -17,7 +17,6 @@ from app.models.signal import Signal, SignalOutcome
 from app.schemas.equity import EquitySummary
 from app.schemas.signal import SignalStats
 
-
 # Outcomes that count as "closed" for stats. PENDING/CANCELLED don't.
 _CLOSED_OUTCOMES = (
     SignalOutcome.tp1,
@@ -50,11 +49,10 @@ async def compute_signal_stats(
     wr_denom = len(wins) + len(losses)
     wr = (len(wins) / wr_denom * 100) if wr_denom else 0.0
 
-    pf: float | None
-    if losses:
-        pf = total_win_usd / abs(total_loss_usd) if total_loss_usd != 0 else None
-    else:
-        pf = None  # undefined — caller renders as "—" or "∞"
+    # pf is None when no losses or total_loss_usd == 0 — caller renders as "—" or "∞"
+    pf: float | None = None
+    if losses and total_loss_usd != 0:
+        pf = total_win_usd / abs(total_loss_usd)
 
     return SignalStats(
         total=total,

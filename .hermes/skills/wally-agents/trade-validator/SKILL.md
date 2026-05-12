@@ -90,6 +90,26 @@ python3 .claude/scripts/volume_divergence.py --symbol $SYMBOL --tf 1h --directio
 - `verdict=OK` → continue silently
 - `divergence=INSUFFICIENT_DATA` → INFO, no bloquea
 
+### FASE 0.9 — Min-R:R gate (dinámico por WR del profile)
+
+Después de macro_gate y session_quality, antes de los 4 filtros técnicos. Calcula el
+R:R mínimo adaptativo según el WR de los últimos 30 días del profile activo.
+
+Ejecutar:
+```bash
+.claude/scripts/.venv/bin/python .claude/scripts/min_rr_gate.py \
+  --profile <profile> --setup-rr <ratio_proyectado> --json
+```
+
+Reglas:
+- `status=OK` → continuar a los 4 filtros.
+- `status=WARN` → reportar al operador ("R:R 1.2 < mínimo dinámico 1.8 para WR 40%")
+  y degradar a NO-GO suave (no BLOCK absoluto, pero recomienda esperar mejor setup).
+- `INSUFFICIENT_DATA` flag → tratar como OK (fallback 1.5) y anotar para que el operador
+  sepa que no hay suficiente historial.
+
+Fuente: design doc 2026-05-12 YouTube bundle, feature B.
+
 ## Protocolo
 
 ### 1. Lee estado actual
