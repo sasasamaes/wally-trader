@@ -371,3 +371,73 @@ USER OVERRIDE BENEFICIOSO documentado:
 - → L8 override tracker debe registrar este caso
 ```
 
+
+---
+
+## 2026-05-11 07:41 — LDOUSDT.P SHORT 20x ✅ WIN +$48.24 (+100.04% margin)
+
+**Entrada ejecutada (no señal externa, self-generated):**
+- Entry: **0.4356** @ 07:34:56 CR (Bitunix timestamp; log time 07:41)
+- Exit: **0.4133** @ 09:03:17 CR
+- Hold: **1h 28min**
+- Leverage: **20x cross** | Margin: $48.80 (~24% capital sobre $200) | Position: 2,214 LDO ≈ $963.31 nominal
+- Liq estimada: 0.5102 (+17.1%) | SL hard 0.4500 setteado tras `/punk-watch #1`
+
+**PnL: +$48.24 USD (+100.04% margin)** — 2x margin retornado en <90 min
+**Exit zone:** entre TP2 (0.4150) y TP3 (0.4020) — overshoot TP2 con +0.42% extra captura
+
+### Confluencia que pagó (triple alineación)
+
+1. **Macro:** Core CPI martes 06:30 CR (~22h adelante). Datos previos: PCE 3-mo annualized **5.62%** vs 3.5% YoY, CPI headline 3-mo annualized **5.33%**, BCOM commodities 3-mo annualized **+104.40%** 🚨 → mercado pricing rate cut delays = risk-off.
+
+2. **Estructural M2 (Albertoisidrin chart):** M2 en **fib 161.8% = $23.00T** = zona exhaustion histórica. Los 4 pivotes verticales previos (8-Abr-24, 30-Dic-24, 14-Abr-25, 5-Ene-26) marcaron techos locales antes de pullbacks.
+
+3. **Técnico LDO:** Counter-trend short post-pump 7%. RSI 1H 63.6 al entry, 4H +6% sobre EMA20 (overextended). Wave Main 15m crashed 63 → 38 → **18 → 12** sin rebote técnico.
+
+### Watches ejecutados (vigilancia disciplinada)
+
+| # | Tiempo elapsed | Mark | PnL | Wave Main 15m | Lectura |
+|---|---|---|---|---|---|
+| 1 | +5 min | 0.4342 | +$3.10 | — | Settear SL 0.4500 + TPs |
+| 2 | +60-75 min | 0.4331 | +$5.53 | 38.6 | Vol secando, hold |
+| 3 | +~2h | 0.4273 | +$18.38 | **18.46** | TP1 ya tocado, cerrar 50% (Case B+) |
+| 4 | +~2.5h | 0.4270 | +$19.04 | **12.74** | Consolidación, hold runner |
+| **Close** | **+88 min total** | **0.4133** | **+$48.24** | — | **Lock pre-CPI** |
+
+### Niveles dibujados en TV (BYBIT:LDOUSDT.P 1H — 7 líneas)
+
+```
+0.5102 LIQ (no cross)
+0.4500 SL_REC (setteado)
+0.4356 ENTRY
+0.4275 TP1 fib 38.2 1H (Neptune-adaptive)
+0.4150 TP2 confluence 1H 61.8% + 4H 38.2%
+0.4133 EXIT REAL ← entre TP2 y TP3
+0.4020 TP3 hold 24-48h
+0.3895 STRETCH fib100 1H retrace
+```
+
+### Pattern validado: 3er LDO SHORT consecutivo ganador
+
+| Trade | Fecha | Hold | PnL | PnL% margin |
+|---|---|---|---|---|
+| LDO #1 | 2026-05-08/09 | 32h | +$18.59 | +19.23% |
+| **LDO #2** | **2026-05-11** | **1h 28min** | **+$48.24** | **+100.04%** |
+
+**Meta-lección:** alt high-beta + thesis estructural + macro alineado + entry counter-trend post-pump = **R:R asimétrico elite**. Acortamiento progresivo del hold (32h → 1.5h) sugiere skill de timing mejorando — entry más cerca del top del pump permite captura más rápida con menos exposure overnight.
+
+### Lecciones operativas
+
+1. ✅ **SL hard setteado tras watch #1** — lección aplicada del LDO #1.
+2. ✅ **Disciplina de vigilancia** (4 watches en 2h) sin sobre-actuar.
+3. ✅ **Decision pre-CPI** de lockear $48 antes del binary event mañana 06:30 CR = anti-tilt + anti-overconfidence.
+4. ⚠️ **TP1 0.4248 NO setteado en Bitunix UI** durante toda la sesión — quedó accesible la última hora. Si hubiera estado setteado, parcial 30-40% locked automáticamente. Resultado final +$48 vs hipotético +$30-50 con plan parcial — equivalente neto, pero el plan parcial es más robusto a reversiones.
+
+### Sesión hoy 2026-05-11 (lunes)
+
+- **LDO SHORT:** +$48.24 ✅
+- **Capital:** ~$178 → **~$226** (+27% intraday)
+- **Slots:** 1/2 disponibles
+- **Daily PnL vs target $20-100:** ✅ MET en primer trade — día verde sólido
+
+**Outcome:** ✅ **WIN — locked**
