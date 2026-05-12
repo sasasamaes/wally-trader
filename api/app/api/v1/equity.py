@@ -6,10 +6,10 @@ import uuid
 from datetime import date as _date
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel, Field
 from sqlalchemy import and_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import BaseModel, Field
 
 from app.deps import get_current_user, get_db_session
 from app.models.equity_point import EquityPoint

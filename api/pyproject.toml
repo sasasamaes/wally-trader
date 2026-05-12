@@ -74,7 +74,17 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "UP", "B", "A", "C4", "T20", "RET", "SIM", "ARG"]
-ignore = ["E501"]
+ignore = [
+    "E501",   # line length — handled by formatter
+    "B008",   # FastAPI Depends(...) in defaults is the canonical pattern
+    "UP042",  # keep (str, enum.Enum) for SQLAlchemy Enum column compatibility
+]
+
+[tool.ruff.lint.per-file-ignores]
+"app/agents/*.py" = ["ARG002"]            # interface methods (precompute/user_prompt) with overridable args
+"app/core/logging.py" = ["ARG001"]        # structlog processor signature requires logger/method_name
+"app/llm_gateway/router.py" = ["ARG002"]  # public stream() keyword arg reserved for tracing
+"tests/**" = ["ARG001", "ARG002"]         # mock classes implement interfaces with unused args
 
 [tool.mypy]
 python_version = "3.13"

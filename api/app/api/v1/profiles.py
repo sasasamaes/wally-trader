@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import uuid
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
