@@ -186,6 +186,15 @@ def open_positions(memory_dir: Path | None = None) -> list[dict]:
     for r in rows:
         if r.get("exit_price"):
             continue
+        # Skip signals that never executed (REJECT verdicts or executed=no).
+        # Without this filter a logged-but-rejected signal looks "open" and
+        # falsely consumes a concurrent slot.
+        decision = (r.get("decision") or "").strip().upper()
+        if decision.startswith("REJECT"):
+            continue
+        executed = (r.get("executed") or "").strip().lower()
+        if executed == "no":
+            continue
         sym = r.get("symbol", "").replace(".P", "").upper()
         if not sym:
             continue
