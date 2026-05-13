@@ -22,7 +22,19 @@ Sistema de trading algorítmico-asistido **multi-profile** (7 profiles): retail 
 - **Pine v6 generator** desde lenguaje natural con auto-compile MCP
 - **Pre-mortem command** con 8 preguntas Klein-1998 obligatorias
 
-**🆕 V3.1 highlights — YouTube Improvements Bundle (Bundle 3, 2026-05-12):**
+**🆕 V3.2 highlights — HMM Diagnostic Tool (Bundle 4, 2026-05-13):**
+- **`/hmm-analyze SYMBOL STRATEGY`** — fits a Hidden Markov Model to 1H × 6m OHLCV (Binance Futures), auto-detects 2-5 regimes via BIC, partitions strategy backtest by HMM-detected regime
+- **Strictly diagnostic.** Never modifies `regime_mapping.json`. Never touches live paths (`/punk-smart`, `/signal`, `/validate`)
+- **Optional `--html`** → plotly artifact con transition matrix heatmap + per-regime backtest table
+- **Optional `--suggest-mapping`** → unified diff DRY-RUN comparando régimen dominante HMM vs current mapping (jamás escribe el archivo)
+- **5 strategies soportadas** del router (A_VWAP, B_TrendPullback, C_BBSqueeze, D_MACDMomentum, E_RangeBounce)
+- **Markdown report** en `docs/hmm_analysis/<SYM>_<STRAT>_<YYYY-MM-DD>.md` con 7 secciones (Summary, Regime Distribution, Transition Matrix, Backtest per Regime, Recommendations, Caveats)
+- **Skill `@hmm-regime-analysis`** documenta interpretación + caveats honest-first
+- Source: video Alex Ruiz `Cdhqu6rIvb0` — implementa la conclusión "HMM para portfolio management, no para param tuning"
+- Dep nueva: `hmmlearn>=0.3.0` en `.claude/scripts/.venv` (plotly opcional para `--html`)
+- 26 tests nuevos (25 unit/integration + 1 E2E network-opt-in). **Total ahora ~596 tests** en `.claude/scripts/tests/` + `shared/wally_core/tests/`
+
+**V3.1 highlights — YouTube Improvements Bundle (Bundle 3, 2026-05-12):**
 - **`/pullback`** — impulse → fib 0.382-0.618 retrace → continuation detector (ADX≥25 gate). Llena el gap del Mean Reversion en TRENDING.
 - **`/asian-range`** — Asian session H/L + London-open grab/fakeout (EURUSD 5m, secondary strategy fotmarkets)
 - **Min-R:R adaptive gate** (`min_rr_gate.py`) — `min_rr = ((1-wr)/wr)*1.2` desde rolling 30d WR del profile. Wired en `trade-validator` FASE 0.9 + `signal-validator`.
@@ -30,7 +42,7 @@ Sistema de trading algorítmico-asistido **multi-profile** (7 profiles): retail 
 - **Challenge readiness gate** (`challenge_readiness.py`) — bloquea compra de otro funded challenge si no hay 3 meses positivos consecutivos. Wired en `/challenge`.
 - **Strategy-Builder master prompt** (`docs/prompts/wally-strategy-builder.md`) — single Markdown copy-pasteable que genera EAs MQL5 (MT5/FTMO/FundingPips), scans Python signal-only (Bitunix/Binance), siempre reutilizando los gates existentes (macro_gate + session_quality + min_rr_gate + volume_divergence + cross-profile BTC exclusion)
 - **CI green** — web (Next.js 15 typecheck/lint/build) + api (FastAPI ruff/mypy/pytest) ambos verdes. ruff config con per-file-ignores para FastAPI Depends + interface methods
-- 22+ nuevos tests sintéticos en el bundle. **Total ahora ~570 tests** en `.claude/scripts/tests/` + `shared/wally_core/tests/`
+- 22+ nuevos tests sintéticos en el bundle.
 
 ---
 
@@ -836,7 +848,18 @@ python3 .claude/scripts/bitunix_pairs_check.py --symbols DOGE,WIF # validar cust
 /punk-watch               ⏱ Vigilancia adaptativa con magnet check (refinado)
 ```
 
-**🆕 V3.1 — YouTube Improvements Bundle (2026-05-12, Alex Ruiz × 4):**
+**🆕 V3.2 — HMM Diagnostic Tool (Bundle 4, 2026-05-13, Alex Ruiz video Cdhqu6rIvb0):**
+```
+/hmm-analyze SYMBOL STRATEGY    🧪 HMM regime detection + per-regime backtest (diagnostic-only)
+                                   [--html] [--suggest-mapping] [--force-refresh] [--seed N]
+/backtest --hmm-analyze ...     ↪ Alias del comando anterior
+```
+- Output: `docs/hmm_analysis/<SYM>_<STRAT>_<YYYY-MM-DD>.md` con 7 secciones
+- Skill `@hmm-regime-analysis` documenta interpretación
+- NUNCA toca `regime_mapping.json` ni paths live — diagnostic puro
+- 5 strategies del router: A_VWAP, B_TrendPullback, C_BBSqueeze, D_MACDMomentum, E_RangeBounce
+
+**V3.1 — YouTube Improvements Bundle (2026-05-12, Alex Ruiz × 4):**
 ```
 /pullback [SYMBOL] [TF]   🌊 Impulse→fib 0.382-0.618→continuation (ADX≥25). Standalone, no router yet
 /asian-range [SYMBOL]     🌅 Asian H/L + London grab/fakeout (EURUSD 5m, fotmarkets secondary)
@@ -2993,16 +3016,20 @@ En resumen: puedes usar, modificar, distribuir y vender este código libremente 
 
 ---
 
-**Última actualización:** 2026-04-23 (sesión arquitectura — 3 features nuevos, 66 commits)
+**Última actualización:** 2026-05-13 (Bundle 4: HMM Diagnostic Tool — 24 commits, video Cdhqu6rIvb0)
 **Capital actual (retail):** $13.63 (3/3 wins, +36.3% acumulado)
 **Estado FTMO:** profile + MT5 bridge implementados, pendiente paper trading en Free Trial
 **Próximo objetivo retail:** $20 (≈ +63%) en las próximas 2 semanas
 **Próximo objetivo FTMO:** correr backtest → paper trading 10+ trades → decidir challenge $93
 
 **Features recientes:**
+- HMM Diagnostic Tool (Bundle 4, Alex Ruiz) — merge `85568c5`
+- YouTube Improvements Bundle (Bundle 3) — commit `d5f2e64`
+- Live Insights Bundle (Bundle 2: USDT.D + multi-tier macro + vol divergence + auto-MUGRE + fib exhaustion)
+- Discipline & Observability (Bundle 1: macro events gate + bitunix log capture + weekly digest)
 - Dual-profile system (retail + FTMO) — commit `086e754`
 - MT5 Bridge con EA MQL5 — commit `c27ccf6`
 - Multi-CLI portability (system/ + adapters OC/Codex) — commit `c3eda3a`
 - Capa ML (Sentiment NLP + XGBoost + LSTM scaffold) — commit `fa06770`
 
-**Tests totales:** 54 unit (24 guardian + 19 mt5_bridge + 11 transform) + 8 integration e2e.
+**Tests totales:** ~596 (Bundle 4 agrega 26: 25 hmm unit/integration + 1 E2E network-opt-in).
