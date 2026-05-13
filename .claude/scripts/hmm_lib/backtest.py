@@ -58,12 +58,15 @@ def _resolve_trade(bars_15m: list[dict], signal: dict, entry_idx: int) -> tuple[
 
 
 def _regime_at_entry(entry_ts: int, bars_1h: list[dict], states_1h: np.ndarray) -> int | None:
-    """Find the 1h bar covering the entry timestamp; return state or None if out of range."""
+    """Find the 1h bar covering the entry timestamp; return state or None if out of range or in warmup."""
     timestamps = [b["t"] for b in bars_1h]
     idx = bisect.bisect_right(timestamps, entry_ts) - 1
     if idx < 0 or idx >= len(states_1h):
         return None
-    return int(states_1h[idx])
+    state = int(states_1h[idx])
+    if state < 0:  # sentinel for warmup bars
+        return None
+    return state
 
 
 def _aggregate_trades(trades: list[tuple[float, str]]) -> tuple[int, float, float, float, float]:

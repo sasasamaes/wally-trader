@@ -87,7 +87,11 @@ def _df_to_1h_bars(df_1h) -> list[dict]:
 
 def _build_report(symbol: str, strategy: str, df, fit, labels, backtests,
                   mapping_note: str | None) -> dict:
-    caveats = []
+    caveats = [
+        "**V1 approximation:** 15m bars are synthesized by duplicating each 1H bar 4 times. "
+        "Strategies that key off intrabar high/low or volume may see degraded signal quality. "
+        "V2 should fetch true 15m series alongside 1H.",
+    ]
     for sid, info in labels.items():
         if info.get("low_sample"):
             caveats.append(
@@ -155,15 +159,18 @@ def main(argv: list[str] | None = None) -> int:
     log.info("k=%d labels=%s", fit.k, {sid: info["label"] for sid, info in labels.items()})
 
     # Map HMM states (defined on features=bars after WARMUP) back to original 1h timeline.
-    # WARMUP bars are dropped from features. Pad states with the first state for alignment.
+    # WARMUP bars are dropped from features. Mark them with sentinel -1 so backtest skips
+    # any trades whose entry falls in the warmup window (avoids fake state attribution).
     from hmm_lib.features import WARMUP as FEATURE_WARMUP
     import numpy as np
     states_1h = np.concatenate([
-        np.full(FEATURE_WARMUP, fit.states[0]),
-        fit.states,
+        np.full(FEATURE_WARMUP, -1, dtype=np.int64),  # sentinel: skip warmup trades
+        fit.states.astype(np.int64),
     ])
     # Trim to match df length
     states_1h = states_1h[:len(df)]
+    warmup_count = int((states_1h == -1).sum())
+    log.info("warmup bars (trades will be skipped): %d", warmup_count)
 
     bars_1h = _df_to_1h_bars(df)
     bars_15m = _df_to_15m_bars(df)

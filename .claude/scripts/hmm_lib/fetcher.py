@@ -1,7 +1,7 @@
 """OHLCV fetch from Binance Futures with 1h disk cache."""
 import json
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -20,7 +20,7 @@ TARGET_BARS = 4380  # ~6 months of 1H
 
 
 def _now_iso() -> str:
-    return datetime.utcnow().isoformat()
+    return datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
 
 
 def _http_get(url: str, params: dict, timeout: int = 15) -> requests.Response:
