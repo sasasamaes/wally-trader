@@ -365,6 +365,22 @@ Antes de operar, verificar:
 - **NAS100/SPX500**: data backtest insuficiente (8/3 trades) — más data needed.
 - **Donchian Breakout en BTC**: probar como alternativa para períodos TRENDING.
 
+### 🆕 Backtest findings 2026-05-12 (post-Bundle 3)
+
+📄 **Reportes:** `docs/backtest_findings_2026-05-12_pullback_vs_macross_trend_leve.md` y `docs/backtest_findings_2026-05-12_asian_range_eurusd.md`
+
+**1. Pullback Detector vs MA Crossover (TREND_LEVE) — verdict NEUTRAL / KEEP-MACROSS**
+- Universe: BTCUSDT/ETHUSDT/SOLUSDT/AVAXUSDT/INJUSDT 60d 15m
+- Pullback: 402 trades, WR 42.8%, PF 1.14, +28.80R
+- MACross: 145 trades, WR 33.8%, PF 0.87, -12.33R
+- Pullback es **más robusto** (2.8× más setups, PF >1, OOS PASS) pero ambos están abajo del umbral wire-in (≥10pp WR AND ≥0.4 PF).
+- **Acción:** mantener MA Crossover en `regime_mapping.json` TREND_LEVE slot. `/pullback` queda standalone. Re-evaluar en 30d con más data.
+
+**2. Asian Range strategy en fotmarkets EURUSD 5m — verdict DISCARD ⛔**
+- 25 trades en 60d. WR 32%, PF 0.83, ret -2.62%, **0% TP hits**.
+- **Causa raíz estructural:** ventana fotmarkets (CR 07:00-10:55 = UTC 13:00-16:55) es NY open, NO London open. Los grabs reales ocurren UTC 08:00-11:00 (CR 02:00-05:00) — fuera del horario operativo del trader.
+- **Acción:** DISCARD para fotmarkets. `strategy_asian_range.md` actualizado con el verdict. `/asian-range` slash queda como herramienta sin profile target. Considerar futuro profile dedicado madrugador si interesa la estrategia.
+
 ## Niveles técnicos vigentes (al 2026-04-20)
 
 - **Neptune Line 1D:** 67,836 (soporte fuerte de trend diario)
