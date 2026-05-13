@@ -48,11 +48,38 @@ from backtest_regime_matrix import (
 import punk_smart_state as state
 import punk_smart_vetos as vetos
 import regime_confidence as rc
+import market_context as mctx
 
 CR_OFFSET = state.CR_OFFSET
 ASSETS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "MSTRUSDT", "AVAXUSDT",
           "INJUSDT", "DOGEUSDT", "WIFUSDT", "XLMUSDT",
           "BCHUSDT", "STRKUSDT", "TONUSDT", "TRXUSDT", "PIPPINUSDT"]
+
+
+def _discover_assets(source: str, top_n: int, min_vol_usd: float) -> tuple[list[str], list[dict]]:
+    """Pull dynamic asset list from a source + filter by Bitunix tradeability.
+
+    Returns (symbols_for_evaluate, raw_discovery_rows).
+    Empty symbols list if discovery failed → caller should fall back to static ASSETS.
+    """
+    if source == "volume":
+        raw = mctx.fetch_top_volume_binance(n=top_n)
+    elif source == "movers":
+        raw = mctx.fetch_top_movers_binance(n=top_n)
+    elif source == "trending":
+        raw = mctx.fetch_trending_coingecko(n=top_n)
+    else:
+        return [], []
+    if not raw:
+        return [], []
+    symbols = [r["symbol"] for r in raw]
+    tradeable = mctx.filter_tradeable_bitunix(symbols, min_vol_usd=min_vol_usd)
+    # Enrich tradeable rows with discovery metadata for the report
+    disc_by_sym = {r["symbol"]: r for r in raw}
+    for t in tradeable:
+        t["discovery_source"] = source
+        t.update({k: v for k, v in disc_by_sym.get(t["symbol"], {}).items() if k != "symbol"})
+    return [t["symbol"] for t in tradeable], tradeable
 
 STRATEGY_FNS = {
     "A_VWAP": strat_a_vwap,
@@ -202,6 +229,15 @@ def main():
     p.add_argument("--asset", help="Single asset (default: scan all)")
     p.add_argument("--json", action="store_true")
     p.add_argument("--show-all", action="store_true", help="Mostrar también STAND_ASIDE / NO_SETUP")
+    p.add_argument("--dynamic", choices=["volume", "movers", "trending"],
+                   help="Pull asset list dynamically (top N by source + Bitunix tradeable filter). "
+                        "Replaces the hardcoded watchlist. 1h cache.")
+    p.add_argument("--top-n", type=int, default=10,
+                   help="N for --dynamic (default 10)")
+    p.add_argument("--min-vol-usd", type=float, default=1_000_000,
+                   help="Min Bitunix 24h vol USD for tradeability (default $1M)")
+    p.add_argument("--no-context", action="store_true",
+                   help="Skip global+per-asset market context fetch (offline mode / testing)")
     args = p.parse_args()
 
     mapping = load_mapping()
@@ -219,8 +255,30 @@ def main():
                   "python3 .claude/scripts/punk_smart_state.py --reset-killswitch")
         return
 
-    targets = [args.asset] if args.asset else ASSETS
+    discovery_meta: list[dict] = []
+    if args.asset:
+        targets = [args.asset]
+    elif args.dynamic:
+        targets, discovery_meta = _discover_assets(args.dynamic, args.top_n, args.min_vol_usd)
+        if not targets:
+            # Discovery source down → fall back to static watchlist with a warning
+            print(f"⚠️  --dynamic {args.dynamic} returned 0 tradeable assets — falling back to static watchlist",
+                  file=sys.stderr)
+            targets = ASSETS
+    else:
+        targets = ASSETS
+
+    # Global market context (cached 10 min) — fetched once per invocation
+    global_ctx: dict | None = None if args.no_context else mctx.fetch_global_context()
+
     raw_results = [evaluate_asset(s, mapping, now) for s in targets]
+
+    # Attach per-asset market context (Binance 24h ticker + funding rate)
+    if not args.no_context:
+        for r in raw_results:
+            sym = r.get("asset")
+            if sym:
+                r["market_context"] = mctx.fetch_asset_context(sym)
 
     enabled = mapping.get("vetos_enabled",
                           ["macro", "blacklist", "correlation", "sentiment",
@@ -312,12 +370,33 @@ def main():
             "no_setup": no_setup,
             "stand_aside": stand_aside,
             "mapping_version": mapping.get("version", 1),
+            "global_context": global_ctx,
+            "discovery": {
+                "source": args.dynamic,
+                "top_n": args.top_n if args.dynamic else None,
+                "min_vol_usd": args.min_vol_usd if args.dynamic else None,
+                "tradeable": discovery_meta,
+            } if args.dynamic else None,
         }, indent=2, default=str))
         return
 
     print(f"\n{'='*72}")
     print(f"PUNK-SMART v2 — {now.strftime('%H:%M CR')}  |  mapping v{mapping.get('version', 1)}")
     print(f"{'='*72}")
+
+    if global_ctx:
+        fng = global_ctx.get("fng")
+        dom = global_ctx.get("dominance") or {}
+        bits = []
+        if fng is not None:
+            bits.append(f"F&G {fng}")
+        if dom:
+            bits.append(f"BTC.D {dom.get('btc_dominance', '?')}%")
+            bits.append(f"USDT.D {dom.get('usdt_dominance', '?')}%")
+        if bits:
+            print(f"  Global: {'  |  '.join(bits)}")
+    if args.dynamic and discovery_meta:
+        print(f"  Discovery: top {args.top_n} by {args.dynamic} → {len(discovery_meta)} tradeable on Bitunix (min vol ${int(args.min_vol_usd):,})")
 
     if approved:
         approved.sort(key=lambda x: -x["rr_tp2"])
