@@ -27,3 +27,9 @@ Output:
 
 Especifica qué probar:
 $ARGUMENTS
+
+## HMM Diagnostic Mode
+
+`/backtest --hmm-analyze SYMBOL STRATEGY [flags...]` is an alias for `/hmm-analyze SYMBOL STRATEGY [flags...]`. See `.claude/commands/hmm-analyze.md` for full documentation.
+
+When Claude sees `--hmm-analyze` in the args, it must invoke `.claude/scripts/hmm_analyze.py` instead of the regular backtest runner.
