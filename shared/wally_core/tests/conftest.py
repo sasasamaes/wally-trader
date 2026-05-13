@@ -20,3 +20,9 @@ def tmp_profile(tmp_path):
     p = tmp_path / "profiles" / "test_profile" / "memory"
     p.mkdir(parents=True)
     return p
+
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers", "network: tests that require external network access (skipped by default)"
+    )

@@ -127,3 +127,8 @@ shared/wally_core/build/
 # Watcher writes these on a per-minute schedule — too noisy to track
 .claude/watcher/status.json
 .claude/watcher/dashboard.md
+
+# HMM diagnostic tool — generated reports
+docs/hmm_analysis/*.html
+docs/hmm_analysis/*.md
+!docs/hmm_analysis/README.md
