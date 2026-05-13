@@ -21,7 +21,7 @@ The unfilled gap that this spec addresses: **diagnostic analysis of how each of 
 
 User decisions (brainstorming session 2026-05-13):
 - Scope: Diagnostic standalone, no live trading touched
-- Strategies in scope: the 5 already in `punk_smart_router.py` (A_VWAP, B_TrendPullback, C_RangeBounce, D_MACDMomentum, E_Donchian)
+- Strategies in scope: the 5 already defined in `.claude/scripts/backtest_regime_matrix.py` and imported by `punk_smart_router.py` (A_VWAP, B_TrendPullback, C_BBSqueeze, D_MACDMomentum, E_RangeBounce)
 - Universe: single asset per invocation
 - Output: markdown by default, optional HTML via `--html`
 - Timeframe: 1H bars, ~6 months lookback, auto-detect K ∈ {2,3,4,5} via BIC
@@ -57,9 +57,9 @@ User: /hmm-analyze <SYMBOL> <STRATEGY> [--html] [--suggest-mapping] [--force-ref
 fetch_ohlcv  build_features  fit_best_hmm   label_states   backtest_per_regime
  (Binance     (log_return,    (GaussianHMM   (heuristic     (reusa strategies/
   /fapi/v1/    vol_20,         K∈{2..5}      mean_ret ×      A_VWAP, B_TrendPullback,
-  klines       momentum_14)    select via    mean_vol)       C_RangeBounce,
+  klines       momentum_14)    select via    mean_vol)       C_BBSqueeze,
   1h × 6m,                     BIC)                          D_MACDMomentum,
-  cache 1h)                                                  E_Donchian)
+  cache 1h)                                                  E_RangeBounce)
                                   │
    ┌──────────────────────────────┼────────────────────────────────┐
    ▼                              ▼                                ▼
@@ -84,14 +84,14 @@ emit_markdown                opt: emit_html              opt: suggest_mapping_pa
     backtest.py         # per-regime backtest
     reporting.py        # markdown + HTML emitters
     suggest.py          # dry-run mapping patch
-.claude/scripts/strategies/                     # refactor from punk_smart_router
+.claude/scripts/strategies/                     # refactor from backtest_regime_matrix
     __init__.py
     base.py             # Strategy ABC
-    vwap_reversion.py
-    trend_pullback.py
-    range_bounce.py
-    macd_momentum.py
-    donchian.py
+    vwap_reversion.py       # A_VWAP (strat_a_vwap)
+    trend_pullback.py       # B_TrendPullback (strat_b_trending_pullback)
+    bb_squeeze.py           # C_BBSqueeze (strat_c_bb_squeeze_break)
+    macd_momentum.py        # D_MACDMomentum (strat_d_momentum_macd)
+    range_bounce.py         # E_RangeBounce (strat_e_range_bounce)
 shared/wally_core/tests/
     test_hmm_features.py
     test_hmm_model.py
@@ -201,10 +201,11 @@ python3 .claude/scripts/backtest_runner.py --hmm-analyze --symbol ETHUSDT --stra
 
 ### Strategies refactor approach
 
-The 5 strategies currently live inline in `punk_smart_router.py`. We extract them to `.claude/scripts/strategies/` behind a `Strategy` ABC with a pure `signal(bars) -> list[Trade]` interface.
+The 5 strategies currently live as module-level functions in `.claude/scripts/backtest_regime_matrix.py` (named `strat_a_vwap`, `strat_b_trending_pullback`, `strat_c_bb_squeeze_break`, `strat_d_momentum_macd`, `strat_e_range_bounce`). They are imported by `punk_smart_router.py`, `backtest_oos_split.py`, and possibly other callers via the `STRATEGY_FNS` registry.
 
-- Router keeps its public API (`evaluate_setup`, `run_router_scan`) unchanged
-- Router imports strategies from the new module
+We extract them to `.claude/scripts/strategies/` behind a `Strategy` ABC with a pure `signal(bars) -> list[Trade]` interface. The original functions stay as thin wrappers (or get fully replaced) in `backtest_regime_matrix.py` to preserve all import sites.
+
+- Router (`punk_smart_router.py`), `backtest_regime_matrix.py`, and `backtest_oos_split.py` continue working without API changes
 - **Regression test:** `python3 .claude/scripts/punk_smart_router.py --json` produces identical output before and after the refactor on a fixed fixture
 
 **Fallback if refactor is too risky:** duplicate the 5 functions in `strategies/` with `# TODO: dedupe with router` comments. V1 ships with duplication; V2 (future PR) does the real refactor. Decision made at implementation time after inspecting the router code.
@@ -405,7 +406,7 @@ Install: `.claude/scripts/.venv/bin/pip install 'hmmlearn>=0.3.0'`
 ## Open questions resolved during brainstorming
 
 1. **Live wire-in?** No. Diagnostic only.
-2. **Strategy scope?** The 5 in `punk_smart_router.py`.
+2. **Strategy scope?** The 5 currently registered in `STRATEGY_FNS` (A_VWAP, B_TrendPullback, C_BBSqueeze, D_MACDMomentum, E_RangeBounce), defined in `backtest_regime_matrix.py`.
 3. **Universe?** Single asset per invocation.
 4. **Output?** Markdown + optional HTML.
 5. **Timeframe / K?** 1H × 6m, auto-detect K ∈ {2,3,4,5} via BIC.
@@ -414,7 +415,7 @@ Install: `.claude/scripts/.venv/bin/pip install 'hmmlearn>=0.3.0'`
 
 ## Open questions for implementation time
 
-1. Does `punk_smart_router.py` structure allow clean extraction of strategies into ABC, or does it require the duplication fallback? Decide after inspecting code.
+1. Does the `strat_*` function signature in `backtest_regime_matrix.py` allow clean extraction into the `Strategy` ABC, or does it require the duplication fallback? Decide after inspecting code at implementation time.
 2. Are there assets in the bitunix watchlist not listed on Binance Futures? If so, document them as unsupported in the skill doc.
 3. Should the suggest patch use sorted JSON keys (matching jq output) or preserve original order? Decide based on `regime_mapping.json` current format.
 
