@@ -608,6 +608,22 @@ Six improvements distilled from four Alex Ruiz videos (es):
 - Design: `docs/superpowers/specs/2026-05-12-youtube-improvements-bundle-design.md`
 - Plan: `docs/superpowers/plans/2026-05-12-youtube-improvements-bundle.md`
 
+## HMM Diagnostic Tool (Bundle 4, 2026-05-13)
+
+`/hmm-analyze SYMBOL STRATEGY` — diagnostic tool that fits a Hidden Markov Model to 1H × 6m OHLCV from Binance Futures, labels regimes (CALM_UP/TREND_UP/CHOP/TREND_DOWN/CALM_DOWN/STRESS/STRESS_LITE), backtests one of the 5 router strategies (A_VWAP, B_TrendPullback, C_BBSqueeze, D_MACDMomentum, E_RangeBounce) per regime, and emits a markdown report.
+
+**Strictly diagnostic.** No live wire-in. Never modifies `regime_mapping.json`.
+
+- CLI: `.claude/scripts/.venv/bin/python .claude/scripts/hmm_analyze.py --symbol ETHUSDT --strategy A_VWAP [--html] [--suggest-mapping]`
+- Slash: `/hmm-analyze ETHUSDT A_VWAP` or `/backtest --hmm-analyze ETHUSDT A_VWAP`
+- Output: `docs/hmm_analysis/<SYM>_<STRAT>_<YYYY-MM-DD>.md`
+- Skill: `@hmm-regime-analysis` documents how to interpret outputs.
+- Dependency: `hmmlearn>=0.3.0` installed in `.claude/scripts/.venv` (and `plotly` for `--html`, optional).
+
+Reference: video `Cdhqu6rIvb0` by Alex Ruiz. Spec/plan in `docs/superpowers/{specs,plans}/2026-05-13-hmm-diagnostic-tool*.md`.
+
+Bundle 3 (2026-05-12) rejected HMM-for-live-tuning; this tool implements only the **portfolio-management framing** Alex describes in the conclusion (~25 min mark): parameters fixed, strategy selection per regime informed by analysis.
+
 ## Disclaimer
 
 Nada en este proyecto es consejo financiero. Futuros con leverage pueden liquidar capital en minutos con un wick. Usa capital que puedas perder sin afectar tu vida.
