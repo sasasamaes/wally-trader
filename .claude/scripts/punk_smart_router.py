@@ -203,6 +203,24 @@ def evaluate_asset(symbol: str, mapping: dict, now: datetime) -> dict:
     # Tentative — vetos applied later in main()
     rr_tp1 = abs(setup["tp1"] - setup["entry"]) / abs(setup["sl"] - setup["entry"])
     rr_tp2 = abs(setup["tp2"] - setup["entry"]) / abs(setup["sl"] - setup["entry"])
+    atr_now = calc_atr(bars_15m)
+    # ATR percentile over the last 200 bars (or whatever's available) — used by
+    # autohunt to drop assets in top-5% volatility regime (spec Appendix B).
+    atr_pct_15m_now = (atr_now / bars_15m[-1]["c"] * 100) if bars_15m[-1]["c"] else 0.0
+    atr_pcts: list[float] = []
+    window = bars_15m[-200:] if len(bars_15m) >= 200 else bars_15m
+    # Cheap historical ATR series — recompute the ATR ending at each historical i
+    # using only the bars up to that point. ATR has a warmup so we skip the first 14.
+    for k in range(14, len(window)):
+        sub = window[: k + 1]
+        a = calc_atr(sub)
+        c = sub[-1]["c"]
+        if c > 0:
+            atr_pcts.append(a / c * 100)
+    atr_percentile = None
+    if atr_pcts:
+        rank = sum(1 for x in atr_pcts if x <= atr_pct_15m_now)
+        atr_percentile = round(rank / len(atr_pcts) * 100, 1)
     return {
         **base, "status": "TENTATIVE",
         "strategy": strategy_name,
@@ -219,7 +237,10 @@ def evaluate_asset(symbol: str, mapping: dict, now: datetime) -> dict:
         "tp2_distance_pct": round(abs(setup["tp2"] - setup["entry"]) / setup["entry"] * 100, 3),
         "backtest_wr": round(info["wr"], 1),
         "backtest_pnl_per_trade": round(info["pnl_per_trade"], 2),
-        "_atr_15m": calc_atr(bars_15m),
+        "backtest_n_trades": info.get("n_trades"),
+        "atr_pct_15m": round(atr_pct_15m_now, 4),
+        "atr_percentile": atr_percentile,
+        "_atr_15m": atr_now,
     }
 
 

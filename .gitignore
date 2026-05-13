@@ -123,3 +123,7 @@ shared/wally_core/build/
 # Strategy imports (raw + distilled JSON — local cache)
 .claude/strategy_imports/
 .claude/cache/yt_subtitles/
+
+# Watcher writes these on a per-minute schedule — too noisy to track
+.claude/watcher/status.json
+.claude/watcher/dashboard.md

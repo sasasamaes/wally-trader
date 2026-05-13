@@ -54,6 +54,7 @@ import autohunt_tp as atp
 import punk_smart_state as state
 import punk_smart_vetos as vetos
 import punk_smart_router as router
+import market_context as mctx
 from backtest_regime_matrix import fetch as fetch_bars  # for multifactor input
 
 CR_OFFSET = state.CR_OFFSET
@@ -187,7 +188,7 @@ def stage3_enrich(tentative: dict) -> dict:
     pnl_per_trade = float(tentative.get("backtest_pnl_per_trade", 0))
     components = {
         "backtest_pnl_per_trade": pnl_per_trade,
-        "backtest_n_trades": None,
+        "backtest_n_trades": tentative.get("backtest_n_trades"),
         "rr_tp1": rr_tp1,
         "entry": entry,
         "tp1": tp1,
@@ -244,6 +245,31 @@ def stage3_enrich(tentative: dict) -> dict:
             components["fib_zone"] = zone
     except Exception:
         pass
+
+    # pump_detector
+    try:
+        pump = _sub_json(
+            [str(SCRIPTS_DIR / "pump_detector.py"), "--symbol", symbol, "--json"],
+            timeout=15,
+        )
+        if pump:
+            components["pump_score"] = pump.get("score")
+            components["pump_side_bias"] = pump.get("side_bias")
+    except Exception:
+        pass
+
+    # on-chain bias (BTC/ETH only — cached 1h)
+    if symbol.replace(".P", "").upper() in ("BTCUSDT", "ETHUSDT"):
+        try:
+            oc = _sub_json(
+                [str(SCRIPTS_DIR / "btc_onchain.py"),
+                 "--symbol", symbol.replace(".P", "")],
+                timeout=15,
+            )
+            if oc and oc.get("bias"):
+                components["on_chain_bias"] = oc["bias"]
+        except Exception:
+            pass
 
     return components
 
@@ -421,6 +447,13 @@ def main() -> int:
     ap.add_argument("--json", action="store_true", help="JSON output to stdout")
     ap.add_argument("--margin", type=float, default=MARGIN_USD_DEFAULT)
     ap.add_argument("--leverage", type=int, default=LEVERAGE_DEFAULT)
+    ap.add_argument("--dynamic", choices=["volume", "movers", "trending"],
+                    help="Pull universe dynamically (top-N + Bitunix tradeable). "
+                         "Falls back to static universe if discovery fails.")
+    ap.add_argument("--top-n", type=int, default=10,
+                    help="N for --dynamic (default 10)")
+    ap.add_argument("--min-vol-usd", type=float, default=1_000_000,
+                    help="Min 24h volume USD for --dynamic filter (default $1M)")
     args = ap.parse_args()
 
     origin = "autohunt-paper" if args.paper else "autohunt"
@@ -457,6 +490,20 @@ def main() -> int:
     # STAGE 2 — universe
     if args.asset:
         targets = [args.asset]
+    elif args.dynamic:
+        if args.dynamic == "volume":
+            raw_disc = mctx.fetch_top_volume_binance(n=args.top_n)
+        elif args.dynamic == "movers":
+            raw_disc = mctx.fetch_top_movers_binance(n=args.top_n)
+        else:
+            raw_disc = mctx.fetch_trending_coingecko(n=args.top_n)
+        if raw_disc:
+            symbols = [r["symbol"] for r in raw_disc]
+            tradeable = mctx.filter_tradeable_bitunix(
+                symbols, min_vol_usd=args.min_vol_usd)
+            targets = [t["symbol"] for t in tradeable] or UNIVERSE
+        else:
+            targets = UNIVERSE
     else:
         targets = UNIVERSE
 
@@ -535,7 +582,7 @@ def main() -> int:
             })
             continue
 
-        # STAGE 6 — TP plan + floor
+        # STAGE 6 — TP plan + floor (Appendix B: atr_percentile drives extreme-vol gate)
         tp_plan = atp.compute_tp_plan(
             side=r["side"],
             entry=entry,
@@ -545,6 +592,7 @@ def main() -> int:
             session_quality=ms["session_quality"],
             margin_usd=args.margin,
             leverage=args.leverage,
+            atr_percentile=r.get("atr_percentile"),
         )
         if tp_plan["atr_extreme"]:
             drops.append({
@@ -617,6 +665,21 @@ def main() -> int:
     log_path = None
     if pick and not args.dry_run:
         log_path = log_pick(pick, origin=origin)
+
+    # macOS notification on A-GRADE pick (best-effort; silent on failure / non-macOS)
+    if pick and pick.get("tier") == "A-GRADE":
+        try:
+            import subprocess as _sp, shlex as _sh
+            arrow = "LONG" if pick["side"] == "LONG" else "SHORT"
+            title = f"🎯 Autohunt {pick['tier']} — {pick['symbol']} {arrow}"
+            msg = (f"Score {pick['score']}/100  TP3 ${pick['tp3_usd']:.0f}  "
+                   f"Regime {pick['regime']}")
+            script = (f'display notification {_sh.quote(msg)} '
+                      f'with title {_sh.quote(title)} sound name "Glass"')
+            _sp.run(["osascript", "-e", script],
+                    timeout=5, stderr=_sp.DEVNULL, stdout=_sp.DEVNULL)
+        except Exception:
+            pass
 
     # OUTPUT
     if args.json:

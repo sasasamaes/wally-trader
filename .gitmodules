@@ -1,3 +1,7 @@
 [submodule "tradingview-mcp"]
 	path = tradingview-mcp
 	url = https://github.com/tradesdontlie/tradingview-mcp.git
+	# Suppress "modified content" noise in `git status` — submodule's npm install
+	# regenerates package-lock.json and .DS_Store appears from Finder. Neither is
+	# meaningful churn for the parent repo.
+	ignore = dirty
