@@ -339,6 +339,9 @@ def main(argv: list[str] | None = None) -> int:
         except OrphanBlockError as exc:
             print(f"::error::{exc}", file=sys.stderr)
             return 3
+        except MismatchedBlockError as exc:
+            print(f"::error::{exc}", file=sys.stderr)
+            return 4
         after = f.read_text()
         if before != after:
             diffs += 1

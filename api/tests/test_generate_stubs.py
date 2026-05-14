@@ -227,3 +227,20 @@ def test_router_filter_writes_only_named_file(tmp_path: Path, monkeypatch) -> No
     assert rc == 0
     files = {p.name for p in target_dir.iterdir()}
     assert files == {"signals.md"}, f"Should only have signals.md, got {files}"
+
+
+def test_main_returns_4_on_mismatched_marker(tmp_path: Path, monkeypatch) -> None:
+    """If a router .md file has malformed AUTOGEN markers, main returns exit code 4."""
+    target_dir = tmp_path / "routers"
+    target_dir.mkdir()
+    monkeypatch.setattr(gs, "ROUTERS_DIR", target_dir)
+
+    # signals.md has START with one id paired to END with a different id
+    (target_dir / "signals.md").write_text(
+        "<!-- AUTOGEN:START name=POST-api-v1-signals -->\n"
+        "body\n"
+        "<!-- AUTOGEN:END name=GET-healthz -->\n"
+    )
+
+    rc = gs.main(argv=["--router", "signals"])
+    assert rc == 4
