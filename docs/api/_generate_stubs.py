@@ -198,9 +198,6 @@ def render_route_block(route: RouteInfo) -> str:
     )
 
 
-START_RE = re.compile(r"<!-- AUTOGEN:START name=([\w\-]+) -->")
-END_RE_TPL = "<!-- AUTOGEN:END name={bid} -->"
-
 EMPTY_HANDWRITE = """
 **Cuándo usar:**
 - _(rellenar — escenarios concretos Wally Trader)_
@@ -232,6 +229,13 @@ class OrphanBlockError(RuntimeError):
     """A file has an AUTOGEN marker for a block that no longer exists."""
 
 
+class MismatchedBlockError(RuntimeError):
+    """A file has an AUTOGEN START marker without a matching END (or with a different id)."""
+
+
+_START_SCAN = re.compile(r"<!-- AUTOGEN:START name=([\w\-]+) -->")
+
+
 def apply_blocks(path: Path, blocks: dict[str, str]) -> None:
     """Replace each AUTOGEN block in `path` with the matching string in `blocks`.
 
@@ -239,8 +243,14 @@ def apply_blocks(path: Path, blocks: dict[str, str]) -> None:
     - Markers whose id is NOT in `blocks` raise OrphanBlockError.
     - Block ids in `blocks` that are NOT in the file get appended as a fresh
       stub (with empty hand-write sections).
+    - START markers without a matching END (or with a mismatched END id) raise
+      MismatchedBlockError to fail loud rather than silently skip them.
     """
     text = path.read_text() if path.exists() else ""
+
+    # Pre-scan to validate: every START must end up matched by the back-referenced
+    # block_re below, otherwise the markers are malformed.
+    all_starts = set(_START_SCAN.findall(text))
     found_ids: set[str] = set()
 
     def _replace(match: re.Match[str]) -> str:
@@ -254,21 +264,27 @@ def apply_blocks(path: Path, blocks: dict[str, str]) -> None:
             )
         return blocks[bid]
 
-    # Match a full block (start + body + end) greedily-but-bounded
     block_re = re.compile(
         r"<!-- AUTOGEN:START name=([\w\-]+) -->.*?<!-- AUTOGEN:END name=\1 -->",
         re.DOTALL,
     )
     new_text = block_re.sub(_replace, text)
 
-    # Append fresh stubs for blocks that didn't exist in the file
+    unmatched_starts = all_starts - found_ids
+    if unmatched_starts:
+        raise MismatchedBlockError(
+            f"File {path} has START marker(s) for {sorted(unmatched_starts)} "
+            f"with no matching END marker (or END has a different id). "
+            f"Fix the markers manually and retry."
+        )
+
     missing = [bid for bid in blocks if bid not in found_ids]
     if missing:
         if not new_text.endswith("\n"):
             new_text += "\n"
         for bid in missing:
-            method, _path = bid.split("-", 1)
-            new_text += f"\n## `{method} /{_path.replace('-', '/')}`\n\n"
+            method, route_path = bid.split("-", 1)
+            new_text += f"\n## `{method} /{route_path.replace('-', '/')}`\n\n"
             new_text += blocks[bid] + "\n"
             new_text += EMPTY_HANDWRITE + "\n"
 

@@ -165,3 +165,20 @@ def test_apply_blocks_aborts_on_orphan_marker(tmp_path: Path) -> None:
     with pytest.raises(gs.OrphanBlockError) as exc:
         gs.apply_blocks(f, {})  # no blocks supplied → marker is orphaned
     assert "POST-api-v1-signals" in str(exc.value)
+
+
+def test_apply_blocks_raises_on_mismatched_start_end_ids(tmp_path: Path) -> None:
+    """A START with name=X paired to an END with name=Y is malformed.
+    Must raise MismatchedBlockError so silent corruption can't happen."""
+    f = tmp_path / "signals.md"
+    f.write_text(
+        "<!-- AUTOGEN:START name=POST-api-v1-signals -->\n"
+        "body\n"
+        "<!-- AUTOGEN:END name=GET-healthz -->\n"
+    )
+    import pytest
+
+    with pytest.raises(gs.MismatchedBlockError) as exc:
+        # Even passing the right block doesn't help — markers are malformed
+        gs.apply_blocks(f, {"POST-api-v1-signals": "x"})
+    assert "POST-api-v1-signals" in str(exc.value)
