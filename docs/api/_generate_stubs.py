@@ -119,6 +119,81 @@ def discover_routes() -> list[RouteInfo]:
     return out
 
 
+def _block_id(route: RouteInfo) -> str:
+    """Stable id for the AUTOGEN block. Path slashes → dashes, leading dash dropped."""
+    slug = route.path.strip("/").replace("/", "-").replace("{", "").replace("}", "")
+    return f"{route.method}-{slug}"
+
+
+def _render_request_table(schema: dict[str, Any] | None) -> str:
+    if schema is None:
+        return "_No request body._"
+    props = schema.get("properties", {}) or {}
+    required = set(schema.get("required", []) or [])
+    if not props:
+        return "_No request body._"
+    rows = ["| Campo | Tipo | Required | Default | Descripción |", "|---|---|---|---|---|"]
+    for name, p in props.items():
+        type_str = _schema_type(p)
+        req = "✓" if name in required else "—"
+        default = p.get("default", "")
+        if default is None:
+            default = "null"
+        elif default == "":
+            default = "—"
+        desc = p.get("description", "") or p.get("title", "")
+        rows.append(f"| `{name}` | {type_str} | {req} | `{default}` | {desc} |")
+    return "\n".join(rows)
+
+
+def _schema_type(p: dict[str, Any]) -> str:
+    """Compact type label for a JSON Schema fragment."""
+    if "$ref" in p:
+        return p["$ref"].split("/")[-1]
+    if "anyOf" in p:
+        types = [_schema_type(s) for s in p["anyOf"]]
+        return " \\| ".join(types)
+    if "enum" in p:
+        return "enum: " + ", ".join(f"`{v}`" for v in p["enum"])
+    t = p.get("type", "any")
+    if t == "array":
+        return f"array<{_schema_type(p.get('items', {}))}>"
+    if t == "string" and p.get("format"):
+        return f"string ({p['format']})"
+    return t
+
+
+def _response_model_name(schema: dict[str, Any] | None) -> str:
+    if schema is None:
+        return "_(no body)_"
+    return schema.get("title", "Object")
+
+
+def render_route_block(route: RouteInfo) -> str:
+    """Render the AUTOGEN portion (between START/END markers) for one route."""
+    bid = _block_id(route)
+    auth = "Requiere `X-User-Id: <uuid>` header" if route.requires_auth else "Pública"
+    statuses = [str(route.success_status)]
+    for code in sorted(route.error_responses.keys()):
+        statuses.append(str(code))
+    statuses_str = ", ".join(statuses)
+    req_table = _render_request_table(route.request_schema)
+    resp_name = _response_model_name(route.response_schema)
+    summary_line = f"_{route.summary}_" if route.summary else ""
+
+    return (
+        f"<!-- AUTOGEN:START name={bid} -->\n"
+        f"{summary_line}\n\n"
+        f"- **Method** `{route.method}`\n"
+        f"- **Path** `{route.path}`\n"
+        f"- **Auth** {auth}\n"
+        f"- **Status codes** {statuses_str}\n\n"
+        f"**Request body:**\n\n{req_table}\n\n"
+        f"**Response:** `{resp_name}`\n"
+        f"<!-- AUTOGEN:END name={bid} -->"
+    )
+
+
 if __name__ == "__main__":
     routes = discover_routes()
     print(f"Discovered {len(routes)} routes:")

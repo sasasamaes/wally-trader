@@ -43,3 +43,26 @@ def test_route_info_has_required_fields() -> None:
     assert sample.name  # operation_id or function name
     assert sample.success_status == 201
     assert sample.requires_auth is True  # uses Depends(get_current_user)
+
+
+def test_render_route_block_for_post_signals() -> None:
+    """The rendered markdown block must contain the canonical AUTOGEN markers
+    + a request body table + the response model + status codes + auth indicator."""
+    routes = gs.discover_routes()
+    post_signals = next(
+        r for r in routes if r.path == "/api/v1/signals" and r.method == "POST"
+    )
+    md = gs.render_route_block(post_signals)
+
+    assert "<!-- AUTOGEN:START name=POST-api-v1-signals -->" in md
+    assert "<!-- AUTOGEN:END name=POST-api-v1-signals -->" in md
+    assert "**Method**" in md and "POST" in md
+    assert "/api/v1/signals" in md
+    assert "**Auth**" in md and "X-User-Id" in md
+    assert "**Status codes**" in md and "201" in md
+    # Request body table must mention some required fields
+    assert "profile_id" in md
+    assert "symbol" in md
+    assert "side" in md
+    # Response model name appears
+    assert "SignalView" in md
