@@ -28,12 +28,13 @@ os.environ.setdefault(
 )
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
 os.environ.setdefault(
-    "MASTER_KEK", "dGVzdC1tYXN0ZXIta2VrLTMyLWJ5dGVzLWxvbmctcGFkZGluZ2c="
+    "MASTER_KEK", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 )
 
 from fastapi.routing import APIRoute  # noqa: E402
 
 from app.main import app  # noqa: E402
+from app.deps import get_current_user as _GET_CURRENT_USER  # noqa: E402
 
 
 @dataclass
@@ -59,11 +60,12 @@ def _route_tag(route: APIRoute) -> str:
 
 
 def _route_requires_auth(route: APIRoute) -> bool:
-    """True if the route depends on get_current_user."""
-    for dep in route.dependant.dependencies:
-        if dep.call is not None and getattr(dep.call, "__name__", None) == "get_current_user":
-            return True
-    return False
+    """True if the route depends directly on get_current_user.
+
+    Walks only top-level deps (not transitive). Identity comparison so renames
+    of the function in app.deps do not silently break detection.
+    """
+    return any(dep.call is _GET_CURRENT_USER for dep in route.dependant.dependencies)
 
 
 def _route_success_status(route: APIRoute) -> int:
