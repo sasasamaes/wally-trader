@@ -182,3 +182,48 @@ def test_apply_blocks_raises_on_mismatched_start_end_ids(tmp_path: Path) -> None
         # Even passing the right block doesn't help — markers are malformed
         gs.apply_blocks(f, {"POST-api-v1-signals": "x"})
     assert "POST-api-v1-signals" in str(exc.value)
+
+
+def test_main_writes_six_router_files(tmp_path: Path, monkeypatch) -> None:
+    """Run main() with output redirected to a temp dir; expect 6 router files."""
+    target_dir = tmp_path / "routers"
+    target_dir.mkdir()
+    monkeypatch.setattr(gs, "ROUTERS_DIR", target_dir)
+
+    rc = gs.main(argv=[])  # default mode = write
+    assert rc == 0
+
+    expected = {"meta.md", "agents.md", "keys.md", "profiles.md", "signals.md", "equity.md"}
+    actual = {p.name for p in target_dir.iterdir()}
+    assert expected.issubset(actual), f"Missing: {expected - actual}"
+
+
+def test_check_mode_returns_0_when_idempotent(tmp_path: Path, monkeypatch) -> None:
+    target_dir = tmp_path / "routers"
+    target_dir.mkdir()
+    monkeypatch.setattr(gs, "ROUTERS_DIR", target_dir)
+
+    assert gs.main(argv=[]) == 0
+    assert gs.main(argv=["--check"]) == 0  # second run with --check: no diff
+
+
+def test_check_mode_returns_1_when_diff(tmp_path: Path, monkeypatch) -> None:
+    target_dir = tmp_path / "routers"
+    target_dir.mkdir()
+    monkeypatch.setattr(gs, "ROUTERS_DIR", target_dir)
+
+    # Pre-write a stale signals.md missing one route
+    (target_dir / "signals.md").write_text("# Stale, missing routes\n")
+
+    assert gs.main(argv=["--check"]) == 1
+
+
+def test_router_filter_writes_only_named_file(tmp_path: Path, monkeypatch) -> None:
+    target_dir = tmp_path / "routers"
+    target_dir.mkdir()
+    monkeypatch.setattr(gs, "ROUTERS_DIR", target_dir)
+
+    rc = gs.main(argv=["--router", "signals"])
+    assert rc == 0
+    files = {p.name for p in target_dir.iterdir()}
+    assert files == {"signals.md"}, f"Should only have signals.md, got {files}"

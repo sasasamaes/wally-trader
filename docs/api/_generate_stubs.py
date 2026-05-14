@@ -10,6 +10,7 @@ Run from repo root.
 
 from __future__ import annotations
 
+import argparse
 import re
 import sys
 from dataclasses import dataclass, field
@@ -291,8 +292,76 @@ def apply_blocks(path: Path, blocks: dict[str, str]) -> None:
     path.write_text(new_text)
 
 
-if __name__ == "__main__":
-    routes = discover_routes()
-    print(f"Discovered {len(routes)} routes:")
+ROUTERS_DIR = REPO_ROOT / "docs" / "api" / "routers"
+
+
+def _group_blocks_by_tag(routes: list[RouteInfo]) -> dict[str, dict[str, str]]:
+    """Returns {tag: {block_id: rendered_block}}."""
+    out: dict[str, dict[str, str]] = {}
     for r in routes:
-        print(f"  {r.method:6} {r.path}   [tag={r.tag}, auth={r.requires_auth}]")
+        out.setdefault(r.tag, {})[_block_id(r)] = render_route_block(r)
+    return out
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Exit 1 if any file would change. Does not modify files.",
+    )
+    parser.add_argument(
+        "--router",
+        help="Only regenerate the named router (e.g. 'signals').",
+    )
+    args = parser.parse_args(argv)
+
+    routes = discover_routes()
+    grouped = _group_blocks_by_tag(routes)
+
+    if args.router:
+        if args.router not in grouped:
+            print(f"Unknown router: {args.router}. Known: {sorted(grouped)}", file=sys.stderr)
+            return 2
+        grouped = {args.router: grouped[args.router]}
+
+    ROUTERS_DIR.mkdir(parents=True, exist_ok=True)
+
+    diffs = 0
+    for tag, blocks in grouped.items():
+        f = ROUTERS_DIR / f"{tag}.md"
+        before = f.read_text() if f.exists() else ""
+        # Write to a scratch buffer first to support --check semantics
+        if not f.exists():
+            f.write_text(f"# {tag.capitalize()} router\n\n")
+        try:
+            apply_blocks(f, blocks)
+        except OrphanBlockError as exc:
+            print(f"::error::{exc}", file=sys.stderr)
+            return 3
+        after = f.read_text()
+        if before != after:
+            diffs += 1
+            if args.check:
+                # In --check mode, restore the original
+                if before:
+                    f.write_text(before)
+                else:
+                    f.unlink(missing_ok=True)
+                try:
+                    display = f.relative_to(REPO_ROOT)
+                except ValueError:
+                    display = f
+                print(f"DRIFT: {display}", file=sys.stderr)
+
+    if args.check and diffs > 0:
+        print(
+            f"\n{diffs} file(s) out of sync. Run `python docs/api/_generate_stubs.py` and commit.",
+            file=sys.stderr,
+        )
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
