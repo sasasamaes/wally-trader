@@ -7,7 +7,7 @@ Manual del backend FastAPI en `api/`. **Estado:** Phase 1 — auth via header `X
 ```bash
 cd api
 uv sync
-cp .env.example .env                    # rellena DATABASE_URL, MASTER_KEK
+# crea api/.env con DATABASE_URL, MASTER_KEK, ANTHROPIC_API_KEY (ver AUTH.md)
 uv run alembic upgrade head
 uv run uvicorn app.main:app --reload    # http://localhost:8000
 ```
@@ -25,7 +25,7 @@ Swagger UI: http://localhost:8000/docs (solo en dev/staging, no en producción).
 
 ## Mantenimiento
 
-Las secciones marcadas `<!-- AUTOGEN:START -->` ... `<!-- AUTOGEN:END -->` se regeneran con:
+Las secciones marcadas `<!-- AUTOGEN:START name=<id> -->` ... `<!-- AUTOGEN:END name=<id> -->` se regeneran con:
 
 ```bash
 python docs/api/_generate_stubs.py
