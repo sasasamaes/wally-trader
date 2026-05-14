@@ -10,6 +10,7 @@ Run from repo root.
 
 from __future__ import annotations
 
+import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -195,6 +196,83 @@ def render_route_block(route: RouteInfo) -> str:
         f"**Response:** `{resp_name}`\n"
         f"<!-- AUTOGEN:END name={bid} -->"
     )
+
+
+START_RE = re.compile(r"<!-- AUTOGEN:START name=([\w\-]+) -->")
+END_RE_TPL = "<!-- AUTOGEN:END name={bid} -->"
+
+EMPTY_HANDWRITE = """
+**Cuándo usar:**
+- _(rellenar — escenarios concretos Wally Trader)_
+
+**Reglas Wally Trader que aplican:**
+- _(rellenar — caps por profile, rate limits, etc.)_
+
+**Ejemplo curl:**
+
+```bash
+# (rellenar)
+```
+
+**Ejemplo TypeScript (fetch):**
+
+```typescript
+// (rellenar)
+```
+
+**Errores típicos en este endpoint:**
+- _(rellenar)_
+
+**Ver también:**
+- _(rellenar)_
+"""
+
+
+class OrphanBlockError(RuntimeError):
+    """A file has an AUTOGEN marker for a block that no longer exists."""
+
+
+def apply_blocks(path: Path, blocks: dict[str, str]) -> None:
+    """Replace each AUTOGEN block in `path` with the matching string in `blocks`.
+
+    - Existing markers whose id IS in `blocks` get replaced.
+    - Markers whose id is NOT in `blocks` raise OrphanBlockError.
+    - Block ids in `blocks` that are NOT in the file get appended as a fresh
+      stub (with empty hand-write sections).
+    """
+    text = path.read_text() if path.exists() else ""
+    found_ids: set[str] = set()
+
+    def _replace(match: re.Match[str]) -> str:
+        bid = match.group(1)
+        found_ids.add(bid)
+        if bid not in blocks:
+            raise OrphanBlockError(
+                f"File {path} has an AUTOGEN marker for '{bid}' but no matching "
+                f"route exists. Either delete the marker + hand-written sections "
+                f"below it, or restore the route."
+            )
+        return blocks[bid]
+
+    # Match a full block (start + body + end) greedily-but-bounded
+    block_re = re.compile(
+        r"<!-- AUTOGEN:START name=([\w\-]+) -->.*?<!-- AUTOGEN:END name=\1 -->",
+        re.DOTALL,
+    )
+    new_text = block_re.sub(_replace, text)
+
+    # Append fresh stubs for blocks that didn't exist in the file
+    missing = [bid for bid in blocks if bid not in found_ids]
+    if missing:
+        if not new_text.endswith("\n"):
+            new_text += "\n"
+        for bid in missing:
+            method, _path = bid.split("-", 1)
+            new_text += f"\n## `{method} /{_path.replace('-', '/')}`\n\n"
+            new_text += blocks[bid] + "\n"
+            new_text += EMPTY_HANDWRITE + "\n"
+
+    path.write_text(new_text)
 
 
 if __name__ == "__main__":

@@ -99,3 +99,69 @@ def test_schema_type_string_with_format() -> None:
 
 def test_schema_type_fallback_empty() -> None:
     assert gs._schema_type({}) == "any"
+
+
+def test_apply_blocks_preserves_handwritten_sections(tmp_path: Path) -> None:
+    """Hand-written sections OUTSIDE markers must be preserved verbatim."""
+    f = tmp_path / "signals.md"
+    f.write_text(
+        "# Signals router\n\n"
+        "## POST /api/v1/signals\n\n"
+        "<!-- AUTOGEN:START name=POST-api-v1-signals -->\n"
+        "OLD AUTO CONTENT\n"
+        "<!-- AUTOGEN:END name=POST-api-v1-signals -->\n\n"
+        "**Cuándo usar:**\n"
+        "- Después de /signal CLI\n"
+        "- Hand-written stuff that must survive\n"
+    )
+
+    new_block = (
+        "<!-- AUTOGEN:START name=POST-api-v1-signals -->\n"
+        "NEW AUTO CONTENT\n"
+        "<!-- AUTOGEN:END name=POST-api-v1-signals -->"
+    )
+    gs.apply_blocks(f, {"POST-api-v1-signals": new_block})
+
+    out = f.read_text()
+    assert "NEW AUTO CONTENT" in out
+    assert "OLD AUTO CONTENT" not in out
+    assert "Hand-written stuff that must survive" in out
+    assert "Después de /signal CLI" in out
+
+
+def test_apply_blocks_appends_missing_endpoint_stub(tmp_path: Path) -> None:
+    """If the router file has no marker for a route, append a fresh stub at the bottom
+    with empty hand-write sections so the human knows to fill them in."""
+    f = tmp_path / "signals.md"
+    f.write_text("# Signals router\n\nExisting content.\n")
+
+    new_block = (
+        "<!-- AUTOGEN:START name=POST-api-v1-signals -->\n"
+        "FRESH AUTO CONTENT\n"
+        "<!-- AUTOGEN:END name=POST-api-v1-signals -->"
+    )
+    gs.apply_blocks(f, {"POST-api-v1-signals": new_block})
+
+    out = f.read_text()
+    assert "Existing content." in out
+    assert "FRESH AUTO CONTENT" in out
+    # The fresh stub must include empty hand-write sections so the writer fills them
+    assert "**Cuándo usar:**" in out
+    assert "**Ejemplo curl:**" in out
+    assert "**Ejemplo TypeScript" in out
+
+
+def test_apply_blocks_aborts_on_orphan_marker(tmp_path: Path) -> None:
+    """A marker in the file with NO matching block in the dict is an orphan
+    (probably an endpoint was deleted). The script must raise."""
+    f = tmp_path / "signals.md"
+    f.write_text(
+        "<!-- AUTOGEN:START name=POST-api-v1-signals -->\n"
+        "x\n"
+        "<!-- AUTOGEN:END name=POST-api-v1-signals -->\n"
+    )
+    import pytest
+
+    with pytest.raises(gs.OrphanBlockError) as exc:
+        gs.apply_blocks(f, {})  # no blocks supplied → marker is orphaned
+    assert "POST-api-v1-signals" in str(exc.value)
