@@ -150,6 +150,9 @@ def _schema_type(p: dict[str, Any]) -> str:
     """Compact type label for a JSON Schema fragment."""
     if "$ref" in p:
         return p["$ref"].split("/")[-1]
+    if "allOf" in p:
+        # Pydantic v2 wraps some model refs in allOf with a single element
+        return _schema_type(p["allOf"][0]) if p["allOf"] else "any"
     if "anyOf" in p:
         types = [_schema_type(s) for s in p["anyOf"]]
         return " \\| ".join(types)
@@ -179,11 +182,11 @@ def render_route_block(route: RouteInfo) -> str:
     statuses_str = ", ".join(statuses)
     req_table = _render_request_table(route.request_schema)
     resp_name = _response_model_name(route.response_schema)
-    summary_line = f"_{route.summary}_" if route.summary else ""
+    summary_part = f"_{route.summary}_\n\n" if route.summary else ""
 
     return (
         f"<!-- AUTOGEN:START name={bid} -->\n"
-        f"{summary_line}\n\n"
+        f"{summary_part}"
         f"- **Method** `{route.method}`\n"
         f"- **Path** `{route.path}`\n"
         f"- **Auth** {auth}\n"

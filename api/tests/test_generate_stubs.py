@@ -66,3 +66,36 @@ def test_render_route_block_for_post_signals() -> None:
     assert "side" in md
     # Response model name appears
     assert "SignalView" in md
+
+
+def test_schema_type_ref() -> None:
+    assert gs._schema_type({"$ref": "#/$defs/SignalSide"}) == "SignalSide"
+
+
+def test_schema_type_allof_with_ref() -> None:
+    assert gs._schema_type({"allOf": [{"$ref": "#/$defs/LLMProvider"}]}) == "LLMProvider"
+
+
+def test_schema_type_allof_empty() -> None:
+    assert gs._schema_type({"allOf": []}) == "any"
+
+
+def test_schema_type_anyof_nullable() -> None:
+    out = gs._schema_type({"anyOf": [{"type": "string"}, {"type": "null"}]})
+    assert out == "string \\| null"
+
+
+def test_schema_type_enum() -> None:
+    assert gs._schema_type({"enum": ["a", "b"]}) == "enum: `a`, `b`"
+
+
+def test_schema_type_array() -> None:
+    assert gs._schema_type({"type": "array", "items": {"type": "string"}}) == "array<string>"
+
+
+def test_schema_type_string_with_format() -> None:
+    assert gs._schema_type({"type": "string", "format": "uuid"}) == "string (uuid)"
+
+
+def test_schema_type_fallback_empty() -> None:
+    assert gs._schema_type({}) == "any"
