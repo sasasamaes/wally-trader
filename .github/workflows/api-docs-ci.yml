@@ -1,0 +1,44 @@
+name: API Docs Sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "api/**"
+      - "docs/api/**"
+      - ".github/workflows/api-docs-ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "api/**"
+      - "docs/api/**"
+      - ".github/workflows/api-docs-ci.yml"
+  workflow_dispatch:
+
+jobs:
+  docs-in-sync:
+    name: Docs in sync with API
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Install api dependencies
+        working-directory: api
+        run: uv sync
+
+      - name: Run docs sync check
+        run: uv --project api run python docs/api/_generate_stubs.py --check
+
+      - name: Run docs-sync test
+        working-directory: api
+        run: uv run pytest tests/test_docs_in_sync.py -v
