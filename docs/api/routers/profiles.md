@@ -34,7 +34,7 @@ curl -s -H "X-User-Id: 550e8400-..." \
 **Ejemplo TypeScript (fetch):**
 
 ```typescript
-type ProfileKind = "retail" | "retail_bingx" | "ftmo" | "fundingpips" | "fotmarkets" | "bitunix" | "quantfury";
+type ProfileKind = "retail" | "retail-bingx" | "ftmo" | "fundingpips" | "fotmarkets" | "bitunix" | "quantfury";
 type Metrics = { trade_count: number; win_rate_pct: number; profit_factor: number | null; capital_current: number };
 type Profile = { id: string; slug: string; name: string; kind: ProfileKind; capital_current: number; metrics?: Metrics };
 
@@ -83,7 +83,7 @@ const profiles: Profile[] = list.profiles;
 - Migrar usuario de CLI Wally Trader local al SaaS — crear los 7 profiles según `.claude/profiles/<name>/config.md`
 
 **Reglas Wally Trader que aplican:**
-- `kind` debe ser uno de los 7 valores del enum `ProfileKind`: `retail`, `retail_bingx`, `ftmo`, `fundingpips`, `fotmarkets`, `bitunix`, `quantfury`
+- `kind` debe ser uno de los 7 valores operativos del enum `ProfileKind`: `retail`, `retail-bingx`, `ftmo`, `fundingpips`, `fotmarkets`, `bitunix`, `quantfury` (El enum incluye un 8º valor `custom` reservado para uso interno futuro — no usar en producción).
 - `slug` es único POR USUARIO (no global) — dos usuarios pueden tener `slug=retail`
 - `capital_initial` se copia automáticamente a `capital_current` al crear
 - `kind` es INMUTABLE después de crear (no se puede convertir un retail en ftmo) — para cambiar tienes que DELETE + POST
