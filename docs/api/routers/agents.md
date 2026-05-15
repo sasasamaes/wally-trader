@@ -55,7 +55,7 @@ const agents: AgentMeta[] = await (await fetch(`${API}/api/v1/agents`)).json();
 - **Method** `POST`
 - **Path** `/api/v1/agents/{name}/run`
 - **Auth** Requiere `X-User-Id: <uuid>` header
-- **Status codes** 200, 200, 404
+- **Status codes** 200, 404
 
 **Request body:**
 

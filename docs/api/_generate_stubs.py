@@ -178,10 +178,8 @@ def render_route_block(route: RouteInfo) -> str:
     """Render the AUTOGEN portion (between START/END markers) for one route."""
     bid = _block_id(route)
     auth = "Requiere `X-User-Id: <uuid>` header" if route.requires_auth else "Pública"
-    statuses = [str(route.success_status)]
-    for code in sorted(route.error_responses.keys()):
-        statuses.append(str(code))
-    statuses_str = ", ".join(statuses)
+    status_set = {route.success_status} | set(route.error_responses.keys())
+    statuses_str = ", ".join(str(c) for c in sorted(status_set))
     req_table = _render_request_table(route.request_schema)
     resp_name = _response_model_name(route.response_schema)
     summary_part = f"_{route.summary}_\n\n" if route.summary else ""
