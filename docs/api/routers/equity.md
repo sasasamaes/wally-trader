@@ -24,7 +24,7 @@ _No request body._
 
 **Reglas Wally Trader que aplican:**
 - `profile_id` REQUIRED, opcional `from_date` / `to_date` (formato `date`, no datetime)
-- `summary` siempre se calcula con `compute_equity_summary` — incluye `total_return_pct`, `max_dd_pct`, `days_count`
+- `summary` siempre se calcula con `compute_equity_summary` — incluye `capital_initial`, `capital_current`, `total_pnl_usd`, `total_pnl_pct`, `max_dd_pct`, `trading_days`, `last_updated`
 - Orden por `date ASC` (más antigua primero — facilita plot directo)
 - Si no hay puntos en el rango, devuelve `points: []` con summary degradado (no error)
 
@@ -48,10 +48,13 @@ type EquityPointView = {
   trade_count: number;
 };
 type EquitySummary = {
-  total_return_pct: number;
-  max_dd_pct: number;
-  days_count: number;
-  current_equity: number;
+  capital_initial: number;
+  capital_current: number;
+  total_pnl_usd: number;
+  total_pnl_pct: number;
+  max_dd_pct: number | null;
+  trading_days: number;
+  last_updated: string | null;  // ISO yyyy-mm-dd
 };
 type EquitySeriesResponse = { points: EquityPointView[]; summary: EquitySummary };
 
