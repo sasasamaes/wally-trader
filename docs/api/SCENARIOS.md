@@ -73,7 +73,7 @@ const regime = await streamAgent("regime", { symbol: "BTCUSDT", timeframe: "1h" 
 **Trigger:** Trade cerrado en exchange / fin del día.
 
 **Pipeline:**
-1. `PATCH /api/v1/signals/{id}/outcome` con outcome (`tp1`/`tp2`/`tp3`/`win`/`loss`/`breakeven`/`manual`) + `exit_price` + `pnl_usd` + `learning`
+1. `PATCH /api/v1/signals/{id}/outcome` con outcome (`TP1`/`TP2`/`TP3`/`SL`/`MANUAL`/`CANCELLED`) + `exit_price` + `pnl_usd` + `learning`
 2. `POST /api/v1/agents/journal/run` con `input={"profile_id": <id>, "date": <today>}` — genera markdown del día
 3. Mostrar el `output_md` al usuario, opcionalmente guardar en `JournalEntry` (no hay endpoint todavía)
 4. `POST /api/v1/equity/upsert` con `equity` actualizado, `daily_pnl_pct`, `dd_pct`, `trade_count`

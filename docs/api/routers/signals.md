@@ -39,8 +39,8 @@ curl -s -H "X-User-Id: 550e8400-..." \
 **Ejemplo TypeScript (fetch):**
 
 ```typescript
-type SignalSide = "long" | "short";
-type SignalOutcome = "pending" | "win" | "loss" | "breakeven" | "tp1" | "tp2" | "tp3" | "manual";
+type SignalSide = "LONG" | "SHORT";
+type SignalOutcome = "PENDING" | "TP1" | "TP2" | "TP3" | "SL" | "MANUAL" | "CANCELLED";
 type SignalView = {
   id: string; profile_id: string; symbol: string; side: SignalSide;
   entry: number; sl: number | null; tp1: number | null; tp2: number | null; tp3: number | null;
@@ -134,7 +134,7 @@ curl -X POST http://localhost:8000/api/v1/signals \
   -d '{
     "profile_id": "f7e6...",
     "symbol": "BTCUSDT",
-    "side": "long",
+    "side": "LONG",
     "entry": 67500,
     "sl": 66800,
     "tp1": 68900,
@@ -157,7 +157,7 @@ curl -X POST http://localhost:8000/api/v1/signals \
 type SignalCreate = {
   profile_id: string;
   symbol: string;
-  side: "long" | "short";
+  side: "LONG" | "SHORT";
   entry: number;
   sl?: number | null;
   tp1?: number | null;
@@ -174,7 +174,7 @@ type SignalCreate = {
 };
 
 const body: SignalCreate = {
-  profile_id, symbol: "BTCUSDT", side: "long",
+  profile_id, symbol: "BTCUSDT", side: "LONG",
   entry: 67500, sl: 66800, tp1: 68900,
   leverage: 20, source: "punkchainer_discord",
   multifactor_score: 72.4, ml_score: 68.1,
@@ -189,7 +189,7 @@ const created: SignalView = await fetch(`${API}/api/v1/signals`, {
 **Errores típicos en este endpoint:**
 - `400 Invalid profile_id` — UUID mal formado
 - `404 Profile not found` — el profile_id no es del usuario actual
-- `422` Pydantic validation — `leverage>125`, `side` no es `long`/`short`, `entry<=0`, `tp1<=0`, etc.
+- `422` Pydantic validation — `leverage>125`, `side` no es `LONG`/`SHORT`, `entry<=0`, `tp1<=0`, etc.
 
 **Ver también:**
 - `PATCH /signals/{id}/outcome` para cerrar
@@ -227,7 +227,7 @@ const created: SignalView = await fetch(`${API}/api/v1/signals`, {
 
 **Reglas Wally Trader que aplican:**
 - ⚠️ **Side-effect crítico:** auto-actualiza `profile.capital_current` con `+= pnl_usd`. Si pasás `pnl_usd` mal, el capital queda corrupto y necesitarás `PATCH /profiles/{slug}` para corregirlo manualmente
-- Outcomes válidos: `win`, `loss`, `breakeven`, `tp1`, `tp2`, `tp3`, `manual` (NO uses `pending` — esa es solo el estado inicial)
+- Outcomes válidos: `TP1`, `TP2`, `TP3`, `SL`, `MANUAL`, `CANCELLED` (NO uses `PENDING` — esa es solo el estado inicial)
 - `pnl_usd` es REQUIRED (puede ser 0 para breakeven, o negativo para losses)
 - `closed_at` default = now si no lo pasás
 - `learning` es opcional pero útil — alimenta los reviews semanales
@@ -239,7 +239,7 @@ curl -X PATCH http://localhost:8000/api/v1/signals/9f8b.../outcome \
   -H "X-User-Id: 550e8400-..." \
   -H "Content-Type: application/json" \
   -d '{
-    "outcome": "tp1",
+    "outcome": "TP1",
     "exit_price": 68900,
     "exit_reason": "TP1 hit",
     "pnl_usd": 1.45,
@@ -252,7 +252,7 @@ curl -X PATCH http://localhost:8000/api/v1/signals/9f8b.../outcome \
 
 ```typescript
 type SignalUpdateOutcome = {
-  outcome: "win" | "loss" | "breakeven" | "tp1" | "tp2" | "tp3" | "manual";
+  outcome: "TP1" | "TP2" | "TP3" | "SL" | "MANUAL" | "CANCELLED";
   exit_price: number;
   exit_reason?: string | null;
   pnl_usd: number;
@@ -265,7 +265,7 @@ const closed: SignalView = await fetch(`${API}/api/v1/signals/${signalId}/outcom
   method: "PATCH",
   headers: { "X-User-Id": userId, "Content-Type": "application/json" },
   body: JSON.stringify({
-    outcome: "tp1",
+    outcome: "TP1",
     exit_price: 68900,
     pnl_usd: 1.45,
     duration_h: 2.3,
