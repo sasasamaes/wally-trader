@@ -100,7 +100,7 @@ const series: EquitySeriesResponse = await fetch(`${API}/api/v1/equity?${params}
 - Cierre diario operador FTMO/FundingPips (anota balance MT5 al final del día)
 - Comando CLI `/equity <value>` actualiza el día actual
 - Backfill histórico: registrar varios días offline desde un export del broker
-- Profile quantfury: registrar `outperformance_vs_hodl_pct` para tracking vs HODL pasivo
+- El campo `outperformance_vs_hodl_pct` se calcula automáticamente en background para profile quantfury (no se setea por POST aquí)
 
 **Reglas Wally Trader que aplican:**
 - ⚠️ **Side-effect:** si `body.date` es la fecha MÁS RECIENTE registrada para el profile, auto-actualiza `profile.capital_current = body.equity`. Si es fecha anterior, NO toca capital_current (solo guarda el punto histórico)
