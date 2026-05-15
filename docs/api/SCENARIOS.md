@@ -19,10 +19,10 @@
 **TypeScript snippet:**
 
 ```typescript
-const profiles = await fetchJSON<ProfileList>(`${API}/profiles?include_metrics=true`);
+const profiles = await fetchJSON<ProfileList>(`${API}/api/v1/profiles?include_metrics=true`);
 const equityByProfile = await Promise.all(
   profiles.profiles.map(p =>
-    fetchJSON<EquitySeries>(`${API}/equity?profile_id=${p.id}&from_date=${weekAgo}`)
+    fetchJSON<EquitySeries>(`${API}/api/v1/equity?profile_id=${p.id}&from_date=${weekAgo}`)
   )
 );
 const regime = await streamAgent("regime", { symbol: "BTCUSDT", timeframe: "1h" });
