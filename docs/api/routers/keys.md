@@ -17,28 +17,35 @@ _No request body._
 <!-- AUTOGEN:END name=GET-api-v1-keys-llm -->
 
 **Cuándo usar:**
-- _(rellenar — escenarios concretos Wally Trader)_
+- Mostrar en frontend qué providers tiene configurados el usuario (Anthropic, OpenAI, Google, Ollama)
+- Antes de un agente run, verificar que existe la key del provider que vas a usar
+- Settings page: lista con `last4` para que el usuario identifique cada key sin exponer el secret
 
 **Reglas Wally Trader que aplican:**
-- _(rellenar — caps por profile, rate limits, etc.)_
+- Las keys se guardan encriptadas con AES-256-GCM en `app/security/encryption.py`
+- Solo retorna `last4` + label + timestamps — nunca plaintext
+- 1 key por provider por usuario (POST nuevo sobreescribe)
 
 **Ejemplo curl:**
 
 ```bash
-# (rellenar)
+curl -s -H "X-User-Id: 550e8400-..." http://localhost:8000/api/v1/keys/llm
+# [{"id":"...","provider":"anthropic","last4":"abcd","label":"prod","created_at":"...","last_used":"..."}]
 ```
 
 **Ejemplo TypeScript (fetch):**
 
 ```typescript
-// (rellenar)
+type LLMKey = { id: string; provider: "anthropic" | "openai" | "google" | "ollama"; last4: string; label: string | null };
+const keys: LLMKey[] = await (await fetch(`${API}/api/v1/keys/llm`, { headers: { "X-User-Id": userId } })).json();
 ```
 
 **Errores típicos en este endpoint:**
-- _(rellenar)_
+- `401` si falta `X-User-Id`
 
 **Ver también:**
-- _(rellenar)_
+- `POST /keys/llm` para registrar
+- `POST /agents/{name}/run` consume estas keys
 
 
 ## `POST /api/v1/keys/llm`
@@ -61,28 +68,43 @@ _No request body._
 <!-- AUTOGEN:END name=POST-api-v1-keys-llm -->
 
 **Cuándo usar:**
-- _(rellenar — escenarios concretos Wally Trader)_
+- Onboarding: el usuario pega su API key de Anthropic / OpenAI / Google
+- Rotación de keys (sobreescribe la existente del mismo provider)
 
 **Reglas Wally Trader que aplican:**
-- _(rellenar — caps por profile, rate limits, etc.)_
+- BYOK (Bring Your Own Key) — el SaaS no provee keys, el usuario paga su propia cuota LLM
+- La plaintext key NUNCA se devuelve después de POST — solo `last4`. Guárdala fuera del API si la necesitas
+- Encripción a nivel application via DEK/KEK (`MASTER_KEK` env var)
 
 **Ejemplo curl:**
 
 ```bash
-# (rellenar)
+curl -X POST http://localhost:8000/api/v1/keys/llm \
+  -H "X-User-Id: 550e8400-..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider": "anthropic",
+    "api_key": "sk-ant-api03-...",
+    "label": "prod"
+  }'
+# 201 Created → {"id":"...","provider":"anthropic","last4":"....","label":"prod",...}
 ```
 
 **Ejemplo TypeScript (fetch):**
 
 ```typescript
-// (rellenar)
+const created = await fetch(`${API}/api/v1/keys/llm`, {
+  method: "POST",
+  headers: { "X-User-Id": userId, "Content-Type": "application/json" },
+  body: JSON.stringify({ provider: "anthropic", api_key, label: "prod" }),
+});
 ```
 
 **Errores típicos en este endpoint:**
-- _(rellenar)_
+- `400` con mensaje de `KeyServiceError` — formato de key inválido para el provider
 
 **Ver también:**
-- _(rellenar)_
+- `DELETE /keys/llm/{key_id}` para borrar
 
 
 ## `DELETE /api/v1/keys/llm/key_id`
@@ -101,26 +123,30 @@ _No request body._
 <!-- AUTOGEN:END name=DELETE-api-v1-keys-llm-key_id -->
 
 **Cuándo usar:**
-- _(rellenar — escenarios concretos Wally Trader)_
+- Usuario rotó la key fuera del provider y quiere limpiar la vieja
+- Cancelación de cuenta — borrar todas las keys antes de eliminar al usuario
 
 **Reglas Wally Trader que aplican:**
-- _(rellenar — caps por profile, rate limits, etc.)_
+- Solo borra keys del usuario actual (filtra por `user_id`)
 
 **Ejemplo curl:**
 
 ```bash
-# (rellenar)
+curl -X DELETE -H "X-User-Id: 550e8400-..." \
+  http://localhost:8000/api/v1/keys/llm/9f8b...
+# 204 No Content
 ```
 
-**Ejemplo TypeScript (fetch):**
+**Ejemplo TypeScript:**
 
 ```typescript
-// (rellenar)
+await fetch(`${API}/api/v1/keys/llm/${keyId}`, { method: "DELETE", headers: { "X-User-Id": userId } });
 ```
 
 **Errores típicos en este endpoint:**
-- _(rellenar)_
+- `400` "Invalid key_id" — UUID mal formado
+- `404` "Key not found" — la key no existe o no es del usuario actual
 
 **Ver también:**
-- _(rellenar)_
+- `GET /keys/llm` para listar IDs
 
