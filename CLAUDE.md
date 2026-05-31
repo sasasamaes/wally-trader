@@ -299,6 +299,30 @@ Ver: `docs/superpowers/specs/2026-05-05-punk-smart-v2-design.md`,
 `docs/backtest_findings_2026-05-05_punk_smart_v2.md` (gates fail strictly,
 mergeado con override explícito 2026-05-06; live-data > pre-launch tuning).
 
+### `/fot-scout` (2026-05-31) — fotmarkets-only
+
+Análogo de `/punk-smart` para el universo MT5 de fotmarkets. Cada corrida escanea los 8 activos
+(EURUSD/GBPUSD/USDJPY/XAUUSD/NAS100/SPX500/BTCUSD/ETHUSD), detecta régimen por activo y aplica la
+estrategia ganadora, valida y propone el mejor setup (entry/SL/TP + sizing) para **MT5 manual**.
+Pensado para correrse varias veces/sesión o con `/loop 30m /fot-scout` para crecer $50 → $500.
+
+- **Mapping honesto** (`fot_strategy_mapping.json`, ASIMÉTRICO): solo Mean Reversion (RANGE_CHOP)
+  es edge `VALIDATED` → puede llegar a GO. Breakout/MA-Cross (TREND) son `WEAK` → máximo TENTATIVE
+  con `⚠️ edge no validado`, NUNCA GO (backtest 2026-05-31: PF ~0.9-1.07, mueren al spread CFD bonus).
+  VOLATILE/TREND_EXTREMO → stand aside. Oro fue el mejor activo (~0.89 setups/día, +0.46R, WARN OOS).
+- **Split:** command (`system/commands/fot-scout.md`, profile guard + `fotmarkets_guard.py check` +
+  router) → `fot_scout_router.py` (motor determinista, `--json`, reusa wally_core + per_asset_backtest +
+  macross) → agente `fot-scout-analyst` (refina quote TV live anti-delay yfinance + cadena
+  macro_gate/session_quality/volume_divergence/min_rr_gate + GO/NO-GO MT5 + log).
+- **Override consciente:** `phase_1.allowed_assets` ampliado a `[EURUSD, XAUUSD, BTCUSD, ETHUSD]`
+  (config.md + `PHASE_ALLOWED` en el router espejan). A $50/1% risk muchos activos dan
+  `UNTRADEABLE_SIZE` (min lot 0.01 excede 1%) — el scout lo marca; honest-first sobre el capital chico.
+- **Disciplina:** WAIT honesto cuando no hay edge; sizing phase-aware; propuestas a
+  `memory/scout_proposals.md` (no a `trading_log.md`, no contamina el day-count del guardian).
+- CLI: `.claude/scripts/.venv/bin/python .claude/scripts/fot_scout_router.py --json`.
+  Tests: `shared/wally_core/tests/test_fot_scout.py` (17). Spec/plan:
+  `docs/superpowers/{specs/2026-05-31-fot-scout-design.md,plans/2026-05-31-fot-scout.md}`.
+
 ### Reglas de invalidación comunes
 
 - 2 SLs consecutivos → **parar ese día**

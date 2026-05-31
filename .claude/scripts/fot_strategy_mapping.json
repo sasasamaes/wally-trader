@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "profile": "fotmarkets",
+  "source_backtest": "per_asset_backtest 60-180d 5m + BTC screen 2026-05-31 (esta sesión)",
+  "notes": "Mapping ASIMÉTRICO a propósito: solo Mean Reversion (RANGE) tiene edge que sobrevive el spread CFD bonus. Breakout/MA-cross/pullback dieron PF ~0.9-1.07 y mueren al spread → edge WEAK, máximo TENTATIVE con label '⚠️ edge no validado', NUNCA GO.",
+  "global_threshold": 70,
+  "trend_penalty": 15,
+  "oos_warn_penalty": 10,
+  "regime_strategy": {
+    "RANGE_CHOP":    { "strategy": "mean_reversion",    "edge": "VALIDATED", "max_status": "APPROVED" },
+    "TREND_LEVE":    { "strategy": "ma_cross",          "edge": "WEAK",      "max_status": "TENTATIVE" },
+    "TREND_FUERTE":  { "strategy": "donchian_breakout", "edge": "WEAK",      "max_status": "TENTATIVE" },
+    "TREND_EXTREMO": { "strategy": "stand_aside",       "edge": "NONE",      "max_status": "STAND_ASIDE" },
+    "VOLATILE":      { "strategy": "stand_aside",       "edge": "NONE",      "max_status": "STAND_ASIDE" }
+  },
+  "per_asset_edge": {
+    "XAUUSD": { "RANGE_CHOP": { "setups_per_day": 0.89, "expectancy_R": 0.46, "oos": "WARN" } },
+    "BTCUSD": { "RANGE_CHOP": { "setups_per_day": 0.33, "expectancy_R": 0.29, "oos": "WARN" } },
+    "SPX500": { "RANGE_CHOP": { "setups_per_day": 0.23, "expectancy_R": 0.24, "oos": "FAIL" } },
+    "EURUSD": { "RANGE_CHOP": { "setups_per_day": 0.34, "expectancy_R": 0.16, "oos": "FAIL" } }
+  },
+  "experimental_trend": false
+}

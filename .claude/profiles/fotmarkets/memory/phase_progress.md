@@ -6,16 +6,16 @@ Actualizado por `/journal` al cierre de cada día.
 ## Estado actual
 
 ```yaml
-capital_current: 33.84  # Equidad MT5 al momento de entry (Balance 5.07 + Crédito 30 + Floating -1.23)
-capital_previous: 27.09
+capital_current: 50.00  # actualizado manualmente 2026-05-31 (user report: $30 → $50)
+capital_previous: 33.84
 phase: 1
 phase_since: "2026-04-23"
 trades_total: 2
 trades_wins: 0
 trades_losses: 1
-trades_open: 1
+trades_open: 0
 pnl_total_usd: -2.91  # cerrado; floating live no contado hasta cierre
-last_updated: "2026-04-27T15:14:00Z"
+last_updated: "2026-05-31T07:06:46Z"
 sls_today: 0
 sls_today_cap: 1
 trades_today: 1
@@ -55,6 +55,7 @@ hasta cumplir requisitos de volumen).
 |---|---|---|---|
 | 2026-04-23 | $30.00 | 1 | Profile creado, bonus inicial |
 | 2026-04-23 | $27.09 | 1 | Trade #1 EURUSD LONG SL (-$2.91, -0.97R). 1/1 trade y 1/1 SL fase 1. STOP día. Sizing 0.03 respetado ✅. |
+| 2026-05-31 | $50.00 | 1 | Actualización manual de equity (user report: $30 → $50, +$20 / +66%). Sin detalle de trades intermedios. Fase 1 sigue (threshold fase 2 = $100). |
 
 ## Thresholds recordatorio
 
