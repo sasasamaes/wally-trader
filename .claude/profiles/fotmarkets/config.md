@@ -49,7 +49,12 @@ phase_1:
   max_sl_consecutive: 1
   tp_r_multiple: 2.0
   # 2026-04-30: GBPUSD removido — backtest PF 0.94 / DD 18% incluso a 1% risk
-  allowed_assets: [EURUSD]
+  # 2026-05-31: OVERRIDE CONSCIENTE — XAUUSD/BTCUSD/ETHUSD desbloqueados en Fase 1 a
+  #   pedido del usuario para /fot-scout (scalp diario $50→$500). El backtest 2026-05-31
+  #   mostró que el único edge real es Mean Reversion; oro fue el mejor activo. El router
+  #   fot_scout_router.py (PHASE_ALLOWED) espeja esta lista. Riesgo aceptado: a $50/1%
+  #   muchos quedan UNTRADEABLE_SIZE (min lot 0.01 excede 1% risk) — el scout lo marca.
+  allowed_assets: [EURUSD, XAUUSD, BTCUSD, ETHUSD]
 
 phase_2:
   capital_min: 100
