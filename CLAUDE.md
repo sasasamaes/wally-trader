@@ -624,6 +624,96 @@ Reference: video `Cdhqu6rIvb0` by Alex Ruiz. Spec/plan in `docs/superpowers/{spe
 
 Bundle 3 (2026-05-12) rejected HMM-for-live-tuning; this tool implements only the **portfolio-management framing** Alex describes in the conclusion (~25 min mark): parameters fixed, strategy selection per regime informed by analysis.
 
+## Strategy Validation Bundle — RST + Monte Carlo + Jesse lab (Bundle 5, 2026-05-31)
+
+Destilado del video **"Opus 4.8 + Claude Code + MCP = Algo Trading on Autopilot"**
+(Algo-trading with Saleh, framework Jesse, `youtube.com/watch?v=1SLbe0k6x4I`). Añade dos
+gates de validación que faltaban + adopta Jesse como laboratorio paralelo. El gate completo
+del flujo de backtest pasa a ser: **RST → backtest → OOS → Monte Carlo → veredicto honesto**.
+
+### `/rst` — Rule Significance Test (entrada: ¿edge o ruido?)
+- CLI: `.claude/scripts/.venv/bin/python .claude/scripts/rule_significance.py --symbol BTCUSDT --tf 30m --days 365 --strategy donchian_ema --side long --n 2000 --json`
+- Permuta el timing de las entradas ~2,000 veces (mismas reglas de salida) → p-value.
+  PASS si p<0.05 (la entrada bate al azar → tiene edge). Estimador conservador
+  `(n_beaten+1)/(n+1)`, determinista por `seed`.
+- API importable: `from rule_significance import significance_test, make_donchian_atr_exit`.
+- Lección del video: una estrategia rentable NO prueba edge de entrada (un "always long"
+  gana en bull year sin poder predictivo). Separa edge-de-entrada de rentabilidad.
+- Exit 0=PASS / 2=FAIL|INSUFFICIENT / 3=error.
+
+### `/montecarlo` — robustez del sizing + detector de overfit
+- CLI: `.claude/scripts/.venv/bin/python .claude/scripts/monte_carlo.py --mode trades|candles ...`
+- **trades (reshuffle):** reordena la secuencia de trades → distribución de max DD (retorno
+  final invariante). WARN si `dd_p95` infla >50% sobre el observado → dimensiona el sizing
+  al p95. Modo `bootstrap` opcional varía retorno + prob. de retorno negativo.
+- **candles (block-bootstrap):** OHLCV sintético (factores de vela `o/c_prev,h/o,l/o,c/o`
+  re-muestreados en bloques) → distribución de Sharpe. `overfit_flag = orig > p95` (zona
+  OVERFIT_SUSPECT). Zonas: ROBUST / FRAGILE / WEAK / OVERFIT_SUSPECT.
+- API: `from monte_carlo import monte_carlo_trades, monte_carlo_candles, default_strategy_sharpe`.
+
+### Wire-in `backtest-runner`
+- Pasos 5.6 (RST), 5.7 (Monte Carlo), 5.8 (veredicto combinado). Recomendar SOLO si
+  RST=PASS **Y** OOS≠FAIL **Y** candles≠OVERFIT_SUSPECT; si no, caveat explícito.
+- OOS multi-período NO se reimplementa: ya existe (`backtest_split.py`) y se integra al veredicto.
+
+### Jesse lab (`integrations/jesse/`) — opcional, lo levanta el usuario
+- Docker (Postgres+Redis+Jesse), su MCP a Claude Code (`claude mcp add --transport http jesse <url>/mcp`),
+  estrategia de ejemplo `DonchianEMATrend` (port del video). Para backtests de año completo +
+  Monte Carlo/walk-forward nativos. **NO reemplaza** el motor Wally ni los gates live.
+- Caveat: setup toca servicios de sistema; el comando/puerto exacto del MCP es el que imprime
+  `jesse run` (termina en `/mcp`).
+
+### Tests
+- 20 nuevos green: `test_rule_significance.py` (8) + `test_monte_carlo.py` (12). Fixtures
+  sintéticas + edge plantado, sin dependencia de live-data.
+
+### Spec & plan
+- Design: `docs/superpowers/specs/2026-05-31-jesse-validation-bundle-design.md`
+- Plan: `docs/superpowers/plans/2026-05-31-jesse-validation-bundle.md`
+
+**Caveat honesto:** RST valida la entrada, no la rentabilidad (PASS no garantiza profit;
+FAIL sí descarta edge). Un Monte Carlo de 1 año hereda el régimen de ese año — robustez ≠
+garantía. Jesse acelera la iteración honesta, no fabrica edge.
+
+## AI Strategy Optimization Bundle (Bundle 6, 2026-05-31)
+
+Destilado del video **"I Let Claude AI Opus 4.8 Trade For Me"** (Trading with DaviddTech,
+`youtube.com/watch?v=tkAq6g2Gjz4`). El video deja a Claude "loopear cada 5 min por 1 hora"
+optimizando hasta hallar backtests rentables — pero presume ganadores con 27% max DD y curvas
+sideways **sin validación OOS/Monte Carlo**. Este bundle toma el loop y lo hace honesto.
+
+### `/optimize` — loop de optimización con gates anti-overfit
+- CLI: `.claude/scripts/.venv/bin/python .claude/scripts/optimize_strategy.py --symbol BTCUSDT --tf 4h --side long --iterations 40 --validate-top 3 --export-pine --json`
+- Random search seeded sobre la familia donchian_ema → rankea por score → valida el **top-K**
+  con los gates del Bundle 5 (RST + OOS + Monte Carlo) → recomienda SOLO la que sobrevive los 3.
+- **Verdict honesto:** RECOMMEND (exit 0) si una config pasa todo; **NONE_SURVIVED** (exit 2)
+  si ninguna — no maquilla un sideways como ganador (verificado: BTC 4h long 365d → ninguna pasa).
+- Presupuesto: `--iterations N` o `--minutes M` (estilo loop del video). API: `from optimize_strategy import optimize`.
+
+### Export Pine `strategy()`
+- `--export-pine` escribe `system/pine_library/opt_donchian_ema_<symbol>_<tf>_<side>.pine` —
+  un `strategy()` v6 importable a TradingView para verificar el backtest visualmente.
+- **Draft:** compilar + revisar visual + re-backtestear antes de confiar (el backtester de TV
+  difiere levemente del motor Wally — salida ATR/Donchian sin pyramiding). API: `to_pine_strategy()`, `write_pine()`.
+
+### Trader Dev MCP (`integrations/trader-dev/`) — opcional, ready-to-connect
+- Scaffold del MCP de DaviddTech/StrategyFactory.ai. **No hay endpoint público** (gated tras
+  signup/comment); no se inventa URL. Template `claude mcp add` con placeholder.
+- Solapa casi 100% con el stack nativo (`/pine-gen`, `/backtest`, `/optimize`, `/rst`,
+  `/montecarlo`) → opcional. Si lo conectas, mantené la frontera proposes-you-approve.
+
+### Excluido a propósito
+- **Auto-ejecución live en exchange** (el Bybit del video): choca con la filosofía
+  manual/human-approve y las reglas de riesgo del proyecto.
+
+### Tests
+- 13 nuevos en `test_optimize_strategy.py` + 2 sanity checks en el harness horario. Fixtures
+  sintéticas, determinismo por seed.
+
+### Spec & plan
+- Design: `docs/superpowers/specs/2026-05-31-ai-strategy-optimization-bundle-design.md`
+- Plan: `docs/superpowers/plans/2026-05-31-ai-strategy-optimization-bundle.md`
+
 ## Disclaimer
 
 Nada en este proyecto es consejo financiero. Futuros con leverage pueden liquidar capital en minutos con un wick. Usa capital que puedas perder sin afectar tu vida.

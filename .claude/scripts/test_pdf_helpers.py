@@ -21,6 +21,9 @@ import trailing_stop  # noqa: E402
 import backtest_split  # noqa: E402
 import macross  # noqa: E402
 import per_asset_backtest  # noqa: E402
+import rule_significance  # noqa: E402
+import monte_carlo  # noqa: E402
+import optimize_strategy  # noqa: E402
 
 import json
 import subprocess
@@ -224,6 +227,71 @@ def test_macro_gate_check_day_smoke():
         assert r.returncode == 0, f"Expected returncode 0, got {r.returncode}\nstderr: {r.stderr}"
         payload = json.loads(r.stdout)
         assert payload["events"] == []
+
+
+# ──────────────────────────────────────────────────────────────────
+# Bundle 5 (2026-05-31) — RST + Monte Carlo (Jesse validation bundle)
+# ──────────────────────────────────────────────────────────────────
+
+def test_rst_insufficient_entries():
+    bars = make_trending_bars(80)
+    res = rule_significance.significance_test(
+        bars, [10, 20], rule_significance.make_fixed_horizon_exit(5), n_permutations=50)
+    assert res["verdict"] == "INSUFFICIENT", res
+
+
+def test_rst_deterministic_pvalue():
+    bars = make_trending_bars(300, slope=0.8)
+    entries = list(range(210, 280, 5))
+    exit_fn = rule_significance.make_fixed_horizon_exit(4)
+    r1 = rule_significance.significance_test(bars, entries, exit_fn, n_permutations=200, seed=11)
+    r2 = rule_significance.significance_test(bars, entries, exit_fn, n_permutations=200, seed=11)
+    assert r1["p_value"] == r2["p_value"], (r1["p_value"], r2["p_value"])
+
+
+def test_mc_trades_reshuffle_preserves_total():
+    returns = [0.05, -0.02, 0.03, -0.08, 0.06, -0.01, 0.02, -0.03]
+    res = monte_carlo.monte_carlo_trades(returns, n_sims=200, seed=7)
+    assert res["orig_ret"] == round(sum(returns), 4), res
+    assert res["dd_p95"] >= res["dd_median"] >= res["dd_p5"], res
+
+
+def test_mc_candles_overfit_flag():
+    real = make_trending_bars(200)
+    real_id = id(real)
+    res = monte_carlo.monte_carlo_candles(
+        real, lambda b: 5.0 if id(b) == real_id else 0.0, n_sims=40, seed=7)
+    assert res["overfit_flag"] is True, res
+    assert res["zone"] == "OVERFIT_SUSPECT", res
+
+
+# ──────────────────────────────────────────────────────────────────
+# Bundle 6 (2026-05-31) — optimization loop (AI strategy optimization)
+# ──────────────────────────────────────────────────────────────────
+
+def test_optimize_pine_strategy_valid_v6():
+    params = {"don_len": 20, "ema_len": 200, "atr_len": 14, "sl_mult": 2.0, "max_hold": 48}
+    code = optimize_strategy.to_pine_strategy(params, "BTCUSDT", "4h", "long")
+    assert code.startswith("//@version=6"), code[:40]
+    assert "strategy(" in code
+    # statements top-level NO indentados (la indentación romperia Pine)
+    assert "\nif longCond\n" in code
+
+
+def test_optimize_loop_deterministic_synthetic():
+    bars = []
+    c = 100.0
+    for i in range(600):
+        o = c
+        c = o + 0.4 + 0.3 * math.sin(i / 5.0)
+        bars.append({"t": i * 3600_000, "o": o, "h": max(o, c) + 0.2,
+                     "l": min(o, c) - 0.2, "c": c, "v": 1000.0})
+    r1 = optimize_strategy.optimize(bars=bars, side="long", iterations=10, validate_top=1,
+                                    min_trades=3, rst_perms=80, mc_sims=10, seed=7)
+    r2 = optimize_strategy.optimize(bars=bars, side="long", iterations=10, validate_top=1,
+                                    min_trades=3, rst_perms=80, mc_sims=10, seed=7)
+    assert r1["verdict"] == r2["verdict"]
+    assert r1["leaderboard"] == r2["leaderboard"]
 
 
 # ──────────────────────────────────────────────────────────────────

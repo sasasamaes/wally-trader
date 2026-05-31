@@ -138,6 +138,92 @@ Resultado posible:
 Si NO hay suficiente data para split fiable (<50 bars o <3 trades en test), declarar
 explícitamente "OOS no validado por data insuficiente" y bajar la confianza del veredicto.
 
+### 5.6 Rule Significance Test (RST) — ¿la ENTRADA tiene edge o es ruido?
+
+Destilado del video "Opus 4.8 + Claude Code + MCP = Algo Trading on Autopilot" (framework
+Jesse). Lección central: **una estrategia rentable NO prueba que su entrada tenga edge** —
+en un bull year un "always long" gana sin poder predictivo. Por eso el RST corre ANTES de
+declarar ganador: si la regla de entrada no bate al azar, el backtest rentable puede ser
+suerte de régimen.
+
+Para la config ganadora, extrae los índices de barra donde la estrategia abrió posición
+(`entry_indices`) y la función de salida (`exit_fn(bars, entry_i, side) -> pnl_pct`), luego:
+
+```python
+import sys
+sys.path.insert(0, '.claude/scripts')
+from rule_significance import significance_test
+
+res = significance_test(bars, entry_indices, exit_fn, side="long",
+                        n_permutations=2000, metric="mean_return", seed=7)
+print(res["verdict"], res["p_value"])
+```
+
+Para la estrategia built-in del video (Donchian breakout + EMA trend), puedes correr el CLI:
+
+```bash
+.claude/scripts/.venv/bin/python .claude/scripts/rule_significance.py \
+    --symbol BTCUSDT --tf 30m --days 365 --strategy donchian_ema --side long --n 2000 --json
+```
+
+Verdict:
+- **PASS** (p < 0.05) → la entrada bate al azar, tiene edge → la config es candidata real.
+- **FAIL** (p ≥ 0.05) → la entrada NO se distingue del azar. El backtest rentable es probable
+  suerte de régimen — **NO recomendar**, reportar como "sin edge de entrada confirmado".
+- **INSUFFICIENT** (<3 entradas) → muestra ínfima, RST no concluyente.
+
+### 5.7 Monte Carlo — robustez del sizing + detector de overfit
+
+Tras RST=PASS y OOS≠FAIL, estresa la config ganadora con Monte Carlo (igual al dashboard
+de Jesse en el video):
+
+```python
+from monte_carlo import monte_carlo_trades, monte_carlo_candles, default_strategy_sharpe
+
+# (a) trades reshuffle → distribución de max drawdown (robustez del position sizing)
+mc1 = monte_carlo_trades(trade_returns_pct, n_sims=1000)   # lista de pnl% por trade
+
+# (b) candles sintéticos → stress test de overfit
+strat = default_strategy_sharpe(side="long")               # o tu propia strategy_fn(bars)->sharpe
+mc2 = monte_carlo_candles(bars, strat, n_sims=100)
+```
+
+CLI equivalente: `.claude/scripts/monte_carlo.py --mode trades|candles ...` (ver `/montecarlo`).
+
+Interpretación:
+- **trades:** si `dd_p95` supera al `orig_max_dd` >50% (`verdict=WARN`), el sizing debe
+  soportar el **p95**, no el DD observado. Reportarlo explícito.
+- **candles:** `zone=ROBUST` (Sharpe original entre mediana y p95) = robustez razonable;
+  `zone=OVERFIT_SUSPECT` (`overfit_flag=True`, original > p95 sintético) = la estrategia
+  memorizó la trayectoria, NO recomendar a ciegas.
+
+### 5.8 Veredicto honesto combinado (gate del video)
+
+El orden de gate es: **RST → backtest/ranking → OOS → Monte Carlo → veredicto**.
+Solo declarar una config como recomendable si:
+
+- RST = **PASS** (entrada con edge), **Y**
+- OOS ≠ **FAIL** (sin overfit temporal), **Y**
+- Monte Carlo candles ≠ **OVERFIT_SUSPECT**.
+
+Si cualquiera falla, reportar la config con su caveat explícito (estilo "honest takeaway"
+del video: "la entrada nunca fue el problema / 2024 fue un uptrend fuerte que favorece un
+long-only / esto no está listo para producción"). Nunca esconder un FAIL detrás de un
+retorno bonito.
+
+### 5.9 Loop autónomo de optimización (`/optimize`)
+
+Si el usuario pide "optimiza", "busca la mejor config", "loopea y mejora" (estilo el video de
+DaviddTech), NO hagas el loop a mano: usa `.claude/scripts/optimize_strategy.py` (slash
+`/optimize`). Hace random search + rankea + valida el top-K con los gates 5.6-5.8 + exporta
+Pine del ganador. Devuelve NONE_SURVIVED honesto si nada pasa los gates (no maquilles un
+sideways como ganador).
+
+```bash
+.claude/scripts/.venv/bin/python .claude/scripts/optimize_strategy.py \
+    --symbol BTCUSDT --tf 4h --side long --iterations 40 --validate-top 3 --export-pine
+```
+
 ### 6. Reportar resultados
 
 Formato:
@@ -167,6 +253,15 @@ Trade log:
 #1 [SIDE] MM-DD HH:MM entry → exit | razón | $pnl
 #2 ...
 
+═══ VALIDACIÓN (gate del video) ═══
+
+RST (entrada):   PASS/FAIL  p=X.XXX   → ¿tiene edge la entrada?
+OOS (70/30):     PASS/WARN/FAIL       → ¿overfit temporal?
+MC trades:       OK/WARN    DD p95=X% → ¿sizing robusto?
+MC candles:      ROBUST/OVERFIT_SUSPECT (Sharpe orig vs sintético)
+
+Veredicto: RECOMENDAR / NO-RECOMENDAR + caveat honesto
+
 ═══ HALLAZGOS ═══
 
 ✅ Lo que funcionó: ...
@@ -194,6 +289,8 @@ Conclusión: más trades ≠ mejor retorno. La actual gana en PF y DD.
 5. **Honesto con datos malos** — si una estrategia pierde, dilo directo
 6. **Advierte de overfit** si demasiados parámetros optimizan perfecto sobre poca data
 7. **OOS obligatorio:** ninguna config ganadora se recomienda sin pasar `backtest_split.report_oos`. Si FAIL → reportar como overfit, no como ganador.
+8. **RST obligatorio:** ninguna config ganadora se recomienda sin pasar el Rule Significance Test (`rule_significance.significance_test`, PASS = p<0.05). Si FAIL → "sin edge de entrada confirmado", no ganador. El RST corre ANTES del veredicto (separa edge-de-entrada de rentabilidad).
+9. **Monte Carlo recomendado:** estresar la ganadora con `monte_carlo.py` (trades reshuffle + candles). Si `overfit_flag` → advertir explícito. El gate completo es RST → backtest → OOS → Monte Carlo → veredicto.
 
 ## Archivos típicos generados
 
