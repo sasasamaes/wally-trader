@@ -18,7 +18,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [[ -f "$SCRIPT_DIR/.env" ]]; then
   set -a; source "$SCRIPT_DIR/.env"; set +a
 fi
-PORT="${JESSE_PORT:-9000}"
+PORT="${JESSE_PORT:-8888}"
 BASE="http://localhost:${PORT}"
 
 echo "→ Importando ${SYMBOL} (${EXCHANGE}) desde ${START} a Jesse en ${BASE}"

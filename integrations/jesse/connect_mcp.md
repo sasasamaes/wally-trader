@@ -34,8 +34,11 @@ copiado de los docs de Jesse (sección *MCP → connect in Claude Code*).
 
 - Jesse es un **segundo servidor MCP**; coexiste sin conflicto con el MCP de TradingView que
   ya usa el proyecto.
-- Si cambiaste el puerto en `.env` (como el presentador del video, que usó 9000), la URL del
-  MCP cambia en consecuencia — **siempre copia la que imprime `jesse run`**, no la asumas.
+- El dashboard del stack oficial corre en **:8888** (no 9000); el MCP es un endpoint aparte
+  que termina en `/mcp`. **Siempre copia la URL que imprime `jesse run`/el dashboard**, no la
+  asumas. Este proyecto ya registró `http://localhost:9002/mcp` como default documentado —
+  si Jesse expone otro puerto, re-registra:
+  `claude mcp remove jesse-mcp && claude mcp add --transport http jesse-mcp <url-real>/mcp`.
 - Fuente oficial (revisar a mano, bloquea fetch automatizado):
   `https://docs.jesse.trade/docs/mcp/connect-claude-code`.
 

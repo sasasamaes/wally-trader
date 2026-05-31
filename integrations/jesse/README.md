@@ -18,9 +18,10 @@ on Autopilot"* (Algo-trading with Saleh).
 
 ## Qué es Jesse
 
-Framework Python de algo-trading que requiere **PostgreSQL + Redis**, expone REST API +
-dashboard + un **servidor MCP** (~32 tools: backtest, tuning con walk-forward, Monte Carlo,
-VaR/stress). Las estrategias se escriben como clases `Strategy`
+Framework Python de algo-trading que requiere **PostgreSQL** (el stack oficial corre sobre
+`postgres:14-alpine`), expone REST API + dashboard + un **servidor MCP** (~32 tools:
+backtest, tuning con walk-forward, Monte Carlo, VaR/stress). Las estrategias se escriben como
+clases `Strategy`
 (`should_long`/`go_long`/`update_position`). En el video el agente escribe la estrategia,
 corre un *rule significance test* sobre el motor de Jesse, backtestea, y usa el Monte Carlo
 nativo del dashboard.
@@ -38,23 +39,24 @@ nativo del dashboard.
    cp .env.example .env
    # edita .env si quieres otro puerto / password
    ```
-2. Levanta Postgres + Redis + Jesse:
+2. Levanta el stack (Postgres + Jesse + visor de trades):
    ```bash
    docker compose up -d
-   docker compose logs -f jesse   # espera a que el dashboard esté listo
+   docker compose logs -f jesse   # primera vez baja imágenes (varios min)
    ```
-   > El `docker-compose.yml` incluido es un **punto de partida**. La fuente autoritativa es
-   > la guía oficial: https://docs.jesse.trade/docs/getting-started — reconcilia imagen/tags
-   > con la versión actual de Jesse (los docs bloquean fetch automatizado, revísalos a mano).
-3. Abre el dashboard en `http://localhost:9000` (o el puerto de tu `.env`) y crea/loguea tu
-   cuenta Jesse local.
+   > El `docker-compose.yml` está alineado con el stack oficial
+   > https://github.com/jesse-ai/jesse-stack-docker (imagen `salehmir/jesse:latest`,
+   > `postgres:14-alpine`). Reconcilia con https://docs.jesse.trade/docs/getting-started/docker
+   > si la versión cambió (los docs bloquean fetch automatizado, revísalos a mano).
+3. Abre el dashboard en `http://localhost:8888` y crea/loguea tu cuenta Jesse local.
+   (El visor `jesse-trades-info` queda en `http://localhost:3000`.)
 
-### Opción B — pip en venv (requiere Postgres + Redis locales)
+### Opción B — pip en venv (requiere Postgres local)
 
 ```bash
 python3.13 -m venv ~/jesse-venv && source ~/jesse-venv/bin/activate
 pip install jesse
-# Postgres + Redis deben estar corriendo y configurados en el .env del proyecto Jesse
+# Postgres debe estar corriendo y configurado en el .env del proyecto Jesse
 cd <tu-proyecto-jesse> && jesse run
 ```
 

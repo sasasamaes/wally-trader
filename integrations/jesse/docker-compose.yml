@@ -1,54 +1,54 @@
-# Jesse — Docker Compose (PUNTO DE PARTIDA, no autoritativo)
+# Jesse — Docker Compose
 #
-# Reconcilia la imagen/tag de `jesse` con la versión actual del framework según
-# https://docs.jesse.trade/docs/getting-started (los docs bloquean fetch automatizado —
-# revísalos a mano). Postgres + Redis son requisitos duros de Jesse.
+# Alineado con el stack oficial: https://github.com/jesse-ai/jesse-stack-docker
+# (imagen salehmir/jesse:latest, postgres:14-alpine como "db", dashboard en :8888,
+#  visor de trades jesse-trades-info en :3000). Reconcilia siempre con la guía oficial
+# https://docs.jesse.trade/docs/getting-started/docker — los docs bloquean fetch automatizado.
 #
-# Uso:  cp .env.example .env  &&  docker compose up -d
+# Uso:  cp .env.example .env  &&  docker compose up -d   (primera vez tarda al bajar imágenes)
+# Dashboard:  http://localhost:8888
 
 services:
-  jesse-postgres:
-    image: postgres:16
-    container_name: jesse-postgres
-    environment:
-      POSTGRES_DB: ${POSTGRES_NAME:-jesse_db}
-      POSTGRES_USER: ${POSTGRES_USERNAME:-jesse_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-    volumes:
-      - jesse_pgdata:/var/lib/postgresql/data
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
-    restart: unless-stopped
-
-  jesse-redis:
-    image: redis:7
-    container_name: jesse-redis
-    command: ["redis-server", "--appendonly", "yes"]
-    volumes:
-      - jesse_redisdata:/data
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
-    restart: unless-stopped
-
   jesse:
-    # Imagen oficial de Jesse — confirma el tag vigente en los docs.
     image: salehmir/jesse:latest
     container_name: jesse
+    tty: true
     depends_on:
-      - jesse-postgres
-      - jesse-redis
-    env_file:
-      - .env
+      - db
+      - jesse-trades-info
     environment:
-      POSTGRES_HOST: jesse-postgres
-      REDIS_HOST: jesse-redis
+      ENV_DATABASES_POSTGRES_HOST: "db"
     ports:
-      - "${JESSE_PORT:-9000}:9000"   # dashboard / REST
-      - "${MCP_PORT:-9002}:9002"     # servidor MCP
+      - "${JESSE_PORT:-8888}:8888"      # dashboard / REST / (MCP se sirve desde aquí)
     volumes:
-      - ./strategies:/home/jesse/project/strategies
+      - ./jesseData:/home
     restart: unless-stopped
 
-volumes:
-  jesse_pgdata:
-  jesse_redisdata:
+  jesse-trades-info:
+    image: jessetradesinfo/jesse-trades-info:v0.2.1
+    container_name: jesse-trades-info
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_NAME: ${POSTGRES_NAME:-jesse_db}
+      DB_USER: ${POSTGRES_USERNAME:-jesse_user}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      DB_PORT: 5432
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  db:
+    image: postgres:14-alpine
+    container_name: jesse-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USERNAME:-jesse_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_NAME:-jesse_db}
+      POSTGRES_HOST_AUTH_METHOD: password
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - ./dbData:/var/lib/postgresql/data
+    restart: unless-stopped
