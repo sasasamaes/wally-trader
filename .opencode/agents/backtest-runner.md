@@ -211,6 +211,19 @@ del video: "la entrada nunca fue el problema / 2024 fue un uptrend fuerte que fa
 long-only / esto no está listo para producción"). Nunca esconder un FAIL detrás de un
 retorno bonito.
 
+### 5.9 Loop autónomo de optimización (`/optimize`)
+
+Si el usuario pide "optimiza", "busca la mejor config", "loopea y mejora" (estilo el video de
+DaviddTech), NO hagas el loop a mano: usa `.claude/scripts/optimize_strategy.py` (slash
+`/optimize`). Hace random search + rankea + valida el top-K con los gates 5.6-5.8 + exporta
+Pine del ganador. Devuelve NONE_SURVIVED honesto si nada pasa los gates (no maquilles un
+sideways como ganador).
+
+```bash
+.claude/scripts/.venv/bin/python .claude/scripts/optimize_strategy.py \
+    --symbol BTCUSDT --tf 4h --side long --iterations 40 --validate-top 3 --export-pine
+```
+
 ### 6. Reportar resultados
 
 Formato:

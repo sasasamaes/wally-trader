@@ -675,6 +675,45 @@ del flujo de backtest pasa a ser: **RST → backtest → OOS → Monte Carlo →
 FAIL sí descarta edge). Un Monte Carlo de 1 año hereda el régimen de ese año — robustez ≠
 garantía. Jesse acelera la iteración honesta, no fabrica edge.
 
+## AI Strategy Optimization Bundle (Bundle 6, 2026-05-31)
+
+Destilado del video **"I Let Claude AI Opus 4.8 Trade For Me"** (Trading with DaviddTech,
+`youtube.com/watch?v=tkAq6g2Gjz4`). El video deja a Claude "loopear cada 5 min por 1 hora"
+optimizando hasta hallar backtests rentables — pero presume ganadores con 27% max DD y curvas
+sideways **sin validación OOS/Monte Carlo**. Este bundle toma el loop y lo hace honesto.
+
+### `/optimize` — loop de optimización con gates anti-overfit
+- CLI: `.claude/scripts/.venv/bin/python .claude/scripts/optimize_strategy.py --symbol BTCUSDT --tf 4h --side long --iterations 40 --validate-top 3 --export-pine --json`
+- Random search seeded sobre la familia donchian_ema → rankea por score → valida el **top-K**
+  con los gates del Bundle 5 (RST + OOS + Monte Carlo) → recomienda SOLO la que sobrevive los 3.
+- **Verdict honesto:** RECOMMEND (exit 0) si una config pasa todo; **NONE_SURVIVED** (exit 2)
+  si ninguna — no maquilla un sideways como ganador (verificado: BTC 4h long 365d → ninguna pasa).
+- Presupuesto: `--iterations N` o `--minutes M` (estilo loop del video). API: `from optimize_strategy import optimize`.
+
+### Export Pine `strategy()`
+- `--export-pine` escribe `system/pine_library/opt_donchian_ema_<symbol>_<tf>_<side>.pine` —
+  un `strategy()` v6 importable a TradingView para verificar el backtest visualmente.
+- **Draft:** compilar + revisar visual + re-backtestear antes de confiar (el backtester de TV
+  difiere levemente del motor Wally — salida ATR/Donchian sin pyramiding). API: `to_pine_strategy()`, `write_pine()`.
+
+### Trader Dev MCP (`integrations/trader-dev/`) — opcional, ready-to-connect
+- Scaffold del MCP de DaviddTech/StrategyFactory.ai. **No hay endpoint público** (gated tras
+  signup/comment); no se inventa URL. Template `claude mcp add` con placeholder.
+- Solapa casi 100% con el stack nativo (`/pine-gen`, `/backtest`, `/optimize`, `/rst`,
+  `/montecarlo`) → opcional. Si lo conectas, mantené la frontera proposes-you-approve.
+
+### Excluido a propósito
+- **Auto-ejecución live en exchange** (el Bybit del video): choca con la filosofía
+  manual/human-approve y las reglas de riesgo del proyecto.
+
+### Tests
+- 13 nuevos en `test_optimize_strategy.py` + 2 sanity checks en el harness horario. Fixtures
+  sintéticas, determinismo por seed.
+
+### Spec & plan
+- Design: `docs/superpowers/specs/2026-05-31-ai-strategy-optimization-bundle-design.md`
+- Plan: `docs/superpowers/plans/2026-05-31-ai-strategy-optimization-bundle.md`
+
 ## Disclaimer
 
 Nada en este proyecto es consejo financiero. Futuros con leverage pueden liquidar capital en minutos con un wick. Usa capital que puedas perder sin afectar tu vida.

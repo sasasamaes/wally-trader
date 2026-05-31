@@ -23,6 +23,7 @@ import macross  # noqa: E402
 import per_asset_backtest  # noqa: E402
 import rule_significance  # noqa: E402
 import monte_carlo  # noqa: E402
+import optimize_strategy  # noqa: E402
 
 import json
 import subprocess
@@ -262,6 +263,35 @@ def test_mc_candles_overfit_flag():
         real, lambda b: 5.0 if id(b) == real_id else 0.0, n_sims=40, seed=7)
     assert res["overfit_flag"] is True, res
     assert res["zone"] == "OVERFIT_SUSPECT", res
+
+
+# ──────────────────────────────────────────────────────────────────
+# Bundle 6 (2026-05-31) — optimization loop (AI strategy optimization)
+# ──────────────────────────────────────────────────────────────────
+
+def test_optimize_pine_strategy_valid_v6():
+    params = {"don_len": 20, "ema_len": 200, "atr_len": 14, "sl_mult": 2.0, "max_hold": 48}
+    code = optimize_strategy.to_pine_strategy(params, "BTCUSDT", "4h", "long")
+    assert code.startswith("//@version=6"), code[:40]
+    assert "strategy(" in code
+    # statements top-level NO indentados (la indentación romperia Pine)
+    assert "\nif longCond\n" in code
+
+
+def test_optimize_loop_deterministic_synthetic():
+    bars = []
+    c = 100.0
+    for i in range(600):
+        o = c
+        c = o + 0.4 + 0.3 * math.sin(i / 5.0)
+        bars.append({"t": i * 3600_000, "o": o, "h": max(o, c) + 0.2,
+                     "l": min(o, c) - 0.2, "c": c, "v": 1000.0})
+    r1 = optimize_strategy.optimize(bars=bars, side="long", iterations=10, validate_top=1,
+                                    min_trades=3, rst_perms=80, mc_sims=10, seed=7)
+    r2 = optimize_strategy.optimize(bars=bars, side="long", iterations=10, validate_top=1,
+                                    min_trades=3, rst_perms=80, mc_sims=10, seed=7)
+    assert r1["verdict"] == r2["verdict"]
+    assert r1["leaderboard"] == r2["leaderboard"]
 
 
 # ──────────────────────────────────────────────────────────────────
