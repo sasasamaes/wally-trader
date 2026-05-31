@@ -1,0 +1,54 @@
+# Jesse — Docker Compose (PUNTO DE PARTIDA, no autoritativo)
+#
+# Reconcilia la imagen/tag de `jesse` con la versión actual del framework según
+# https://docs.jesse.trade/docs/getting-started (los docs bloquean fetch automatizado —
+# revísalos a mano). Postgres + Redis son requisitos duros de Jesse.
+#
+# Uso:  cp .env.example .env  &&  docker compose up -d
+
+services:
+  jesse-postgres:
+    image: postgres:16
+    container_name: jesse-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_NAME:-jesse_db}
+      POSTGRES_USER: ${POSTGRES_USERNAME:-jesse_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    volumes:
+      - jesse_pgdata:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    restart: unless-stopped
+
+  jesse-redis:
+    image: redis:7
+    container_name: jesse-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - jesse_redisdata:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    restart: unless-stopped
+
+  jesse:
+    # Imagen oficial de Jesse — confirma el tag vigente en los docs.
+    image: salehmir/jesse:latest
+    container_name: jesse
+    depends_on:
+      - jesse-postgres
+      - jesse-redis
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: jesse-postgres
+      REDIS_HOST: jesse-redis
+    ports:
+      - "${JESSE_PORT:-9000}:9000"   # dashboard / REST
+      - "${MCP_PORT:-9002}:9002"     # servidor MCP
+    volumes:
+      - ./strategies:/home/jesse/project/strategies
+    restart: unless-stopped
+
+volumes:
+  jesse_pgdata:
+  jesse_redisdata:

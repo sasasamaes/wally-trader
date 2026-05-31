@@ -624,6 +624,57 @@ Reference: video `Cdhqu6rIvb0` by Alex Ruiz. Spec/plan in `docs/superpowers/{spe
 
 Bundle 3 (2026-05-12) rejected HMM-for-live-tuning; this tool implements only the **portfolio-management framing** Alex describes in the conclusion (~25 min mark): parameters fixed, strategy selection per regime informed by analysis.
 
+## Strategy Validation Bundle — RST + Monte Carlo + Jesse lab (Bundle 5, 2026-05-31)
+
+Destilado del video **"Opus 4.8 + Claude Code + MCP = Algo Trading on Autopilot"**
+(Algo-trading with Saleh, framework Jesse, `youtube.com/watch?v=1SLbe0k6x4I`). Añade dos
+gates de validación que faltaban + adopta Jesse como laboratorio paralelo. El gate completo
+del flujo de backtest pasa a ser: **RST → backtest → OOS → Monte Carlo → veredicto honesto**.
+
+### `/rst` — Rule Significance Test (entrada: ¿edge o ruido?)
+- CLI: `.claude/scripts/.venv/bin/python .claude/scripts/rule_significance.py --symbol BTCUSDT --tf 30m --days 365 --strategy donchian_ema --side long --n 2000 --json`
+- Permuta el timing de las entradas ~2,000 veces (mismas reglas de salida) → p-value.
+  PASS si p<0.05 (la entrada bate al azar → tiene edge). Estimador conservador
+  `(n_beaten+1)/(n+1)`, determinista por `seed`.
+- API importable: `from rule_significance import significance_test, make_donchian_atr_exit`.
+- Lección del video: una estrategia rentable NO prueba edge de entrada (un "always long"
+  gana en bull year sin poder predictivo). Separa edge-de-entrada de rentabilidad.
+- Exit 0=PASS / 2=FAIL|INSUFFICIENT / 3=error.
+
+### `/montecarlo` — robustez del sizing + detector de overfit
+- CLI: `.claude/scripts/.venv/bin/python .claude/scripts/monte_carlo.py --mode trades|candles ...`
+- **trades (reshuffle):** reordena la secuencia de trades → distribución de max DD (retorno
+  final invariante). WARN si `dd_p95` infla >50% sobre el observado → dimensiona el sizing
+  al p95. Modo `bootstrap` opcional varía retorno + prob. de retorno negativo.
+- **candles (block-bootstrap):** OHLCV sintético (factores de vela `o/c_prev,h/o,l/o,c/o`
+  re-muestreados en bloques) → distribución de Sharpe. `overfit_flag = orig > p95` (zona
+  OVERFIT_SUSPECT). Zonas: ROBUST / FRAGILE / WEAK / OVERFIT_SUSPECT.
+- API: `from monte_carlo import monte_carlo_trades, monte_carlo_candles, default_strategy_sharpe`.
+
+### Wire-in `backtest-runner`
+- Pasos 5.6 (RST), 5.7 (Monte Carlo), 5.8 (veredicto combinado). Recomendar SOLO si
+  RST=PASS **Y** OOS≠FAIL **Y** candles≠OVERFIT_SUSPECT; si no, caveat explícito.
+- OOS multi-período NO se reimplementa: ya existe (`backtest_split.py`) y se integra al veredicto.
+
+### Jesse lab (`integrations/jesse/`) — opcional, lo levanta el usuario
+- Docker (Postgres+Redis+Jesse), su MCP a Claude Code (`claude mcp add --transport http jesse <url>/mcp`),
+  estrategia de ejemplo `DonchianEMATrend` (port del video). Para backtests de año completo +
+  Monte Carlo/walk-forward nativos. **NO reemplaza** el motor Wally ni los gates live.
+- Caveat: setup toca servicios de sistema; el comando/puerto exacto del MCP es el que imprime
+  `jesse run` (termina en `/mcp`).
+
+### Tests
+- 20 nuevos green: `test_rule_significance.py` (8) + `test_monte_carlo.py` (12). Fixtures
+  sintéticas + edge plantado, sin dependencia de live-data.
+
+### Spec & plan
+- Design: `docs/superpowers/specs/2026-05-31-jesse-validation-bundle-design.md`
+- Plan: `docs/superpowers/plans/2026-05-31-jesse-validation-bundle.md`
+
+**Caveat honesto:** RST valida la entrada, no la rentabilidad (PASS no garantiza profit;
+FAIL sí descarta edge). Un Monte Carlo de 1 año hereda el régimen de ese año — robustez ≠
+garantía. Jesse acelera la iteración honesta, no fabrica edge.
+
 ## Disclaimer
 
 Nada en este proyecto es consejo financiero. Futuros con leverage pueden liquidar capital en minutos con un wick. Usa capital que puedas perder sin afectar tu vida.
