@@ -1,7 +1,7 @@
 # 🌭 Wally Trader — Multi-Profile AI-Assisted Trading System
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-570%2B%20passing-brightgreen.svg)](#)
+[![Tests](https://img.shields.io/badge/tests-610%2B%20passing-brightgreen.svg)](#)
 [![Multi-CLI](https://img.shields.io/badge/harness-Claude%20Code%20%7C%20OpenClaw%20%7C%20OpenCode%20%7C%20Hermes-blue.svg)](#)
 [![Memory](https://img.shields.io/badge/memory-Local%20%7C%20Notion%20%7C%20Hybrid-purple.svg)](#)
 [![V3](https://img.shields.io/badge/version-V3%20pre--trade%20gates%20%2B%20L8%20learning-orange.svg)](#)
@@ -13,6 +13,13 @@ Sistema de trading algorítmico-asistido **multi-profile** (7 profiles): retail 
 **Autor:** [Francisco Campos Diaz (@sasasamaes)](https://github.com/sasasamaes) · **License:** [MIT](LICENSE) · **Contribuciones:** ver [CONTRIBUTING.md](CONTRIBUTING.md)
 
 **Status actual:** Bitunix validado con 9 wins / 1 BE en sem 2026-W19 (WR 89% / +$112 net). Sistema V3 con 5-layer veto pipeline (macro + session + correlation + win-streak + extreme-momentum-pattern), backtest 14-day validation (WR 38% → 51% con F1+F2), y L8 self-learning desde user overrides (4 cases tracked, 100% WR).
+
+**🆕 V3.3 highlights — Fotmarkets Scout (`/fot-scout`, 2026-05-31):**
+- **`/fot-scout`** — scanner regime-aware multi-estrategia para el universo MT5 fotmarkets (EURUSD/GBPUSD/USDJPY/XAUUSD/NAS100/SPX500/BTCUSD/ETHUSD). Análogo de `/punk-smart` pero para forex/metales/índices/cripto CFD. Cada corrida detecta el régimen por activo, aplica la estrategia ganadora, valida con la cadena de gates y propone el mejor setup (entry/SL/TP + sizing) para **MT5 manual**. Pensado para correrse repetidamente (`/loop 30m /fot-scout`) y crecer la cuenta **$50 → $500** con disciplina.
+- **Edge-gate honesto (mapping ASIMÉTRICO):** backtest 2026-05-31 demostró que **solo Mean Reversion (RANGE_CHOP) sobrevive el spread CFD bonus** → único edge `VALIDATED`, puede llegar a GO. Breakout/MA-Cross (TREND) dieron PF ~0.9-1.07 → `WEAK`, máximo `TENTATIVE` con `⚠️ edge no validado`, **nunca GO**. VOLATILE/TREND_EXTREMO → stand aside. **WAIT honesto** cuando no hay edge — no fuerza señales.
+- **Split:** command (`fot-scout.md`, profile guard + `fotmarkets_guard` pre-flight) → `fot_scout_router.py` (motor determinista, `--json`, reusa `wally_core` + `per_asset_backtest` + `macross`, sin MCP) → agente `fot-scout-analyst` (refina quote TV live anti-delay yfinance + cadena `macro_gate/session_quality/volume_divergence/min_rr_gate` + GO/NO-GO MT5 + log a `scout_proposals.md`).
+- **Disciplina bakeada:** sizing phase-aware (1%/2%/2%); si lots < 0.01 → `UNTRADEABLE_SIZE` (a $50/1% pasa seguido en FX/oro — honest-first sobre el capital chico); override consciente Fase 1 `allowed_assets [EURUSD, XAUUSD, BTCUSD, ETHUSD]`.
+- **17 tests nuevos** en `shared/wally_core/tests/test_fot_scout.py`. Spec/plan en `docs/superpowers/{specs,plans}/2026-05-31-fot-scout*.md`.
 
 **🚀 V3 highlights (2026-05-09/10):**
 - **Pattern recognition** del winning signature documentado por L8 (`extreme_momentum_fade.py`)
@@ -756,7 +763,7 @@ Statusline refleja el profile activo + equivalente en colones:
 | `retail` | $18.09 | Real propio | 2% | sin cap externo | 5 | Binance Futures |
 | `retail-bingx` | $0.93 | Real residual | 2% (cosmético) | — | 3 | BingX |
 | `ftmo` | $10k | Demo challenge | **0.5%** | 10% trailing | 3 | MT5 (FTMO-Demo) |
-| `fotmarkets` | $30→$100→$300+ | Bonus no-deposit | 10%/5%/2% (phase) | 12% | 1-3 (phase) | MT5 (Fotmarkets) |
+| `fotmarkets` | $50 (→$500 goal) | Bonus no-deposit | **1%/2%/2%** (phase, recalibrado) | 12% | 1-3 (phase) | MT5 (Fotmarkets) · `/fot-scout` |
 | `fundingpips` | $10k | **Real funded** ($99) | **0.3%** | **5% from initial** | **2** | MT5 (FundingPips-Live) |
 | `bitunix` 🆕 | $50 | Copy-validated | 2% | -30% pause | 3 | Bitunix (referral `punkchainer`) |
 | `quantfury` 🆕 | 0.01 BTC | BTC-denominated | 2% del BTC | -10% BTC stack | 3 | Quantfury (broker app) |
@@ -847,6 +854,22 @@ python3 .claude/scripts/bitunix_pairs_check.py --symbols DOGE,WIF # validar cust
 /premortem <args>         🔍 Pre-mortem 8 preguntas (Klein 1998) antes de entry
 /punk-watch               ⏱ Vigilancia adaptativa con magnet check (refinado)
 ```
+
+**🆕 V3.3 — Fotmarkets Scout (2026-05-31, solo fotmarkets):**
+```
+/fot-scout                🎯 Escanea los 8 activos fotmarkets, detecta régimen por activo,
+                             aplica la estrategia ganadora, valida y propone el mejor setup
+                             (entry/SL/TP + sizing) para MT5 manual. WAIT honesto si no hay edge.
+/fot-scout --asset XAUUSD ↪ escanear un solo activo
+/fot-scout --show-all     ↪ incluye buckets WAIT/STAND_ASIDE/NO_SETUP + trend ⚠️ con razón
+/fot-scout --experimental-trend  ↪ sube setups de tendencia a TENTATIVE explícito (edge no validado)
+/loop 30m /fot-scout      ↪ cazar toda la ventana CR 07:00-10:55
+```
+- Mapping ASIMÉTRICO (`fot_strategy_mapping.json`): RANGE_CHOP→Mean Reversion (VALIDATED, único GO);
+  TREND_LEVE→MA-Cross / TREND_FUERTE→Donchian (WEAK, máximo TENTATIVE ⚠️); VOLATILE/EXTREMO→stand aside
+- Motor `fot_scout_router.py` (determinista, `--json`) + agente `fot-scout-analyst` (validación live + log)
+- Disciplina: sizing phase-aware, `UNTRADEABLE_SIZE` cuando lots<0.01, propuestas a `scout_proposals.md`
+- Backtest 2026-05-31: solo MR sobrevive el spread CFD bonus; oro = mejor activo (~0.89 setups/día)
 
 **🆕 V3.2 — HMM Diagnostic Tool (Bundle 4, 2026-05-13, Alex Ruiz video Cdhqu6rIvb0):**
 ```
@@ -1201,6 +1224,50 @@ bash .claude/scripts/btc_outperform.py --period 30d
 - Daily BTC PnL ≤ -2% → BLOCK día
 - Total DD ≤ -10% del BTC stack → BLOCK profile
 - **Outperformance vs HODL <-2% mensual → PAUSAR profile 30 días** (admite que no hay edge)
+
+---
+
+### 💰 Workflow FOTMARKETS ($50 bonus MT5 — scout regime-aware) — NUEVO 2026-05-31
+
+> Objetivo: crecer **$50 → $500** scalpeando en MT5 manual, corriendo `/fot-scout` varias veces
+> en la ventana. El comando elige la mejor estrategia para cada activo en el momento, pero **solo
+> recomienda Mean Reversion (RANGE_CHOP)** como GO — el único edge que sobrevive el spread CFD bonus.
+
+#### 1. Switch + ventana
+
+```bash
+/profile fotmarkets       # capital $50, Fase 1
+# Ventana operativa: CR 07:00–10:55 (fuera de eso el guardian BLOQUEA, fin de semana también)
+```
+
+#### 2. Caza con `/fot-scout` (varias veces o en loop)
+
+```bash
+/fot-scout                # escanea los 8 activos → mejor setup AHORA o WAIT honesto
+/loop 30m /fot-scout      # auto-cazar toda la ventana
+```
+
+- **Pre-flight:** profile guard + `fotmarkets_guard.py` (ventana, weekend, trades/día, SL consec).
+- **Router:** detecta régimen por activo → estrategia ganadora → score 0-100 → edge-gate.
+- **Agente:** refina el quote del ganador con TV live + cadena de validación + GO/NO-GO + log.
+- La **mayoría de ticks serán WAIT** — correcto y disciplinado (RANGE_CHOP da ~1 setup/día-activo).
+
+#### 3. Si hay GO → ejecutar manual en MT5
+
+```
+🟢 GO: LONG XAUUSD (RANGE_CHOP, Mean Reversion, score 78/100)
+   Entry 2345.20 | SL 2343.20 (20 pips) | TP 2349.20 (R:R 2.0) | Lots 0.01 | Risk $0.50 (1%)
+👉 MT5 manual + al cerrar: /journal para loggear el outcome real
+```
+
+#### 4. Honestidad del profile (leer antes de esperar milagros)
+
+- Sobre $50 esto rinde **centavos/día** — es semilla compuesta, no ingreso. El path de ingreso real
+  es funded (FundingPips/FTMO $10k).
+- A $50/1% risk, FX/oro suelen dar **`UNTRADEABLE_SIZE`** (el lote mínimo 0.01 excede 1%); el scout
+  lo marca en vez de hacerte sobre-arriesgar. BTC es el más fácil de sizear a este capital.
+- Setups de tendencia salen como `⚠️ edge no validado` (TENTATIVE), nunca GO.
+- Diagnóstico fuera de ventana: `.claude/scripts/.venv/bin/python .claude/scripts/fot_scout_router.py --show-all`
 
 ---
 
