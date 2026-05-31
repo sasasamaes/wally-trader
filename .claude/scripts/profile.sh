@@ -31,5 +31,4 @@ else
   exit 99
 fi
 
-export WALLY_PROFILE=retail-bingx
 exec "$PY" "$PY_SCRIPT" "$@"
