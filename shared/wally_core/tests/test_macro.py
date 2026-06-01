@@ -9,6 +9,19 @@ import pytest
 CR_OFFSET = timezone(timedelta(hours=-6))
 
 
+def test_default_cache_path_points_to_repo_root_cache(monkeypatch):
+    """Regression: the default cache must resolve to <repo>/.claude/cache/macro_events.json.
+
+    A wrong parents[] index silently made upcoming_relevant()/next_events() read a
+    nonexistent path in production (router context), so news always came back empty.
+    """
+    monkeypatch.delenv("WALLY_MACRO_CACHE", raising=False)
+    from wally_core import macro
+    repo_root = Path(__file__).resolve().parents[3]  # tests → wally_core → shared → repo
+    expected = repo_root / ".claude" / "cache" / "macro_events.json"
+    assert macro._cache_path() == expected
+
+
 @pytest.fixture
 def macro_cache_file(tmp_path):
     """Synthetic macro_events.json with two events:

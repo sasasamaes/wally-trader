@@ -13,7 +13,8 @@ from pathlib import Path
 from typing import Any
 
 CR_OFFSET = timezone(timedelta(hours=-6))
-_DEFAULT_CACHE = Path(__file__).parents[5] / ".claude" / "cache" / "macro_events.json"
+# parents[4] is the repo root (src/wally_core/macro.py → wally_core → src → wally_core → shared → repo)
+_DEFAULT_CACHE = Path(__file__).parents[4] / ".claude" / "cache" / "macro_events.json"
 
 
 def _cache_path() -> Path:
