@@ -43,6 +43,7 @@ from wally_core.regime import compute_adx, label_regime, RegimeLabel  # noqa: E4
 from wally_core.validate import validate_setup, Side  # noqa: E402
 from wally_core.hunt import score_asset  # noqa: E402
 from wally_core.multifactor import composite_score  # noqa: E402
+from wally_core.macro import upcoming_relevant  # noqa: E402
 
 import per_asset_backtest as pab  # fetch_binance_klines, fetch_yfinance, atr, donchian, rsi  # noqa: E402
 from macross import detect_cross  # noqa: E402
@@ -88,6 +89,13 @@ TV_SYMBOL = {
     "EURUSD": "OANDA:EURUSD", "GBPUSD": "OANDA:GBPUSD", "USDJPY": "OANDA:USDJPY",
     "XAUUSD": "OANDA:XAUUSD", "NAS100": "OANDA:NAS100USD", "SPX500": "OANDA:SPX500USD",
     "BTCUSD": "BINANCE:BTCUSDT", "ETHUSD": "BINANCE:ETHUSDT",
+}
+
+# Divisas que mueven cada activo (para filtrar noticias FF relevantes).
+ASSET_CURRENCIES = {
+    "EURUSD": ("EUR", "USD"), "GBPUSD": ("GBP", "USD"), "USDJPY": ("USD", "JPY"),
+    "XAUUSD": ("USD",), "NAS100": ("USD",), "SPX500": ("USD",),
+    "BTCUSD": ("USD",), "ETHUSD": ("USD",),
 }
 
 GOAL_USD = 500.0
@@ -346,7 +354,8 @@ def load_mapping(path: Path | str = MAPPING_PATH) -> dict:
 
 
 def scan(mapping: dict, phase: int, capital: float, *, fetch=fetch_bars,
-         assets: list[str] | None = None, experimental_trend: bool = False) -> dict:
+         assets: list[str] | None = None, experimental_trend: bool = False,
+         news_fn=upcoming_relevant) -> dict:
     """Escanea el universo y devuelve el resultado estructurado."""
     assets = assets or UNIVERSE
     experimental_trend = experimental_trend or mapping.get("experimental_trend", False)
@@ -376,11 +385,23 @@ def scan(mapping: dict, phase: int, capital: float, *, fetch=fetch_bars,
     tentative = sorted(_bucket("TENTATIVE"), key=lambda c: c.get("score", 0), reverse=True)
 
     status = "APPROVED" if approved else ("OVERRIDE_AVAILABLE" if override else "WAIT")
+
+    # Noticias FF relevantes: divisas de los activos DESBLOQUEADOS que se escanean.
+    allowed = PHASE_ALLOWED[phase]
+    ccys: set[str] = set()
+    for a in assets:
+        if allowed == "ALL" or a in allowed:
+            ccys.update(ASSET_CURRENCIES.get(a, ("USD",)))
+    if not ccys:
+        ccys = {"USD"}  # USD mueve todo el universo (oro/índices/cripto/EURUSD)
+    news = news_fn(ccys, hours=48)
+
     return {
         "status": status,
         "phase": phase,
         "capital": capital,
         "goal_progress": _goal_progress(capital, phase),
+        "news": news,
         "mapping_version": mapping.get("version"),
         "approved": approved,
         "override_candidates": override,

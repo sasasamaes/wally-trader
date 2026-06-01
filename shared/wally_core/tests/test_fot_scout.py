@@ -205,3 +205,39 @@ def test_to_wally_remap_feeds_validate_setup():
     from wally_core.validate import validate_setup as vs
     result = vs(wally, Side.LONG, 15)
     assert hasattr(result, "go")
+
+
+# ── news block ────────────────────────────────────────────────────────────────
+
+def test_scan_attaches_news_block(mapping):
+    captured = {}
+    def fake_news(currencies, hours=48, now=None):
+        captured["ccys"] = set(currencies)
+        return {"events": [], "nearest": None, "stale": False, "source": "test"}
+    out = r.scan(mapping, 1, 50.0, fetch=lambda a, i, n: _bars(40),
+                 assets=["XAUUSD"], news_fn=fake_news)
+    assert "news" in out
+    assert out["news"]["source"] == "test"
+    assert captured["ccys"] == {"USD"}
+
+
+def test_scan_news_currencies_union_over_unlocked(mapping):
+    captured = {}
+    def fake_news(currencies, hours=48, now=None):
+        captured["ccys"] = set(currencies)
+        return {"events": [], "nearest": None, "stale": False, "source": None}
+    out = r.scan(mapping, 1, 50.0, fetch=lambda a, i, n: _bars(40),
+                 assets=["EURUSD", "XAUUSD"], news_fn=fake_news)
+    assert captured["ccys"] == {"EUR", "USD"}
+
+
+def test_scan_news_excludes_locked_asset_currency(mapping):
+    # USDJPY is locked in phase 1 → JPY must not leak into the currency set.
+    captured = {}
+    def fake_news(currencies, hours=48, now=None):
+        captured["ccys"] = set(currencies)
+        return {"events": [], "nearest": None, "stale": False, "source": None}
+    out = r.scan(mapping, 1, 50.0, fetch=lambda a, i, n: _bars(40),
+                 assets=["USDJPY", "XAUUSD"], news_fn=fake_news)
+    assert "JPY" not in captured["ccys"]
+    assert captured["ccys"] == {"USD"}

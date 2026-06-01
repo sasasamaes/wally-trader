@@ -91,6 +91,22 @@ dice WAIT honesto cuando no hay edge en vez de forzar un setup de tendencia.
    Próxima corrida: ~30-60 min. (Trend setups visibles con --show-all, marcados ⚠️.)
 ```
 
+### 📰 Bloque de noticias (TODOS los casos)
+
+Leído del campo `news` del JSON del router. Se muestra en APPROVED, override y WAIT.
+
+```markdown
+📰 Forex Factory — próximas 48h (USD/EUR)
+   ⏰ 03 jun 06:15 CR · ADP Non-Farm Employment Change (USD) — en ~23h
+   (sin otros high-impact relevantes hasta entonces)
+```
+
+- `news.events` vacío → `📰 FF: sin high-impact en 48h para tus assets.`
+- `news.stale == true` → añadir `⚠️ calendario FF desactualizado (>24h) — refrescá: .claude/scripts/.venv/bin/python .claude/scripts/macro_calendar.py`
+- Las divisas mostradas son las de los activos DESBLOQUEADOS escaneados (Fase 1 → USD/EUR).
+- **Informativo** — nunca convierte un WAIT en GO ni bloquea (el gate real sigue siendo
+  `macro_gate` en la cadena del agente).
+
 ## Cadencia recomendada
 
 Manual cada 30–60 min, o auto-loop:

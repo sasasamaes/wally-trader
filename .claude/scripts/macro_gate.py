@@ -23,11 +23,10 @@ _SHARED = Path(__file__).resolve().parent.parent.parent / "shared/wally_core/src
 if _SHARED.exists() and str(_SHARED) not in sys.path:
     sys.path.insert(0, str(_SHARED))
 
-from wally_core.macro import _load_cache as _wc_load_cache, CR_OFFSET  # noqa: E402
+from wally_core.macro import _load_cache as _wc_load_cache, CR_OFFSET, STALE_HOURS  # noqa: E402
 
 DEFAULT_CACHE = Path(__file__).parent.parent / "cache" / "macro_events.json"
 WINDOW_MINUTES = 30
-STALE_HOURS = 24
 
 
 def load_cache(path: Path) -> dict[str, Any] | None:
