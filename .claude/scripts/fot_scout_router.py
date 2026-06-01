@@ -55,6 +55,9 @@ MAPPING_PATH = HERE / "fot_strategy_mapping.json"
 # Campos: mt5_symbol (símbolo que el usuario opera en MT5), data_source (binance|yfinance),
 # data_symbol (ticker de la fuente), tv_symbol (quote live del agente), pip_size,
 # pip_value_per_001_lot (APROX — validar en MT5 Spec), min_sl_pips, currencies, realtime.
+# IMPORTANTE: data_symbol debe ser el TICKER FINAL de la fuente (yfinance: ticker Yahoo
+# definitivo como "GC=F"/"EURUSD=X", NO una asset-key alias; binance: par como "BTCUSDT").
+# fetch_bars lo pasa directo al fetcher, bypasseando YF_SYMBOL_MAP a propósito.
 ASSETS: dict[str, dict] = {
     "EURUSD": {"mt5_symbol": "EURUSD", "data_source": "yfinance", "data_symbol": "EURUSD=X",
                "tv_symbol": "OANDA:EURUSD", "pip_size": 0.0001, "pip_value_per_001_lot": 0.10,

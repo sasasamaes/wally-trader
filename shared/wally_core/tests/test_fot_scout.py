@@ -291,6 +291,10 @@ def test_fetch_bars_routes_binance_for_crypto(monkeypatch):
     assert calls["binance"] == ("BTCUSDT", "5m", 120)
     assert "yf" not in calls
 
+    calls.clear()
+    r.fetch_bars("ETHUSD", "1h", 80)
+    assert calls["binance"] == ("ETHUSDT", "1h", 80)
+
 
 def test_fetch_bars_routes_yfinance_with_data_symbol(monkeypatch):
     calls = {}
