@@ -326,6 +326,13 @@ Pensado para correrse varias veces/sesión o con `/loop 30m /fot-scout` para cre
   próximas 48h, filtrados a las divisas de los activos desbloqueados) al `--json`; se muestra
   en cada tick (incluido WAIT). Informativo, no gatea. Helper:
   `wally_core.macro.upcoming_relevant()`.
+- **Universo curado (2026-06-01):** el router escanea **23 instrumentos líquidos** (oro/plata,
+  10 FX, 5 índices, 4 cripto, WTI/Brent) vía una tabla única `ASSETS` (agregar = 1 fila). Todos
+  desbloqueados en Fase 1; risk escala 1%→2%→2%. Activos sin `per_asset_edge` backtesteado
+  llevan `edge_backtested:false` → caveat "⚠️ edge no backtesteado". Excluye exóticos, futuros
+  agrícolas, metales base y acciones (no scalp-friendly en bonus). Feeds: yfinance (FX/índices/
+  metales/energía, ~15min delay) + Binance (cripto, realtime). Spec/plan:
+  `docs/superpowers/{specs,plans}/2026-06-01-fot-scout-universe-expansion*.md`.
 
 ### Reglas de invalidación comunes
 

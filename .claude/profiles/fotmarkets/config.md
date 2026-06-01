@@ -19,16 +19,10 @@ initial_capital: 30.00
 currency: USD
 min_lot_broker: 0.01
 
-# Assets operables (universo completo, filtrado por fase)
-assets_universe:
-  - EURUSD
-  - GBPUSD
-  - USDJPY
-  - XAUUSD
-  - NAS100
-  - SPX500
-  - BTCUSD
-  - ETHUSD
+# Assets operables (subset líquido curado 2026-06-01, todos en Fase 1)
+assets_universe: [XAUUSD, XAGUSD, EURUSD, GBPUSD, USDJPY, USDCHF, USDCAD, AUDUSD, NZDUSD,
+                  EURGBP, EURJPY, GBPJPY, NAS100, SPX500, US30, GER40, UK100,
+                  BTCUSD, ETHUSD, SOLUSD, XRPUSD, WTI, BRENT]
 
 # Ventana operativa
 session_window_mx:
@@ -48,13 +42,9 @@ phase_1:
   max_trades_per_day: 1
   max_sl_consecutive: 1
   tp_r_multiple: 2.0
-  # 2026-04-30: GBPUSD removido — backtest PF 0.94 / DD 18% incluso a 1% risk
-  # 2026-05-31: OVERRIDE CONSCIENTE — XAUUSD/BTCUSD/ETHUSD desbloqueados en Fase 1 a
-  #   pedido del usuario para /fot-scout (scalp diario $50→$500). El backtest 2026-05-31
-  #   mostró que el único edge real es Mean Reversion; oro fue el mejor activo. El router
-  #   fot_scout_router.py (PHASE_ALLOWED) espeja esta lista. Riesgo aceptado: a $50/1%
-  #   muchos quedan UNTRADEABLE_SIZE (min lot 0.01 excede 1% risk) — el scout lo marca.
-  allowed_assets: [EURUSD, XAUUSD, BTCUSD, ETHUSD]
+  # 2026-06-01: subset curado completo desbloqueado en Fase 1; risk escala por fase.
+  #   El mecanismo de lock/override se preserva en el router para config futuras.
+  allowed_assets: [ALL]  # subset curado completo desbloqueado desde Fase 1; risk escala por fase
 
 phase_2:
   capital_min: 100
@@ -65,8 +55,8 @@ phase_2:
   max_sl_consecutive: 2
   tp_r_multiple: 2.0
   break_even_trigger_r: 1.0
-  # 2026-04-30: GBPUSD desbloqueado solo si backtest fase 2 lo valide
-  allowed_assets: [EURUSD, USDJPY, XAUUSD, NAS100]
+  # 2026-06-01: subset curado completo desbloqueado en todas las fases; risk escala por fase.
+  allowed_assets: [ALL]  # subset curado completo desbloqueado desde Fase 1; risk escala por fase
 
 phase_3:
   capital_min: 300
@@ -75,7 +65,7 @@ phase_3:
   max_trades_per_day: 3
   max_sl_consecutive: 2
   tp_r_multiple: 2.5
-  allowed_assets: [ALL]  # todos los del universo
+  allowed_assets: [ALL]  # subset curado completo desbloqueado desde Fase 1; risk escala por fase
 
 # Strategy config global (todas las fases)
 strategy:
