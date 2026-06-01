@@ -241,3 +241,39 @@ def test_scan_news_excludes_locked_asset_currency(mapping):
                  assets=["USDJPY", "XAUUSD"], news_fn=fake_news)
     assert "JPY" not in captured["ccys"]
     assert captured["ccys"] == {"USD"}
+
+
+# ── ASSETS table refactor ─────────────────────────────────────────────────────
+
+def test_assets_table_derives_legacy_dicts():
+    """The derived per-asset dicts must equal the original literal values (parity)."""
+    expected_pip_size = {
+        "EURUSD": 0.0001, "GBPUSD": 0.0001, "USDJPY": 0.01, "XAUUSD": 0.1,
+        "NAS100": 1.0, "SPX500": 1.0, "BTCUSD": 1.0, "ETHUSD": 0.1,
+    }
+    expected_pip_value = {
+        "EURUSD": 0.10, "GBPUSD": 0.10, "USDJPY": 0.10, "XAUUSD": 0.10,
+        "NAS100": 0.01, "SPX500": 0.01, "BTCUSD": 0.01, "ETHUSD": 0.01,
+    }
+    expected_min_sl = {
+        "EURUSD": 8, "GBPUSD": 10, "USDJPY": 10, "XAUUSD": 20,
+        "NAS100": 25, "SPX500": 4, "BTCUSD": 50, "ETHUSD": 40,
+    }
+    expected_tv = {
+        "EURUSD": "OANDA:EURUSD", "GBPUSD": "OANDA:GBPUSD", "USDJPY": "OANDA:USDJPY",
+        "XAUUSD": "OANDA:XAUUSD", "NAS100": "OANDA:NAS100USD", "SPX500": "OANDA:SPX500USD",
+        "BTCUSD": "BINANCE:BTCUSDT", "ETHUSD": "BINANCE:ETHUSDT",
+    }
+    expected_ccy = {
+        "EURUSD": ("EUR", "USD"), "GBPUSD": ("GBP", "USD"), "USDJPY": ("USD", "JPY"),
+        "XAUUSD": ("USD",), "NAS100": ("USD",), "SPX500": ("USD",),
+        "BTCUSD": ("USD",), "ETHUSD": ("USD",),
+    }
+    for a in expected_pip_size:
+        assert r.PIP_SIZE[a] == expected_pip_size[a]
+        assert r.PIP_VALUE_PER_001_LOT[a] == expected_pip_value[a]
+        assert r.MIN_SL_PIPS[a] == expected_min_sl[a]
+        assert r.TV_SYMBOL[a] == expected_tv[a]
+        assert r.ASSET_CURRENCIES[a] == expected_ccy[a]
+    assert r._REALTIME == {"BTCUSD", "ETHUSD"}
+    assert set(r.UNIVERSE) == set(expected_pip_size)

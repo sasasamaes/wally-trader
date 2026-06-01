@@ -51,8 +51,44 @@ from macross import detect_cross  # noqa: E402
 
 MAPPING_PATH = HERE / "fot_strategy_mapping.json"
 
-# Universo fotmarkets (mirror de config.md assets_universe)
-UNIVERSE = ["EURUSD", "GBPUSD", "USDJPY", "XAUUSD", "NAS100", "SPX500", "BTCUSD", "ETHUSD"]
+# Tabla única de configuración por instrumento. Agregar un activo = una fila.
+# Campos: mt5_symbol (símbolo que el usuario opera en MT5), data_source (binance|yfinance),
+# data_symbol (ticker de la fuente), tv_symbol (quote live del agente), pip_size,
+# pip_value_per_001_lot (APROX — validar en MT5 Spec), min_sl_pips, currencies, realtime.
+ASSETS: dict[str, dict] = {
+    "EURUSD": {"mt5_symbol": "EURUSD", "data_source": "yfinance", "data_symbol": "EURUSD=X",
+               "tv_symbol": "OANDA:EURUSD", "pip_size": 0.0001, "pip_value_per_001_lot": 0.10,
+               "min_sl_pips": 8, "currencies": ("EUR", "USD"), "realtime": False},
+    "GBPUSD": {"mt5_symbol": "GBPUSD", "data_source": "yfinance", "data_symbol": "GBPUSD=X",
+               "tv_symbol": "OANDA:GBPUSD", "pip_size": 0.0001, "pip_value_per_001_lot": 0.10,
+               "min_sl_pips": 10, "currencies": ("GBP", "USD"), "realtime": False},
+    "USDJPY": {"mt5_symbol": "USDJPY", "data_source": "yfinance", "data_symbol": "USDJPY=X",
+               "tv_symbol": "OANDA:USDJPY", "pip_size": 0.01, "pip_value_per_001_lot": 0.10,
+               "min_sl_pips": 10, "currencies": ("USD", "JPY"), "realtime": False},
+    "XAUUSD": {"mt5_symbol": "GOLD", "data_source": "yfinance", "data_symbol": "GC=F",
+               "tv_symbol": "OANDA:XAUUSD", "pip_size": 0.1, "pip_value_per_001_lot": 0.10,
+               "min_sl_pips": 20, "currencies": ("USD",), "realtime": False},
+    "NAS100": {"mt5_symbol": "US100Cash", "data_source": "yfinance", "data_symbol": "^NDX",
+               "tv_symbol": "OANDA:NAS100USD", "pip_size": 1.0, "pip_value_per_001_lot": 0.01,
+               "min_sl_pips": 25, "currencies": ("USD",), "realtime": False},
+    "SPX500": {"mt5_symbol": "US500Cash", "data_source": "yfinance", "data_symbol": "^GSPC",
+               "tv_symbol": "OANDA:SPX500USD", "pip_size": 1.0, "pip_value_per_001_lot": 0.01,
+               "min_sl_pips": 4, "currencies": ("USD",), "realtime": False},
+    "BTCUSD": {"mt5_symbol": "BTCUSD", "data_source": "binance", "data_symbol": "BTCUSDT",
+               "tv_symbol": "BINANCE:BTCUSDT", "pip_size": 1.0, "pip_value_per_001_lot": 0.01,
+               "min_sl_pips": 50, "currencies": ("USD",), "realtime": True},
+    "ETHUSD": {"mt5_symbol": "ETHUSD", "data_source": "binance", "data_symbol": "ETHUSDT",
+               "tv_symbol": "BINANCE:ETHUSDT", "pip_size": 0.1, "pip_value_per_001_lot": 0.01,
+               "min_sl_pips": 40, "currencies": ("USD",), "realtime": True},
+}
+
+UNIVERSE = list(ASSETS.keys())
+MIN_SL_PIPS = {a: c["min_sl_pips"] for a, c in ASSETS.items()}
+PIP_SIZE = {a: c["pip_size"] for a, c in ASSETS.items()}
+PIP_VALUE_PER_001_LOT = {a: c["pip_value_per_001_lot"] for a, c in ASSETS.items()}
+TV_SYMBOL = {a: c["tv_symbol"] for a, c in ASSETS.items()}
+ASSET_CURRENCIES = {a: c["currencies"] for a, c in ASSETS.items()}
+_REALTIME = {a for a, c in ASSETS.items() if c["realtime"]}
 
 # Override consciente 2026-05-31 (ver config.md phase_1.allowed_assets).
 # Mirror de config.md — fuente de verdad humana en config.md, esta es la del router.
@@ -66,42 +102,7 @@ PHASE_ALLOWED = {
 PHASE_RISK_PCT = {1: 1.0, 2: 2.0, 3: 2.0}
 PHASE_TP_R = {1: 2.0, 2: 2.0, 3: 2.5}
 
-# SL floor por activo (mirror config.md strategy.min_sl_pips), en "pips" del activo
-MIN_SL_PIPS = {
-    "EURUSD": 8, "GBPUSD": 10, "USDJPY": 10, "XAUUSD": 20,
-    "NAS100": 25, "SPX500": 4, "BTCUSD": 50, "ETHUSD": 40,
-}
-
-# Tamaño de "pip" en unidades de precio (para convertir distancia → pips)
-PIP_SIZE = {
-    "EURUSD": 0.0001, "GBPUSD": 0.0001, "USDJPY": 0.01, "XAUUSD": 0.1,
-    "NAS100": 1.0, "SPX500": 1.0, "BTCUSD": 1.0, "ETHUSD": 0.1,
-}
-
-# Valor USD por pip por 0.01 lote — APROXIMADO, validar en MT5 Specification del broker.
-PIP_VALUE_PER_001_LOT = {
-    "EURUSD": 0.10, "GBPUSD": 0.10, "USDJPY": 0.10, "XAUUSD": 0.10,
-    "NAS100": 0.01, "SPX500": 0.01, "BTCUSD": 0.01, "ETHUSD": 0.01,
-}
-
-# Símbolos TV (OANDA/Binance) para que el agente refine el quote live
-TV_SYMBOL = {
-    "EURUSD": "OANDA:EURUSD", "GBPUSD": "OANDA:GBPUSD", "USDJPY": "OANDA:USDJPY",
-    "XAUUSD": "OANDA:XAUUSD", "NAS100": "OANDA:NAS100USD", "SPX500": "OANDA:SPX500USD",
-    "BTCUSD": "BINANCE:BTCUSDT", "ETHUSD": "BINANCE:ETHUSDT",
-}
-
-# Divisas que mueven cada activo (para filtrar noticias FF relevantes).
-ASSET_CURRENCIES = {
-    "EURUSD": ("EUR", "USD"), "GBPUSD": ("GBP", "USD"), "USDJPY": ("USD", "JPY"),
-    "XAUUSD": ("USD",), "NAS100": ("USD",), "SPX500": ("USD",),
-    "BTCUSD": ("USD",), "ETHUSD": ("USD",),
-}
-
 GOAL_USD = 500.0
-
-# Activos con data real-time (Binance) vs delayed ~15min (yfinance)
-_REALTIME = {"BTCUSD", "ETHUSD"}
 
 
 # ── Data layer ──────────────────────────────────────────────────────────────
