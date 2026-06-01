@@ -44,7 +44,7 @@ phase_1:
   tp_r_multiple: 2.0
   # 2026-06-01: subset curado completo desbloqueado en Fase 1; risk escala por fase.
   #   El mecanismo de lock/override se preserva en el router para config futuras.
-  allowed_assets: [ALL]  # subset curado completo desbloqueado en Fase 1; risk escala por fase
+  allowed_assets: [ALL]  # subset curado completo desbloqueado desde Fase 1; risk escala por fase
 
 phase_2:
   capital_min: 100
@@ -56,7 +56,7 @@ phase_2:
   tp_r_multiple: 2.0
   break_even_trigger_r: 1.0
   # 2026-06-01: subset curado completo desbloqueado en todas las fases; risk escala por fase.
-  allowed_assets: [ALL]  # subset curado completo desbloqueado en Fase 1; risk escala por fase
+  allowed_assets: [ALL]  # subset curado completo desbloqueado desde Fase 1; risk escala por fase
 
 phase_3:
   capital_min: 300
@@ -65,7 +65,7 @@ phase_3:
   max_trades_per_day: 3
   max_sl_consecutive: 2
   tp_r_multiple: 2.5
-  allowed_assets: [ALL]  # subset curado completo desbloqueado en Fase 1; risk escala por fase
+  allowed_assets: [ALL]  # subset curado completo desbloqueado desde Fase 1; risk escala por fase
 
 # Strategy config global (todas las fases)
 strategy:

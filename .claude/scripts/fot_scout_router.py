@@ -122,7 +122,7 @@ ASSETS: dict[str, dict] = {
                "min_sl_pips": 30, "currencies": ("USD",), "realtime": True},
     "XRPUSD": {"mt5_symbol": "XRPUSD", "data_source": "binance", "data_symbol": "XRPUSDT",
                "tv_symbol": "BINANCE:XRPUSDT", "pip_size": 0.0001, "pip_value_per_001_lot": 0.01,
-               "min_sl_pips": 30, "currencies": ("USD",), "realtime": True},
+               "min_sl_pips": 100, "currencies": ("USD",), "realtime": True},
     "WTI":    {"mt5_symbol": "OILCash", "data_source": "yfinance", "data_symbol": "CL=F",
                "tv_symbol": "TVC:USOIL", "pip_size": 0.01, "pip_value_per_001_lot": 0.10,
                "min_sl_pips": 20, "currencies": ("USD",), "realtime": False},
