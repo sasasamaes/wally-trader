@@ -242,8 +242,10 @@ def evaluate_asset(asset: str, mapping: dict, phase: int, capital: float,
     """Evalúa un activo y devuelve un candidate dict con status + (si aplica) setup."""
     allowed = PHASE_ALLOWED[phase]
     unlocked = (allowed == "ALL") or (asset in allowed)
-    base = {"asset": asset, "tv_symbol": TV_SYMBOL.get(asset, asset), "unlocked": unlocked,
-            "data_realtime": asset in _REALTIME}
+    base = {"asset": asset, "tv_symbol": TV_SYMBOL.get(asset, asset),
+            "mt5_symbol": ASSETS[asset]["mt5_symbol"], "unlocked": unlocked,
+            "data_realtime": asset in _REALTIME,
+            "edge_backtested": asset in mapping.get("per_asset_edge", {})}
 
     # Data suficiente?
     min_bars = max(28, 21, 30)  # ADX(28), validate_setup(21), score_asset(30)

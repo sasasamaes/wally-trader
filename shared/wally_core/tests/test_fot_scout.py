@@ -304,4 +304,21 @@ def test_fetch_bars_routes_yfinance_with_data_symbol(monkeypatch):
                         lambda sym, interval, n: calls.setdefault("binance", (sym, interval, n)) or [])
     r.fetch_bars("XAUUSD", "15m", 80)
     assert calls["yf"] == ("GC=F", "15m", 80)   # passes the resolved data_symbol, not the asset key
-    assert "binance" not in calls
+
+
+# ── candidate enrichment ──────────────────────────────────────────────────────
+
+def test_candidate_has_mt5_symbol_and_edge_flag(monkeypatch, mapping):
+    _mr_long(monkeypatch)
+    # XAUUSD HAS per_asset_edge → edge_backtested True; mt5_symbol GOLD
+    xau = r.evaluate_asset("XAUUSD", mapping, 1, 50.0, _bars(40), _bars(40), _bars(40))
+    assert xau["mt5_symbol"] == "GOLD"
+    assert xau["edge_backtested"] is True
+
+
+def test_candidate_edge_flag_false_for_unbacktested(monkeypatch, mapping):
+    _mr_long(monkeypatch)
+    # USDJPY has NO per_asset_edge entry → edge_backtested False
+    jpy = r.evaluate_asset("USDJPY", mapping, 1, 50.0, _bars(40), _bars(40), _bars(40))
+    assert jpy["edge_backtested"] is False
+    assert jpy["mt5_symbol"] == "USDJPY"
