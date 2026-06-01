@@ -83,6 +83,52 @@ ASSETS: dict[str, dict] = {
     "ETHUSD": {"mt5_symbol": "ETHUSD", "data_source": "binance", "data_symbol": "ETHUSDT",
                "tv_symbol": "BINANCE:ETHUSDT", "pip_size": 0.1, "pip_value_per_001_lot": 0.01,
                "min_sl_pips": 40, "currencies": ("USD",), "realtime": True},
+    # ── Expansión 2026-06-01: subset líquido curado ──
+    "XAGUSD": {"mt5_symbol": "SILVER", "data_source": "yfinance", "data_symbol": "SI=F",
+               "tv_symbol": "OANDA:XAGUSD", "pip_size": 0.01, "pip_value_per_001_lot": 0.50,
+               "min_sl_pips": 30, "currencies": ("USD",), "realtime": False},
+    "USDCHF": {"mt5_symbol": "USDCHF", "data_source": "yfinance", "data_symbol": "USDCHF=X",
+               "tv_symbol": "OANDA:USDCHF", "pip_size": 0.0001, "pip_value_per_001_lot": 0.10,
+               "min_sl_pips": 10, "currencies": ("USD", "CHF"), "realtime": False},
+    "USDCAD": {"mt5_symbol": "USDCAD", "data_source": "yfinance", "data_symbol": "USDCAD=X",
+               "tv_symbol": "OANDA:USDCAD", "pip_size": 0.0001, "pip_value_per_001_lot": 0.10,
+               "min_sl_pips": 10, "currencies": ("USD", "CAD"), "realtime": False},
+    "AUDUSD": {"mt5_symbol": "AUDUSD", "data_source": "yfinance", "data_symbol": "AUDUSD=X",
+               "tv_symbol": "OANDA:AUDUSD", "pip_size": 0.0001, "pip_value_per_001_lot": 0.10,
+               "min_sl_pips": 8, "currencies": ("AUD", "USD"), "realtime": False},
+    "NZDUSD": {"mt5_symbol": "NZDUSD", "data_source": "yfinance", "data_symbol": "NZDUSD=X",
+               "tv_symbol": "OANDA:NZDUSD", "pip_size": 0.0001, "pip_value_per_001_lot": 0.10,
+               "min_sl_pips": 8, "currencies": ("NZD", "USD"), "realtime": False},
+    "EURGBP": {"mt5_symbol": "EURGBP", "data_source": "yfinance", "data_symbol": "EURGBP=X",
+               "tv_symbol": "OANDA:EURGBP", "pip_size": 0.0001, "pip_value_per_001_lot": 0.10,
+               "min_sl_pips": 8, "currencies": ("EUR", "GBP"), "realtime": False},
+    "EURJPY": {"mt5_symbol": "EURJPY", "data_source": "yfinance", "data_symbol": "EURJPY=X",
+               "tv_symbol": "OANDA:EURJPY", "pip_size": 0.01, "pip_value_per_001_lot": 0.10,
+               "min_sl_pips": 10, "currencies": ("EUR", "JPY"), "realtime": False},
+    "GBPJPY": {"mt5_symbol": "GBPJPY", "data_source": "yfinance", "data_symbol": "GBPJPY=X",
+               "tv_symbol": "OANDA:GBPJPY", "pip_size": 0.01, "pip_value_per_001_lot": 0.10,
+               "min_sl_pips": 12, "currencies": ("GBP", "JPY"), "realtime": False},
+    "US30":   {"mt5_symbol": "US30Cash", "data_source": "yfinance", "data_symbol": "^DJI",
+               "tv_symbol": "OANDA:US30USD", "pip_size": 1.0, "pip_value_per_001_lot": 0.01,
+               "min_sl_pips": 30, "currencies": ("USD",), "realtime": False},
+    "GER40":  {"mt5_symbol": "GER40Cash", "data_source": "yfinance", "data_symbol": "^GDAXI",
+               "tv_symbol": "OANDA:DE40EUR", "pip_size": 1.0, "pip_value_per_001_lot": 0.01,
+               "min_sl_pips": 30, "currencies": ("EUR",), "realtime": False},
+    "UK100":  {"mt5_symbol": "UK100Cash", "data_source": "yfinance", "data_symbol": "^FTSE",
+               "tv_symbol": "OANDA:UK100GBP", "pip_size": 1.0, "pip_value_per_001_lot": 0.01,
+               "min_sl_pips": 20, "currencies": ("GBP",), "realtime": False},
+    "SOLUSD": {"mt5_symbol": "SOLUSD", "data_source": "binance", "data_symbol": "SOLUSDT",
+               "tv_symbol": "BINANCE:SOLUSDT", "pip_size": 0.01, "pip_value_per_001_lot": 0.01,
+               "min_sl_pips": 30, "currencies": ("USD",), "realtime": True},
+    "XRPUSD": {"mt5_symbol": "XRPUSD", "data_source": "binance", "data_symbol": "XRPUSDT",
+               "tv_symbol": "BINANCE:XRPUSDT", "pip_size": 0.0001, "pip_value_per_001_lot": 0.01,
+               "min_sl_pips": 30, "currencies": ("USD",), "realtime": True},
+    "WTI":    {"mt5_symbol": "OILCash", "data_source": "yfinance", "data_symbol": "CL=F",
+               "tv_symbol": "TVC:USOIL", "pip_size": 0.01, "pip_value_per_001_lot": 0.10,
+               "min_sl_pips": 20, "currencies": ("USD",), "realtime": False},
+    "BRENT":  {"mt5_symbol": "BRENTCash", "data_source": "yfinance", "data_symbol": "BZ=F",
+               "tv_symbol": "TVC:UKOIL", "pip_size": 0.01, "pip_value_per_001_lot": 0.10,
+               "min_sl_pips": 20, "currencies": ("USD",), "realtime": False},
 }
 
 UNIVERSE = list(ASSETS.keys())
@@ -93,13 +139,10 @@ TV_SYMBOL = {a: c["tv_symbol"] for a, c in ASSETS.items()}
 ASSET_CURRENCIES = {a: c["currencies"] for a, c in ASSETS.items()}
 _REALTIME = {a for a, c in ASSETS.items() if c["realtime"]}
 
-# Override consciente 2026-05-31 (ver config.md phase_1.allowed_assets).
-# Mirror de config.md — fuente de verdad humana en config.md, esta es la del router.
-PHASE_ALLOWED = {
-    1: ["EURUSD", "XAUUSD", "BTCUSD", "ETHUSD"],
-    2: ["EURUSD", "USDJPY", "XAUUSD", "NAS100", "BTCUSD", "ETHUSD"],
-    3: "ALL",
-}
+# Decisión 2026-06-01 (ver spec universe-expansion): el subset curado se desbloquea
+# entero en Fase 1; el risk sigue escalando por fase (PHASE_RISK_PCT). El mecanismo
+# de lock/override se conserva en el código por si una config futura lo restringe.
+PHASE_ALLOWED = {1: "ALL", 2: "ALL", 3: "ALL"}
 
 # Risk % y TP R-multiple por fase (mirror config.md)
 PHASE_RISK_PCT = {1: 1.0, 2: 2.0, 3: 2.0}

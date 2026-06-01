@@ -144,6 +144,8 @@ def test_sl_floor_dominates_when_atr_tiny():
 # ── 7/8. Override flagging (locked assets in phase 1) ────────────────────────
 
 def test_btc_unlocked_nas100_locked_phase1(monkeypatch, mapping):
+    # Production phase 1 unlocks all; restrict via monkeypatch to test the lock/override path.
+    monkeypatch.setattr(r, "PHASE_ALLOWED", {1: ["BTCUSD"], 2: "ALL", 3: "ALL"})
     _mr_long(monkeypatch)
     btc = r.evaluate_asset("BTCUSD", mapping, 1, 50.0, _bars(40), _bars(40), _bars(40))
     nas = r.evaluate_asset("NAS100", mapping, 1, 50.0, _bars(40), _bars(40), _bars(40))
@@ -153,6 +155,7 @@ def test_btc_unlocked_nas100_locked_phase1(monkeypatch, mapping):
 
 
 def test_scan_separates_override_from_approved(monkeypatch, mapping):
+    monkeypatch.setattr(r, "PHASE_ALLOWED", {1: ["BTCUSD"], 2: "ALL", 3: "ALL"})
     _mr_long(monkeypatch)
     out = r.scan(mapping, 1, 50.0, fetch=lambda a, i, n: _bars(40), assets=["NAS100"])
     assert out["approved"] == []
@@ -231,8 +234,9 @@ def test_scan_news_currencies_union_over_unlocked(mapping):
     assert captured["ccys"] == {"EUR", "USD"}
 
 
-def test_scan_news_excludes_locked_asset_currency(mapping):
-    # USDJPY is locked in phase 1 → JPY must not leak into the currency set.
+def test_scan_news_excludes_locked_asset_currency(monkeypatch, mapping):
+    # Restrict via monkeypatch: USDJPY locked in phase 1 → JPY must not leak into currency set.
+    monkeypatch.setattr(r, "PHASE_ALLOWED", {1: ["XAUUSD"], 2: "ALL", 3: "ALL"})
     captured = {}
     def fake_news(currencies, hours=48, now=None):
         captured["ccys"] = set(currencies)
@@ -275,8 +279,8 @@ def test_assets_table_derives_legacy_dicts():
         assert r.MIN_SL_PIPS[a] == expected_min_sl[a]
         assert r.TV_SYMBOL[a] == expected_tv[a]
         assert r.ASSET_CURRENCIES[a] == expected_ccy[a]
-    assert r._REALTIME == {"BTCUSD", "ETHUSD"}
-    assert set(r.UNIVERSE) == set(expected_pip_size)
+    assert r._REALTIME >= {"BTCUSD", "ETHUSD"}   # original cryptos still realtime
+    assert set(expected_pip_size).issubset(set(r.UNIVERSE))  # original 8 still present
 
 
 # ── data-source routing ───────────────────────────────────────────────────────
@@ -323,3 +327,29 @@ def test_candidate_edge_flag_false_for_unbacktested(monkeypatch, mapping):
     jpy = r.evaluate_asset("USDJPY", mapping, 1, 50.0, _bars(40), _bars(40), _bars(40))
     assert jpy["edge_backtested"] is False
     assert jpy["mt5_symbol"] == "USDJPY"
+
+
+# ── universe expansion ────────────────────────────────────────────────────────
+
+def test_universe_has_23_curated_instruments():
+    assert len(r.UNIVERSE) == 23
+    for sym in ("XAGUSD", "USDCHF", "USDCAD", "AUDUSD", "NZDUSD", "EURGBP", "EURJPY",
+                "GBPJPY", "US30", "GER40", "UK100", "SOLUSD", "XRPUSD", "WTI", "BRENT"):
+        assert sym in r.ASSETS, f"{sym} missing from ASSETS"
+
+
+def test_assets_entries_are_complete_and_valid():
+    required = {"mt5_symbol", "data_source", "data_symbol", "tv_symbol", "pip_size",
+                "pip_value_per_001_lot", "min_sl_pips", "currencies", "realtime"}
+    for sym, cfg in r.ASSETS.items():
+        assert required.issubset(cfg), f"{sym} missing fields: {required - set(cfg)}"
+        assert cfg["data_source"] in ("yfinance", "binance"), sym
+        assert isinstance(cfg["currencies"], tuple) and cfg["currencies"], sym
+        assert cfg["pip_size"] > 0, sym
+
+
+def test_phase1_unlocks_all_curated_assets(monkeypatch, mapping):
+    _mr_long(monkeypatch)
+    for sym in ("SOLUSD", "USDCHF", "GER40"):
+        res = r.evaluate_asset(sym, mapping, 1, 50.0, _bars(40), _bars(40), _bars(40))
+        assert res["unlocked"] is True, f"{sym} should be unlocked in phase 1"
