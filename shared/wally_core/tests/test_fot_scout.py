@@ -277,3 +277,27 @@ def test_assets_table_derives_legacy_dicts():
         assert r.ASSET_CURRENCIES[a] == expected_ccy[a]
     assert r._REALTIME == {"BTCUSD", "ETHUSD"}
     assert set(r.UNIVERSE) == set(expected_pip_size)
+
+
+# ── data-source routing ───────────────────────────────────────────────────────
+
+def test_fetch_bars_routes_binance_for_crypto(monkeypatch):
+    calls = {}
+    monkeypatch.setattr(r.pab, "fetch_binance_klines",
+                        lambda sym, interval, n: calls.setdefault("binance", (sym, interval, n)) or [])
+    monkeypatch.setattr(r.pab, "fetch_yfinance",
+                        lambda sym, interval, n: calls.setdefault("yf", (sym, interval, n)) or [])
+    r.fetch_bars("BTCUSD", "5m", 120)
+    assert calls["binance"] == ("BTCUSDT", "5m", 120)
+    assert "yf" not in calls
+
+
+def test_fetch_bars_routes_yfinance_with_data_symbol(monkeypatch):
+    calls = {}
+    monkeypatch.setattr(r.pab, "fetch_yfinance",
+                        lambda sym, interval, n: calls.setdefault("yf", (sym, interval, n)) or [])
+    monkeypatch.setattr(r.pab, "fetch_binance_klines",
+                        lambda sym, interval, n: calls.setdefault("binance", (sym, interval, n)) or [])
+    r.fetch_bars("XAUUSD", "15m", 80)
+    assert calls["yf"] == ("GC=F", "15m", 80)   # passes the resolved data_symbol, not the asset key
+    assert "binance" not in calls

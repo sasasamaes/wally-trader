@@ -108,15 +108,15 @@ GOAL_USD = 500.0
 # ── Data layer ──────────────────────────────────────────────────────────────
 
 def fetch_bars(asset: str, interval: str, n: int) -> list[dict]:
-    """Pull OHLCV en formato o/h/l/c/v (estilo per_asset_backtest).
+    """Pull OHLCV en formato o/h/l/c/v según la fuente declarada en ASSETS.
 
-    Binance para BTC/ETH (real-time), yfinance para el resto (delayed ~15min).
+    binance → real-time; yfinance → delayed ~15min. Pasa data_symbol resuelto
+    (no la asset key) para no depender de YF_SYMBOL_MAP en activos nuevos.
     """
-    if asset == "BTCUSD":
-        return pab.fetch_binance_klines("BTCUSDT", interval, n)
-    if asset == "ETHUSD":
-        return pab.fetch_binance_klines("ETHUSDT", interval, n)
-    return pab.fetch_yfinance(asset, interval, n)
+    cfg = ASSETS[asset]
+    if cfg["data_source"] == "binance":
+        return pab.fetch_binance_klines(cfg["data_symbol"], interval, n)
+    return pab.fetch_yfinance(cfg["data_symbol"], interval, n)
 
 
 def _to_wally(bars: list[dict]) -> list[dict]:
