@@ -92,3 +92,86 @@ def next_events(days: int = 7, now: datetime | None = None) -> list[dict]:
             upcoming.append(ev)
     upcoming.sort(key=_event_dt)
     return upcoming
+
+
+STALE_HOURS = 24
+
+_COUNTRY_CCY = {
+    "united states": "USD",
+    "usa": "USD",
+    "euro area": "EUR",
+    "united kingdom": "GBP",
+    "japan": "JPY",
+}
+
+
+def _country_to_currency(country: str) -> str:
+    """Normalize a cache `country` field to a 3-letter currency code.
+
+    The FF scraper stores full names for USD/EUR/GBP/JPY ("United States", ...)
+    and raw codes for everything else ("AUD", "CAD"). Map the known names;
+    pass through unknown values uppercased.
+    """
+    c = (country or "").strip()
+    return _COUNTRY_CCY.get(c.lower(), c.upper())
+
+
+def upcoming_relevant(currencies, hours: int = 48,
+                      now: datetime | None = None) -> dict:
+    """High-impact events in the next `hours`, filtered to `currencies`.
+
+    Read-only over the macro cache. Never fetches. Returns:
+        {events: [{name, currency, country, date, time_cr, hours_until}],
+         nearest: <first event or None>, stale: bool, source: str | None}
+    """
+    wanted = {str(c).upper() for c in currencies}
+    cache = _load_cache()
+    if cache is None:
+        return {"events": [], "nearest": None, "stale": True, "source": None}
+
+    if now is None:
+        now = datetime.now(CR_OFFSET)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=CR_OFFSET)
+    horizon = now + timedelta(hours=hours)
+
+    out = []
+    for ev in cache.get("events", []):
+        if ev.get("impact") != "high":
+            continue
+        try:
+            ev_dt = _event_dt(ev)
+        except (ValueError, KeyError):
+            continue
+        if not (now <= ev_dt <= horizon):
+            continue
+        ccy = _country_to_currency(ev.get("country", ""))
+        if ccy not in wanted:
+            continue
+        out.append({
+            "name": ev.get("name", "?"),
+            "currency": ccy,
+            "country": ev.get("country", ""),
+            "date": ev["date"],
+            "time_cr": ev["time_cr"],
+            "hours_until": round((ev_dt - now).total_seconds() / 3600.0, 1),
+        })
+    out.sort(key=lambda e: (e["date"], e["time_cr"]))
+
+    stale = True
+    fetched = cache.get("fetched_at")
+    if fetched:
+        try:
+            f_dt = datetime.fromisoformat(fetched)
+            if f_dt.tzinfo is None:
+                f_dt = f_dt.replace(tzinfo=CR_OFFSET)
+            stale = (now - f_dt) > timedelta(hours=STALE_HOURS)
+        except ValueError:
+            stale = True
+
+    return {
+        "events": out,
+        "nearest": out[0] if out else None,
+        "stale": stale,
+        "source": cache.get("source"),
+    }
