@@ -138,6 +138,11 @@ La mayoría de ticks serán **WAIT** — es correcto y disciplinado (RANGE_CHOP 
 - Override de oro/BTC/ETH en Fase 1 es config-level y documentado (config.md + backtest 2026-04-30).
 - yfinance (FX/índices) tiene ~15 min delay → el agente refina el quote del ganador con TV live
   antes de dar la entrada; si el setup decayó → NO-GO.
+- **Edge no backtesteado por activo:** si un candidato APROBADO trae `edge_backtested: false`
+  (activo del subset curado sin entrada en `per_asset_edge`), el render añade
+  `⚠️ edge no backtesteado en este activo — paper-first`. El MR-RANGE_CHOP es edge de clase
+  validado, pero ese activo puntual no se backtesteó aún. Usar `mt5_symbol` del candidato para
+  las instrucciones de ejecución en MT5 (p.ej. `US100Cash`, `GOLD`, `OILCash`).
 
 Si argumentos:
 
