@@ -304,6 +304,7 @@ def test_fetch_bars_routes_yfinance_with_data_symbol(monkeypatch):
                         lambda sym, interval, n: calls.setdefault("binance", (sym, interval, n)) or [])
     r.fetch_bars("XAUUSD", "15m", 80)
     assert calls["yf"] == ("GC=F", "15m", 80)   # passes the resolved data_symbol, not the asset key
+    assert "binance" not in calls
 
 
 # ── candidate enrichment ──────────────────────────────────────────────────────
