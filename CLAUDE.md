@@ -322,6 +322,10 @@ Pensado para correrse varias veces/sesión o con `/loop 30m /fot-scout` para cre
 - CLI: `.claude/scripts/.venv/bin/python .claude/scripts/fot_scout_router.py --json`.
   Tests: `shared/wally_core/tests/test_fot_scout.py` (17). Spec/plan:
   `docs/superpowers/{specs/2026-05-31-fot-scout-design.md,plans/2026-05-31-fot-scout.md}`.
+- **Noticias FF (2026-06-01):** el router adjunta un bloque `news` (eventos high-impact FF
+  próximas 48h, filtrados a las divisas de los activos desbloqueados) al `--json`; se muestra
+  en cada tick (incluido WAIT). Informativo, no gatea. Helper:
+  `wally_core.macro.upcoming_relevant()`.
 
 ### Reglas de invalidación comunes
 
