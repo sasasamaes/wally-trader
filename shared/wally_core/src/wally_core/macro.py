@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -116,7 +117,7 @@ def _country_to_currency(country: str) -> str:
     return _COUNTRY_CCY.get(c.lower(), c.upper())
 
 
-def upcoming_relevant(currencies, hours: int = 48,
+def upcoming_relevant(currencies: Iterable[str], hours: int = 48,
                       now: datetime | None = None) -> dict:
     """High-impact events in the next `hours`, filtered to `currencies`.
 
@@ -156,6 +157,7 @@ def upcoming_relevant(currencies, hours: int = 48,
             "time_cr": ev["time_cr"],
             "hours_until": round((ev_dt - now).total_seconds() / 3600.0, 1),
         })
+    # string sort matches chronological order for ISO-formatted date/time fields
     out.sort(key=lambda e: (e["date"], e["time_cr"]))
 
     stale = True
@@ -171,7 +173,7 @@ def upcoming_relevant(currencies, hours: int = 48,
 
     return {
         "events": out,
-        "nearest": out[0] if out else None,
+        "nearest": dict(out[0]) if out else None,
         "stale": stale,
         "source": cache.get("source"),
     }
