@@ -1,23 +1,200 @@
 {
   "version": 1,
   "profile": "fotmarkets",
-  "source_backtest": "per_asset_backtest 60-180d 5m + BTC screen 2026-05-31 (esta sesión)",
+  "source_backtest": "fot_backtest_universe.py 2026-06-02 — MR gated a RANGE_CHOP (ADX 1h<25), exit SL=max(ATR×1.2,floor)+TP 2R, 5m ~60d. expectancy_R = GROSS (3×WR−1, sin costo); net (fee notional) es negativo en los 23 — ver docs/backtest_findings_2026-06-02_fot_universe.md. Edge marginal: ningún activo llega a +0.30. Reemplaza los 4 valores optimistas 2026-05-31 que no se reprodujeron.",
   "notes": "Mapping ASIMÉTRICO a propósito: solo Mean Reversion (RANGE) tiene edge que sobrevive el spread CFD bonus. Breakout/MA-cross/pullback dieron PF ~0.9-1.07 y mueren al spread → edge WEAK, máximo TENTATIVE con label '⚠️ edge no validado', NUNCA GO.",
   "global_threshold": 70,
   "trend_penalty": 15,
   "oos_warn_penalty": 10,
   "regime_strategy": {
-    "RANGE_CHOP":    { "strategy": "mean_reversion",    "edge": "VALIDATED", "max_status": "APPROVED" },
-    "TREND_LEVE":    { "strategy": "ma_cross",          "edge": "WEAK",      "max_status": "TENTATIVE" },
-    "TREND_FUERTE":  { "strategy": "donchian_breakout", "edge": "WEAK",      "max_status": "TENTATIVE" },
-    "TREND_EXTREMO": { "strategy": "stand_aside",       "edge": "NONE",      "max_status": "STAND_ASIDE" },
-    "VOLATILE":      { "strategy": "stand_aside",       "edge": "NONE",      "max_status": "STAND_ASIDE" }
+    "RANGE_CHOP": {
+      "strategy": "mean_reversion",
+      "edge": "VALIDATED",
+      "max_status": "APPROVED"
+    },
+    "TREND_LEVE": {
+      "strategy": "ma_cross",
+      "edge": "WEAK",
+      "max_status": "TENTATIVE"
+    },
+    "TREND_FUERTE": {
+      "strategy": "donchian_breakout",
+      "edge": "WEAK",
+      "max_status": "TENTATIVE"
+    },
+    "TREND_EXTREMO": {
+      "strategy": "stand_aside",
+      "edge": "NONE",
+      "max_status": "STAND_ASIDE"
+    },
+    "VOLATILE": {
+      "strategy": "stand_aside",
+      "edge": "NONE",
+      "max_status": "STAND_ASIDE"
+    }
   },
   "per_asset_edge": {
-    "XAUUSD": { "RANGE_CHOP": { "setups_per_day": 0.89, "expectancy_R": 0.46, "oos": "WARN" } },
-    "BTCUSD": { "RANGE_CHOP": { "setups_per_day": 0.33, "expectancy_R": 0.29, "oos": "WARN" } },
-    "SPX500": { "RANGE_CHOP": { "setups_per_day": 0.23, "expectancy_R": 0.24, "oos": "FAIL" } },
-    "EURUSD": { "RANGE_CHOP": { "setups_per_day": 0.34, "expectancy_R": 0.16, "oos": "FAIL" } }
+    "EURUSD": {
+      "RANGE_CHOP": {
+        "setups_per_day": 1.55,
+        "expectancy_R": -0.02,
+        "oos": "WARN"
+      }
+    },
+    "GBPUSD": {
+      "RANGE_CHOP": {
+        "setups_per_day": 1.83,
+        "expectancy_R": -0.02,
+        "oos": "PASS"
+      }
+    },
+    "USDJPY": {
+      "RANGE_CHOP": {
+        "setups_per_day": 1.77,
+        "expectancy_R": 0.06,
+        "oos": "PASS"
+      }
+    },
+    "XAUUSD": {
+      "RANGE_CHOP": {
+        "setups_per_day": 2.34,
+        "expectancy_R": 0.1,
+        "oos": "FAIL"
+      }
+    },
+    "NAS100": {
+      "RANGE_CHOP": {
+        "setups_per_day": 0.52,
+        "expectancy_R": 0.16,
+        "oos": "PASS"
+      }
+    },
+    "SPX500": {
+      "RANGE_CHOP": {
+        "setups_per_day": 0.58,
+        "expectancy_R": 0.2,
+        "oos": "PASS"
+      }
+    },
+    "BTCUSD": {
+      "RANGE_CHOP": {
+        "setups_per_day": 2.2,
+        "expectancy_R": -0.04,
+        "oos": "PASS"
+      }
+    },
+    "ETHUSD": {
+      "RANGE_CHOP": {
+        "setups_per_day": 2.07,
+        "expectancy_R": -0.17,
+        "oos": "PASS"
+      }
+    },
+    "XAGUSD": {
+      "RANGE_CHOP": {
+        "setups_per_day": 1.9,
+        "expectancy_R": -0.09,
+        "oos": "PASS"
+      }
+    },
+    "USDCHF": {
+      "RANGE_CHOP": {
+        "setups_per_day": 1.57,
+        "expectancy_R": -0.17,
+        "oos": "WARN"
+      }
+    },
+    "USDCAD": {
+      "RANGE_CHOP": {
+        "setups_per_day": 1.16,
+        "expectancy_R": -0.17,
+        "oos": "WARN"
+      }
+    },
+    "AUDUSD": {
+      "RANGE_CHOP": {
+        "setups_per_day": 1.71,
+        "expectancy_R": -0.0,
+        "oos": "FAIL"
+      }
+    },
+    "NZDUSD": {
+      "RANGE_CHOP": {
+        "setups_per_day": 1.54,
+        "expectancy_R": -0.08,
+        "oos": "PASS"
+      }
+    },
+    "EURGBP": {
+      "RANGE_CHOP": {
+        "setups_per_day": 0.88,
+        "expectancy_R": 0.28,
+        "oos": "PASS"
+      }
+    },
+    "EURJPY": {
+      "RANGE_CHOP": {
+        "setups_per_day": 1.86,
+        "expectancy_R": -0.1,
+        "oos": "PASS"
+      }
+    },
+    "GBPJPY": {
+      "RANGE_CHOP": {
+        "setups_per_day": 1.77,
+        "expectancy_R": 0.2,
+        "oos": "FAIL"
+      }
+    },
+    "US30": {
+      "RANGE_CHOP": {
+        "setups_per_day": 0.72,
+        "expectancy_R": -0.02,
+        "oos": "PASS"
+      }
+    },
+    "GER40": {
+      "RANGE_CHOP": {
+        "setups_per_day": 0.93,
+        "expectancy_R": 0.1,
+        "oos": "WARN"
+      }
+    },
+    "UK100": {
+      "RANGE_CHOP": {
+        "setups_per_day": 0.87,
+        "expectancy_R": -0.04,
+        "oos": "PASS"
+      }
+    },
+    "SOLUSD": {
+      "RANGE_CHOP": {
+        "setups_per_day": 2.16,
+        "expectancy_R": -0.14,
+        "oos": "PASS"
+      }
+    },
+    "XRPUSD": {
+      "RANGE_CHOP": {
+        "setups_per_day": 1.34,
+        "expectancy_R": -0.16,
+        "oos": "PASS"
+      }
+    },
+    "WTI": {
+      "RANGE_CHOP": {
+        "setups_per_day": 1.69,
+        "expectancy_R": -0.05,
+        "oos": "PASS"
+      }
+    },
+    "BRENT": {
+      "RANGE_CHOP": {
+        "setups_per_day": 1.6,
+        "expectancy_R": 0.11,
+        "oos": "PASS"
+      }
+    }
   },
   "experimental_trend": false
 }

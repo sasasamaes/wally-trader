@@ -177,10 +177,15 @@ def test_approved_sorted_by_score_desc(monkeypatch, mapping):
 
 
 def test_score_mr_penalizes_oos_fail_more_than_warn(mapping):
+    import copy
     bars5 = _bars(40)
     bars15 = _bars(40)
-    warn = r._score_mr("XAUUSD", bars5, bars15, mapping)   # oos WARN, exp 0.46 (+10 -10)
-    fail = r._score_mr("EURUSD", bars5, bars15, mapping)   # oos FAIL, exp 0.16 (-20)
+    # Aísla la penalización de OOS: misma expectancy, distinto oos (robusto a re-backtests).
+    m = copy.deepcopy(mapping)
+    m["per_asset_edge"]["XAUUSD"] = {"RANGE_CHOP": {"setups_per_day": 1.0, "expectancy_R": 0.10, "oos": "WARN"}}
+    m["per_asset_edge"]["EURUSD"] = {"RANGE_CHOP": {"setups_per_day": 1.0, "expectancy_R": 0.10, "oos": "FAIL"}}
+    warn = r._score_mr("XAUUSD", bars5, bars15, m)   # oos WARN → -10
+    fail = r._score_mr("EURUSD", bars5, bars15, m)   # oos FAIL → -20
     assert warn > fail
 
 
@@ -323,8 +328,13 @@ def test_candidate_has_mt5_symbol_and_edge_flag(monkeypatch, mapping):
 
 def test_candidate_edge_flag_false_for_unbacktested(monkeypatch, mapping):
     _mr_long(monkeypatch)
-    # USDJPY has NO per_asset_edge entry → edge_backtested False
-    jpy = r.evaluate_asset("USDJPY", mapping, 1, 50.0, _bars(40), _bars(40), _bars(40))
+    # Un activo SIN entrada en per_asset_edge → edge_backtested False. Tras el backtest
+    # 2026-06-02 los 23 del universo están poblados, así que simulamos uno faltante
+    # quitándolo del mapping (deep-copy para no contaminar el fixture compartido).
+    import copy
+    m = copy.deepcopy(mapping)
+    m["per_asset_edge"].pop("USDJPY", None)
+    jpy = r.evaluate_asset("USDJPY", m, 1, 50.0, _bars(40), _bars(40), _bars(40))
     assert jpy["edge_backtested"] is False
     assert jpy["mt5_symbol"] == "USDJPY"
 

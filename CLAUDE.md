@@ -333,6 +333,14 @@ Pensado para correrse varias veces/sesión o con `/loop 30m /fot-scout` para cre
   agrícolas, metales base y acciones (no scalp-friendly en bonus). Feeds: yfinance (FX/índices/
   metales/energía, ~15min delay) + Binance (cripto, realtime). Spec/plan:
   `docs/superpowers/{specs,plans}/2026-06-01-fot-scout-universe-expansion*.md`.
+- **Backtest universo (2026-06-02):** los 23 ahora tienen `per_asset_edge` poblado
+  (`edge_backtested:true`) vía `.claude/scripts/fot_backtest_universe.py` — MR gated a RANGE_CHOP
+  (ADX 1h<25) + exit real del router (SL=max(ATR×1.2,floor), TP 2R). `expectancy_R` es **GROSS**
+  (sin costo); el net con fee notional es negativo en los 23. **Edge marginal:** ningún activo
+  llega a +0.30 (mejores gross: EURGBP +0.28, SPX500 +0.20, NAS100 +0.16, BRENT +0.11, XAUUSD +0.10).
+  Los 4 edges optimistas 2026-05-31 (XAUUSD +0.46…) **no se reprodujeron** y fueron corregidos.
+  Refuerza el WAIT honesto del scout — el edge MR vive o muere según el spread real del broker.
+  Reporte: `docs/backtest_findings_2026-06-02_fot_universe.md`.
 
 ### Reglas de invalidación comunes
 
